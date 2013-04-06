@@ -3,16 +3,14 @@
     {
       "target_name": "pathwatcher",
       "sources": [
-        "main.cc",
-        "common.cc",
-        "common.h",
-        "pathwatcher_mac.mm"
+        "src/main.cc",
+        "src/common.cc",
+        "src/common.h",
+        "src/pathwatcher_mac.mm"
       ],
-      'link_settings': {
-        'libraries': [
-          '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
-        ],
-      },
+      "include_dirs": [
+        "src"
+      ]
     }
   ]
 }
