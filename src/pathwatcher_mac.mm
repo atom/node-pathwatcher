@@ -36,6 +36,7 @@ void PlatformThread() {
     } else if (event.fflags & NOTE_RENAME) {
       type = RENAME;
       fcntl(fd, F_GETPATH, &path);
+      close(fd);
     } else {
       continue;
     }
