@@ -1,9 +1,9 @@
 {
-  "main": "./build/Release/pathwatcher.node",
+  "main": "./lib/main.js",
   "name": "pathwatcher",
   "readme": "README.md",
   "description": "watch events of a file",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/atom/node-pathwatcher.git"
