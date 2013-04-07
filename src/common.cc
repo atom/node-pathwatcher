@@ -7,11 +7,11 @@ static uv_sem_t g_semaphore;
 static uv_thread_t g_thread;
 
 static EVENT_TYPE g_type;
-static int g_data;
+static int g_handle;
 static std::string g_path;
 static Persistent<Function> g_callback;
 
-static void CommonThread(void* data) {
+static void CommonThread(void* handle) {
   WaitForMainThread();
   PlatformThread();
 }
@@ -34,7 +34,7 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
     }
 
     Handle<Value> argv[] = {
-      type, Integer::New(g_data), String::New(g_path.c_str())
+      type, Integer::New(g_handle), String::New(g_path.c_str())
     };
     g_callback->Call(Context::GetCurrent()->Global(), 3, argv);
   }
@@ -56,9 +56,9 @@ void WakeupNewThread() {
   uv_sem_post(&g_semaphore);
 }
 
-void PostEvent(EVENT_TYPE type, int data, const char* path) {
+void PostEvent(EVENT_TYPE type, int handle, const char* path) {
   g_type = type;
-  g_data = data;
+  g_handle = handle;
   g_path = path;
   uv_async_send(&g_async);
 }
@@ -79,9 +79,11 @@ Handle<Value> Watch(const Arguments& args) {
     return ThrowException(Exception::Error(String::New("String required")));
 
   Handle<String> path = args[0]->ToString();
-  int data = PlatformWatch(*String::Utf8Value(path));
+  int handle = PlatformWatch(*String::Utf8Value(path));
+  if (!PlatformIsHandleValid(handle))
+    return ThrowException(Exception::Error(String::New("Unable to watch path")));
 
-  return scope.Close(Integer::New(data));
+  return scope.Close(Integer::New(handle));
 }
 
 Handle<Value> Unwatch(const Arguments& args) {
