@@ -67,7 +67,7 @@ class PathWatcher extends EventEmitter
 
 exports.watch = (path, callback) ->
   path = require('path').resolve(path)
-  return new PathWatcher(path, callback)
+  new PathWatcher(path, callback)
 
 exports.closeAllWatchers = ->
   watcher.close() for handle, watcher of handleWatchers
