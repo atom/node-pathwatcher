@@ -1,6 +1,6 @@
 # Path Watcher Node Module
 
-## Install
+## Installing
 
 ```bash
 npm install pathwatcher
@@ -13,7 +13,7 @@ npm install pathwatcher
   * Run `grunt` to compile the CoffeeScript and native code
   * Run `npm test` to run the specs
 
-## Usage
+## Docs
 
 ### watch(filename, [listener])
 
