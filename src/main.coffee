@@ -46,8 +46,9 @@ class HandleWatcher extends EventEmitter
       delete handleWatchers[@handle]
 
 class PathWatcher extends EventEmitter
+  handleWatcher: null
+
   constructor: (path, callback) ->
-    @handleWatcher = null
     for handle, watcher of handleWatchers
       if watcher.path is path
         @handleWatcher = watcher
