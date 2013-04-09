@@ -12,6 +12,7 @@
     "url": "https://github.com/atom/node-pathwatcher/issues"
   },
   "scripts": {
+    "prepublish": "grunt coffee",
     "test": "jasmine-node --forceexit --coffee spec/"
   },
   "devDependencies": {
