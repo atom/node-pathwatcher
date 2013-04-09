@@ -10,5 +10,11 @@
   },
   "bugs": {
     "url": "https://github.com/atom/node-pathwatcher/issues"
+  },
+  "scripts": {
+    "test": "jasmine-node --forceexit --coffee spec/"
+  },
+  "devDependencies": {
+    "jasmine-node": "~1.5.0"
   }
 }
