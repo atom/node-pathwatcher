@@ -1,4 +1,4 @@
-binding = require '../build/Release/pathwatcher.node'
+binding = require('bindings')('pathwatcher.node')
 {EventEmitter} = require 'events'
 fs = require 'fs'
 util = require 'util'
