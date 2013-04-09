@@ -5,9 +5,8 @@ util = require 'util'
 
 handleWatchers = {}
 
-dispatch = (event, handle, path) ->
+binding.setCallback (event, handle, path) ->
   handleWatchers[handle]?.onEvent(event, path)
-binding.setCallback(dispatch)
 
 class HandleWatcher extends EventEmitter
   constructor: (@path) ->
