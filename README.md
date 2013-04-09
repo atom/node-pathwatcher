@@ -2,9 +2,9 @@
 
 ## Install
 
-````bash
+```bash
 npm install pathwatcher
-````
+```
 
 ## Usage
 
@@ -20,4 +20,3 @@ event.
 ### PathWatcher.close()
 
 Stop watching for changes on the given `PathWatcher`.
-
