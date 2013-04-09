@@ -16,19 +16,17 @@ class HandleWatcher extends EventEmitter
   onEvent: (event, path) ->
     switch event
       when 'rename'
-        self = this
-
         # Detect atomic write.
         @close()
-        detectRename = ->
-          fs.stat self.path, (err) ->
+        detectRename = =>
+          fs.stat @path, (err) =>
             if err # original file is gone it's a rename.
-              self.path = path
-              self.start()
-              self.emit('change', 'rename', path)
+              @path = path
+              @start()
+              @emit('change', 'rename', path)
             else # atomic write.
-              self.start()
-              self.emit('change', 'change', null)
+              @start()
+              @emit('change', 'change', null)
         setTimeout(detectRename, 100)
       when 'delete'
         @emit('change', 'delete', null)

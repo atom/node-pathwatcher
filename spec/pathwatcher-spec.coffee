@@ -46,7 +46,7 @@ describe "PathWatcher", ->
         expect(eventPath).toBe ''
 
   describe "when a watched path is renamed", ->
-    it "fires the callback with the event type and new path", ->
+    it "fires the callback with the event type and new path and watches the new path", ->
       fs.writeFileSync('/tmp/watch.txt', '')
 
       eventType = null
@@ -60,6 +60,7 @@ describe "PathWatcher", ->
       runs ->
         expect(eventType).toBe 'rename'
         expect(eventPath).toBe fs.realpathSync('/tmp/watch-renamed.txt')
+        expect(pathWatcher.getWatchedPaths()).toEqual [fs.realpathSync('/tmp/watch-renamed.txt')]
 
   describe "when a watched path is deleted", ->
     it "fires the callback with the event type and null path", ->
