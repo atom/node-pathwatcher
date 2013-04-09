@@ -28,3 +28,51 @@ describe "PathWatcher", ->
       expect(pathWatcher.getWatchedPaths()).toEqual ['/tmp/watch.txt']
       pathWatcher.closeAllWatchers()
       expect(pathWatcher.getWatchedPaths()).toEqual []
+
+  describe "when a watched path is changed", ->
+    it "fires the callback with the event type and empty path", ->
+      fs.writeFileSync('/tmp/watch.txt', '')
+
+      eventType = null
+      eventPath = null
+      watcher = pathWatcher.watch '/tmp/watch.txt', (type, path) ->
+        eventType = type
+        eventPath = path
+
+      fs.writeFileSync('/tmp/watch.txt', 'changed')
+      waitsFor -> eventType?
+      runs ->
+        expect(eventType).toBe 'change'
+        expect(eventPath).toBe ''
+
+  describe "when a watched path is renamed", ->
+    it "fires the callback with the event type and new path", ->
+      fs.writeFileSync('/tmp/watch.txt', '')
+
+      eventType = null
+      eventPath = null
+      watcher = pathWatcher.watch '/tmp/watch.txt', (type, path) ->
+        eventType = type
+        eventPath = path
+
+      fs.renameSync('/tmp/watch.txt', '/tmp/watch-renamed.txt')
+      waitsFor -> eventType?
+      runs ->
+        expect(eventType).toBe 'rename'
+        expect(eventPath).toBe fs.realpathSync('/tmp/watch-renamed.txt')
+
+  describe "when a watched path is deleted", ->
+    it "fires the callback with the event type and null path", ->
+      fs.writeFileSync('/tmp/watch.txt', '')
+
+      eventType = null
+      eventPath = null
+      watcher = pathWatcher.watch '/tmp/watch.txt', (type, path) ->
+        eventType = type
+        eventPath = path
+
+      fs.unlinkSync('/tmp/watch.txt')
+      waitsFor -> eventType?
+      runs ->
+        expect(eventType).toBe 'delete'
+        expect(eventPath).toBe null
