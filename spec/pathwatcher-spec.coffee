@@ -2,13 +2,14 @@ pathWatcher = require '../lib/main'
 fs = require 'fs'
 
 describe "PathWatcher", ->
+  beforeEach ->
+    fs.writeFileSync('/tmp/watch.txt', '')
+
   afterEach ->
     pathWatcher.closeAllWatchers()
 
   describe ".getWatchedPaths()", ->
     it "returns an array of all watched paths", ->
-      fs.writeFileSync('/tmp/watch.txt', '')
-
       expect(pathWatcher.getWatchedPaths()).toEqual []
       watcher1 = pathWatcher.watch '/tmp/watch.txt', ->
       expect(pathWatcher.getWatchedPaths()).toEqual ['/tmp/watch.txt']
@@ -21,8 +22,6 @@ describe "PathWatcher", ->
 
   describe ".closeAllWatchers()", ->
     it "closes all watched paths", ->
-      fs.writeFileSync('/tmp/watch.txt', '')
-
       expect(pathWatcher.getWatchedPaths()).toEqual []
       watcher = pathWatcher.watch '/tmp/watch.txt', ->
       expect(pathWatcher.getWatchedPaths()).toEqual ['/tmp/watch.txt']
@@ -31,8 +30,6 @@ describe "PathWatcher", ->
 
   describe "when a watched path is changed", ->
     it "fires the callback with the event type and empty path", ->
-      fs.writeFileSync('/tmp/watch.txt', '')
-
       eventType = null
       eventPath = null
       watcher = pathWatcher.watch '/tmp/watch.txt', (type, path) ->
@@ -47,8 +44,6 @@ describe "PathWatcher", ->
 
   describe "when a watched path is renamed", ->
     it "fires the callback with the event type and new path and watches the new path", ->
-      fs.writeFileSync('/tmp/watch.txt', '')
-
       eventType = null
       eventPath = null
       watcher = pathWatcher.watch '/tmp/watch.txt', (type, path) ->
@@ -64,8 +59,6 @@ describe "PathWatcher", ->
 
   describe "when a watched path is deleted", ->
     it "fires the callback with the event type and null path", ->
-      fs.writeFileSync('/tmp/watch.txt', '')
-
       eventType = null
       eventPath = null
       watcher = pathWatcher.watch '/tmp/watch.txt', (type, path) ->
