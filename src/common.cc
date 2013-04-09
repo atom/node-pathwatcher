@@ -38,7 +38,7 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
     };
     g_callback->Call(Context::GetCurrent()->Global(), 3, argv);
   }
-  
+
   WakeupNewThread();
 }
 
@@ -95,4 +95,3 @@ Handle<Value> Unwatch(const Arguments& args) {
   PlatformUnwatch(args[0]->Int32Value());
   return Undefined();
 }
-

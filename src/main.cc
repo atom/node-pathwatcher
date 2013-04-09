@@ -13,4 +13,3 @@ void Init(Handle<Object> exports) {
 }
 
 NODE_MODULE(pathwatcher, Init)
-

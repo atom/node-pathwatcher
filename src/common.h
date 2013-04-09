@@ -24,4 +24,3 @@ void CommonInit();
 Handle<Value> SetCallback(const Arguments& args);
 Handle<Value> Watch(const Arguments& args);
 Handle<Value> Unwatch(const Arguments& args);
-

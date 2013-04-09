@@ -47,7 +47,6 @@ class HandleWatcher extends EventEmitter
       binding.unwatch(@handle)
       delete handleWatchers[@handle]
 
-
 class PathWatcher extends EventEmitter
   constructor: (path, callback) ->
     @handleWatcher = null

@@ -73,4 +73,3 @@ void PlatformUnwatch(int fd) {
 bool PlatformIsHandleValid(int handle) {
   return handle >= 0;
 }
-
