@@ -1,5 +1,5 @@
 {
-  "main": "./lib/main",
+  "main": "./lib/main.js",
   "name": "pathwatcher",
   "readme": "README.md",
   "description": "watch events of a file",
