@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>node-pathwatcher by atom</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>node-pathwatcher</h1>
+        <p>Path Watcher Node Module</p>
+
+        <p class="view"><a href="https://github.com/atom/node-pathwatcher">View the Project on GitHub <small>atom/node-pathwatcher</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/atom/node-pathwatcher/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/atom/node-pathwatcher/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/atom/node-pathwatcher">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a name="path-watcher-node-module" class="anchor" href="#path-watcher-node-module"><span class="octicon octicon-link"></span></a>Path Watcher Node Module</h1>
+
+<h2>
+<a name="installing" class="anchor" href="#installing"><span class="octicon octicon-link"></span></a>Installing</h2>
+
+<div class="highlight"><pre>npm install pathwatcher
+</pre></div>
+
+<h2>
+<a name="building" class="anchor" href="#building"><span class="octicon octicon-link"></span></a>Building</h2>
+
+<ul>
+<li>Clone the repository</li>
+<li>Run <code>npm install</code>
+</li>
+<li>Run <code>grunt</code> to compile the CoffeeScript and native code</li>
+<li>Run <code>npm test</code> to run the specs</li>
+</ul><h2>
+<a name="using" class="anchor" href="#using"><span class="octicon octicon-link"></span></a>Using</h2>
+
+<div class="highlight"><pre><span class="nv">PathWatcher = </span><span class="nx">require</span> <span class="s">'pathwatcher'</span>
+</pre></div>
+
+<h3>
+<a name="pathwatcherwatchfilename-listener" class="anchor" href="#pathwatcherwatchfilename-listener"><span class="octicon octicon-link"></span></a>PathWatcher.watch(filename, [listener])</h3>
+
+<p>Watch for changes on <code>filename</code>, where <code>filename</code> is either a file or a
+directory. The returned object is a PathWatcher.</p>
+
+<p>The listener callback gets two arguments <code>(event, path)</code>. <code>event</code> is either
+'rename' or 'change', and <code>path</code> is the path of the file which triggered the
+event.</p>
+
+<h3>
+<a name="pathwatcherclose" class="anchor" href="#pathwatcherclose"><span class="octicon octicon-link"></span></a>PathWatcher.close()</h3>
+
+<p>Stop watching for changes on the given <code>PathWatcher</code>.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/atom">atom</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
