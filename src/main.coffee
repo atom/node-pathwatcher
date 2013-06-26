@@ -1,7 +1,6 @@
 binding = require('bindings')('pathwatcher.node')
 {EventEmitter} = require 'events'
 fs = require 'fs'
-util = require 'util'
 
 handleWatchers = {}
 
