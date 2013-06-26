@@ -13,9 +13,13 @@ npm install pathwatcher
   * Run `grunt` to compile the CoffeeScript and native code
   * Run `npm test` to run the specs
 
-## Docs
+## Using
 
-### watch(filename, [listener])
+```coffeescript
+PathWatcher = require 'pathwatcher'
+```
+
+### PathWatcher.watch(filename, [listener])
 
 Watch for changes on `filename`, where `filename` is either a file or a
 directory. The returned object is a PathWatcher.

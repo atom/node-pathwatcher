@@ -2,7 +2,7 @@
   "main": "./lib/main.js",
   "name": "pathwatcher",
   "readme": "README.md",
-  "description": "watch events of a file",
+  "description": "Watch file events",
   "version": "0.4.0",
   "licenses": [
     {
