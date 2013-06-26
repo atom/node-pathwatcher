@@ -17,6 +17,7 @@
   "bugs": {
     "url": "https://github.com/atom/node-pathwatcher/issues"
   },
+  "homepage": "http://atom.github.io/node-pathwatcher",
   "scripts": {
     "prepublish": "grunt clean lint coffee",
     "test": "grunt test"
