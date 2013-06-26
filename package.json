@@ -3,7 +3,7 @@
   "name": "pathwatcher",
   "readme": "README.md",
   "description": "Watch file events",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "licenses": [
     {
       "type": "MIT",
