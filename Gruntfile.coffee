@@ -29,3 +29,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks('grunt-shell')
   grunt.registerTask('default', ['coffee', 'shell:rebuild'])
   grunt.registerTask('test', ['default', 'shell:test'])
+  grunt.registerTask 'clean', ->
+    rm = require('rimraf').sync
+    rm 'build'
+    rm 'lib'
