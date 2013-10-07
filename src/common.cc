@@ -1,5 +1,6 @@
 #include "common.h"
 
+#include <node_internals.h>
 #include <string>
 
 static uv_async_t g_async;
@@ -7,9 +8,20 @@ static uv_sem_t g_semaphore;
 static uv_thread_t g_thread;
 
 static EVENT_TYPE g_type;
-static int g_handle;
+static WatcherHandle g_handle;
 static std::string g_path;
 static Persistent<Function> g_callback;
+
+// Conversion between V8 value and WatcherHandle.
+#ifdef _WIN32
+#define WatcherHandleToV8Value(h) External::New(h)
+#define V8ValueToWatcherHandle(v) Handle<External>::Cast(v)->Value()
+#define IsV8ValueWatcherHandle(v) v->IsExternal()
+#else
+#define WatcherHandleToV8Value(h) Integer::New(h)
+#define V8ValueToWatcherHandle(v) v->IntegerValue()
+#define IsV8ValueWatcherHandle(v) v->IsNumber()
+#endif
 
 static void CommonThread(void* handle) {
   WaitForMainThread();
@@ -34,7 +46,7 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
     }
 
     Handle<Value> argv[] = {
-      type, Integer::New(g_handle), String::New(g_path.c_str())
+      type, WatcherHandleToV8Value(g_handle), String::New(g_path.c_str())
     };
     g_callback->Call(Context::GetCurrent()->Global(), 3, argv);
   }
@@ -56,7 +68,7 @@ void WakeupNewThread() {
   uv_sem_post(&g_semaphore);
 }
 
-void PostEvent(EVENT_TYPE type, int handle, const char* path) {
+void PostEvent(EVENT_TYPE type, WatcherHandle handle, const char* path) {
   g_type = type;
   g_handle = handle;
   g_path = path;
@@ -65,7 +77,7 @@ void PostEvent(EVENT_TYPE type, int handle, const char* path) {
 
 Handle<Value> SetCallback(const Arguments& args) {
   if (!args[0]->IsFunction())
-    return ThrowException(Exception::Error(String::New("Function required")));
+    return node::ThrowTypeError("Function required");
 
   g_callback = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
 
@@ -76,22 +88,22 @@ Handle<Value> Watch(const Arguments& args) {
   HandleScope scope;
 
   if (!args[0]->IsString())
-    return ThrowException(Exception::Error(String::New("String required")));
+    return node::ThrowTypeError("String required");
 
   Handle<String> path = args[0]->ToString();
-  int handle = PlatformWatch(*String::Utf8Value(path));
+  WatcherHandle handle = PlatformWatch(*String::Utf8Value(path));
   if (!PlatformIsHandleValid(handle))
-    return ThrowException(Exception::Error(String::New("Unable to watch path")));
+    return node::ThrowError("Unable to watch path");
 
-  return scope.Close(Integer::New(handle));
+  return scope.Close(WatcherHandleToV8Value(handle));
 }
 
 Handle<Value> Unwatch(const Arguments& args) {
   HandleScope scope;
 
-  if (!args[0]->IsNumber())
-    return ThrowException(Exception::Error(String::New("Handle type required")));
+  if (!IsV8ValueWatcherHandle(args[0]))
+    return node::ThrowTypeError("Handle type required");
 
-  PlatformUnwatch(args[0]->Int32Value());
+  PlatformUnwatch(V8ValueToWatcherHandle(args[0]));
   return Undefined();
 }

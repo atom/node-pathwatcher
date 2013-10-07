@@ -47,7 +47,7 @@ void PlatformThread() {
   }
 }
 
-int PlatformWatch(const char* path) {
+WatcherHandle PlatformWatch(const char* path) {
   int fd = open(path, O_EVTONLY, 0);
   if (fd < 0) {
     fprintf(stderr, "Cannot create kevent for %s with errno %d\n", path, errno);
@@ -66,10 +66,10 @@ int PlatformWatch(const char* path) {
   return fd;
 }
 
-void PlatformUnwatch(int fd) {
+void PlatformUnwatch(WatcherHandle fd) {
   close(fd);
 }
 
-bool PlatformIsHandleValid(int handle) {
+bool PlatformIsHandleValid(WatcherHandle handle) {
   return handle >= 0;
 }

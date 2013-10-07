@@ -4,11 +4,19 @@
 
 using namespace v8;
 
+#ifdef _WIN32
+#include <windows.h>
+typedef HANDLE WatcherHandle;
+#else
+typedef int WatcherHandle;
+#endif
+
+
 void PlatformInit();
 void PlatformThread();
-int PlatformWatch(const char* path);
-void PlatformUnwatch(int handle);
-bool PlatformIsHandleValid(int handle);
+WatcherHandle PlatformWatch(const char* path);
+void PlatformUnwatch(WatcherHandle handle);
+bool PlatformIsHandleValid(WatcherHandle handle);
 
 enum EVENT_TYPE {
   EVENT_CHANGE,
@@ -18,7 +26,7 @@ enum EVENT_TYPE {
 
 void WaitForMainThread();
 void WakeupNewThread();
-void PostEvent(EVENT_TYPE type, int handle, const char* path);
+void PostEvent(EVENT_TYPE type, WatcherHandle handle, const char* path);
 
 void CommonInit();
 Handle<Value> SetCallback(const Arguments& args);

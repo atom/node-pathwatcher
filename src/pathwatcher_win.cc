@@ -6,13 +6,13 @@ void PlatformInit() {
 void PlatformThread() {
 }
 
-int PlatformWatch(const char* path) {
+WatcherHandle PlatformWatch(const char* path) {
   return 0;
 }
 
-void PlatformUnwatch(int fd) {
+void PlatformUnwatch(WatcherHandle handle) {
 }
 
-bool PlatformIsHandleValid(int handle) {
+bool PlatformIsHandleValid(WatcherHandle handle) {
   return true;
 }
