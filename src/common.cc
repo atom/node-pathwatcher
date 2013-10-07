@@ -33,6 +33,18 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
       case EVENT_RENAME:
         type = String::New("rename");
         break;
+      case EVENT_CHILD_CREATE:
+        type = String::New("child-create");
+        break;
+      case EVENT_CHILD_CHANGE:
+        type = String::New("child-change");
+        break;
+      case EVENT_CHILD_DELETE:
+        type = String::New("child-delete");
+        break;
+      case EVENT_CHILD_RENAME:
+        type = String::New("child-rename");
+        break;
     }
 
     Handle<Value> argv[] = {

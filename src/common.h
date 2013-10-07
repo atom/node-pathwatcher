@@ -31,9 +31,14 @@ void PlatformUnwatch(WatcherHandle handle);
 bool PlatformIsHandleValid(WatcherHandle handle);
 
 enum EVENT_TYPE {
+  EVENT_NONE,
   EVENT_CHANGE,
   EVENT_RENAME,
-  EVENT_DELETE
+  EVENT_DELETE,
+  EVENT_CHILD_CHANGE,
+  EVENT_CHILD_RENAME,
+  EVENT_CHILD_DELETE,
+  EVENT_CHILD_CREATE,
 };
 
 void WaitForMainThread();

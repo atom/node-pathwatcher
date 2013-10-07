@@ -78,7 +78,7 @@ Handle<Value> HandleMap::Has(const Arguments& args) {
 Handle<Value> HandleMap::Values(const Arguments& args) {
   HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
 
-  int i = 0;
+  size_t i = 0;
   Handle<Array> keys = Array::New(obj->map_.size());
   for (Map::const_iterator iter = obj->map_.begin();
        iter != obj->map_.end();
