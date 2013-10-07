@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <vector>
 
 // Size of the buffer to store result of ReadDirectoryChangesW.
 static const unsigned int uv_directory_watcher_buffer_size = 4096;
@@ -9,20 +10,29 @@ static const unsigned int uv_directory_watcher_buffer_size = 4096;
 // Object template to create representation of WatcherHandle.
 Persistent<ObjectTemplate> g_object_template;
 
+// HandleWrapper that need to be deleted.
+std::vector<WatcherHandle> g_gabage_handles;
+
+// Mutex for the g_gabage_handles.
+uv_mutex_t g_gabage_handles_mutex;
+
 // The global IOCP to be quested.
 static HANDLE g_iocp;
 
 struct HandleWrapper {
   explicit HandleWrapper(WatcherHandle handle)
-      : dir_handle(handle), alive(true) {
+      : dir_handle(handle) {
     map_[dir_handle] = this;
     memset(&overlapped, 0, sizeof(overlapped));
+  }
+
+  ~HandleWrapper() {
+    map_.erase(dir_handle);
   }
 
   WatcherHandle dir_handle;
   OVERLAPPED overlapped;
   char buffer[uv_directory_watcher_buffer_size];
-  bool alive;
 
   static HandleWrapper* Get(WatcherHandle key) { return map_[key]; }
 
@@ -47,6 +57,7 @@ bool IsV8ValueWatcherHandle(Handle<Value> value) {
 }
 
 void PlatformInit() {
+  uv_mutex_init(&g_gabage_handles_mutex);
   g_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
 
   g_object_template = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
@@ -117,6 +128,14 @@ void PlatformThread() {
         offset = file_info->NextEntryOffset;
       } while(offset);
     }
+
+    // Safely delete handles after all events are dispatched.
+    std::vector<WatcherHandle> gabage_handles;
+    uv_mutex_lock(&g_gabage_handles_mutex);
+    gabage_handles.swap(g_gabage_handles);
+    uv_mutex_unlock(&g_gabage_handles_mutex);
+    for (int i = 0; i < gabage_handles.size(); ++i)
+      delete HandleWrapper::Get(gabage_handles[i]);
   }
 }
 
@@ -172,8 +191,12 @@ WatcherHandle PlatformWatch(const char* path) {
 
 void PlatformUnwatch(WatcherHandle handle) {
   if (PlatformIsHandleValid(handle)) {
-    HandleWrapper::Get(handle)->alive = false;
     CloseHandle(handle);
+
+    // Add the handle to the to-be-deleted list.
+    uv_mutex_lock(&g_gabage_handles_mutex);
+    g_gabage_handles.push_back(handle);
+    uv_mutex_unlock(&g_gabage_handles_mutex);
   }
 }
 
