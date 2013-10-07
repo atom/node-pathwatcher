@@ -79,7 +79,7 @@ describe 'PathWatcher', ->
         expect(eventType).toBe 'delete'
         expect(eventPath).toBe null
 
-  fdescribe 'when a file under watched directory is deleted', ->
+  describe 'when a file under watched directory is deleted', ->
     it 'fires the callback with the change event and empty path', (done) ->
       fileUnderDir = path.join(tempDir, 'file')
       fs.writeFileSync(fileUnderDir, '')
@@ -91,7 +91,7 @@ describe 'PathWatcher', ->
         done()
       fs.unlinkSync(fileUnderDir)
 
-  fdescribe 'when a new file is created under watched directory', ->
+  describe 'when a new file is created under watched directory', ->
     it 'fires the callback with the change event and empty path', ->
       newFile = path.join(tempDir, 'file')
       watcher = pathWatcher.watch tempDir, (type, path) ->
@@ -103,7 +103,7 @@ describe 'PathWatcher', ->
         done()
       fs.writeFileSync(newFile, '')
 
-  fdescribe 'when a file under watched directory is moved', ->
+  describe 'when a file under watched directory is moved', ->
     it 'fires the callback with the change event and empty path', ->
       fileUnderDir = path.join(tempDir, 'file')
       newName = path.join(tempDir, 'file2')

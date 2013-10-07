@@ -2,6 +2,7 @@ binding = require('bindings')('pathwatcher.node')
 HandleMap = binding.HandleMap
 {EventEmitter} = require 'events'
 fs = require 'fs'
+path = require 'path'
 
 handleWatchers = new HandleMap
 
@@ -10,9 +11,19 @@ binding.setCallback (event, handle, path) ->
 
 class HandleWatcher extends EventEmitter
   constructor: (@path) ->
-    @start()
+    # On Windows watching a file is emulated by watching its parent folder.
+    if process.platform is 'win32'
+      stats = fs.statSync(@path)
+      @isParent = not stats.isDirectory()
+      @watchedPath = require('path').dirname(@path, '..')
 
-  onEvent: (event, path) ->
+    @isParent ?= false
+    @start(if @isParent then @watchedPath else @path)
+
+  onEvent: (event, filePath) ->
+    # The filePath only contains the filename part on Windows.
+    filePath = path.resolve(@watchedPath, filePath) if @isParent and filePath
+
     switch event
       when 'rename'
         # Detect atomic write.
@@ -20,9 +31,9 @@ class HandleWatcher extends EventEmitter
         detectRename = =>
           fs.stat @path, (err) =>
             if err # original file is gone it's a rename.
-              @path = path
+              @path = filePath
               @start()
-              @emit('change', 'rename', path)
+              @emit('change', 'rename', filePath)
             else # atomic write.
               @start()
               @emit('change', 'change', null)
@@ -30,11 +41,20 @@ class HandleWatcher extends EventEmitter
       when 'delete'
         @emit('change', 'delete', null)
         @close()
-      else
-        @emit('change', event, path)
+      when 'change'
+        @emit('change', 'change', filePath)
+      when 'child-rename'
+        if @isParent and @path is filePath
+          @onEvent('rename', filePath)
+      when 'child-delete'
+        if @isParent and @path is filePath
+          @onEvent('delete', null)
+      when 'child-change'
+        if @isParent and @path is filePath
+          @onEvent('change', '')
 
-  start: ->
-    @handle = binding.watch(@path)
+  start: (path) ->
+    @handle = binding.watch(path)
     handleWatchers.add(@handle, this)
 
   closeIfNoListener: ->
