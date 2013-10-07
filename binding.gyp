@@ -6,12 +6,22 @@
         "src/main.cc",
         "src/common.cc",
         "src/common.h",
-        "src/pathwatcher_mac.mm",
-        "src/pathwatcher_win.cc",
       ],
       "include_dirs": [
         "src"
-      ]
+      ],
+      "conditions": [
+        ['OS=="win"', {
+          "sources": [
+            "src/pathwatcher_win.cc",
+          ],
+        }],  # OS=="win"
+        ['OS=="mac"', {
+          "sources": [
+            "src/pathwatcher_mac.mm",
+          ],
+        }],  # OS=="mac"
+      ],
     }
   ]
 }
