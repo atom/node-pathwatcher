@@ -1,8 +1,8 @@
 #include "common.h"
 
-#include "node_internals.h"
-
 #include <string>
+
+#include "node_internals.h"
 
 static uv_async_t g_async;
 static uv_sem_t g_semaphore;

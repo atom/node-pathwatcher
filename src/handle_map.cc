@@ -1,8 +1,8 @@
 #include "handle_map.h"
 
-#include "node_internals.h"
-
 #include <algorithm>
+
+#include "node_internals.h"
 
 HandleMap::HandleMap() {
 }

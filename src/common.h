@@ -13,9 +13,9 @@ using namespace v8;
 typedef HANDLE WatcherHandle;
 
 // Conversion between V8 value and WatcherHandle.
-#define WatcherHandleToV8Value(h) External::New(h)
-#define V8ValueToWatcherHandle(v) Handle<External>::Cast(v)->Value()
-#define IsV8ValueWatcherHandle(v) v->IsExternal()
+Handle<Value> WatcherHandleToV8Value(WatcherHandle handle);
+WatcherHandle V8ValueToWatcherHandle(Handle<Value> value);
+bool IsV8ValueWatcherHandle(Handle<Value> value);
 #else
 // Correspoding definetions on OS X and Linux.
 typedef int WatcherHandle;
