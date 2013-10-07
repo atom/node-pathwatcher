@@ -1,11 +1,12 @@
 binding = require('bindings')('pathwatcher.node')
+HandleMap = binding.HandleMap
 {EventEmitter} = require 'events'
 fs = require 'fs'
 
-handleWatchers = {}
+handleWatchers = new HandleMap
 
 binding.setCallback (event, handle, path) ->
-  handleWatchers[handle]?.onEvent(event, path)
+  handleWatchers.get(handle).onEvent(event, path) if handleWatchers.has(handle)
 
 class HandleWatcher extends EventEmitter
   constructor: (@path) ->
@@ -34,21 +35,21 @@ class HandleWatcher extends EventEmitter
 
   start: ->
     @handle = binding.watch(@path)
-    handleWatchers[@handle] = this
+    handleWatchers.add(@handle, this)
 
   closeIfNoListener: ->
     @close() if @listeners('change').length is 0
 
   close: ->
-    if handleWatchers[@handle]?
+    if handleWatchers.has(@handle)
       binding.unwatch(@handle)
-      delete handleWatchers[@handle]
+      handleWatchers.remove(@handle)
 
 class PathWatcher extends EventEmitter
   handleWatcher: null
 
   constructor: (path, callback) ->
-    for handle, watcher of handleWatchers
+    for watcher in handleWatchers.values()
       if watcher.path is path
         @handleWatcher = watcher
         break
@@ -70,10 +71,10 @@ exports.watch = (path, callback) ->
   new PathWatcher(path, callback)
 
 exports.closeAllWatchers = ->
-  watcher.close() for handle, watcher of handleWatchers
-  handleWatchers = {}
+  watcher.close() for watcher in handleWatchers.values()
+  handleWatchers = new HandleMap
 
 exports.getWatchedPaths = ->
   paths = []
-  paths.push(watcher.path) for handle, watcher of handleWatchers
+  paths.push(watcher.path) for watcher in handleWatchers.values()
   paths

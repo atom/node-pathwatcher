@@ -1,4 +1,5 @@
 #include "common.h"
+#include "handle_map.h"
 
 void Init(Handle<Object> exports) {
   CommonInit();
@@ -10,6 +11,8 @@ void Init(Handle<Object> exports) {
       FunctionTemplate::New(Watch)->GetFunction());
   exports->Set(String::NewSymbol("unwatch"),
       FunctionTemplate::New(Unwatch)->GetFunction());
+
+  HandleMap::Initialize(exports);
 }
 
 NODE_MODULE(pathwatcher, Init)

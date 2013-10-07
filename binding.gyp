@@ -6,6 +6,8 @@
         "src/main.cc",
         "src/common.cc",
         "src/common.h",
+        "src/handle_map.cc",
+        "src/handle_map.h",
       ],
       "include_dirs": [
         "src"

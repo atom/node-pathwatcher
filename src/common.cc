@@ -1,6 +1,7 @@
 #include "common.h"
 
-#include <node_internals.h>
+#include "node_internals.h"
+
 #include <string>
 
 static uv_async_t g_async;
@@ -11,17 +12,6 @@ static EVENT_TYPE g_type;
 static WatcherHandle g_handle;
 static std::string g_path;
 static Persistent<Function> g_callback;
-
-// Conversion between V8 value and WatcherHandle.
-#ifdef _WIN32
-#define WatcherHandleToV8Value(h) External::New(h)
-#define V8ValueToWatcherHandle(v) Handle<External>::Cast(v)->Value()
-#define IsV8ValueWatcherHandle(v) v->IsExternal()
-#else
-#define WatcherHandleToV8Value(h) Integer::New(h)
-#define V8ValueToWatcherHandle(v) v->IntegerValue()
-#define IsV8ValueWatcherHandle(v) v->IsNumber()
-#endif
 
 static void CommonThread(void* handle) {
   WaitForMainThread();
