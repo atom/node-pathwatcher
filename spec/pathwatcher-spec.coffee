@@ -1,11 +1,13 @@
 pathWatcher = require '../lib/main'
 fs = require 'fs'
+path = require 'path'
 temp = require 'temp'
 
 temp.track()
 
 describe 'PathWatcher', ->
-  tempFile = temp.openSync('node-pathwatcher')
+  tempFile = temp.openSync('node-pathwatcher-file')
+  tempDir = temp.mkdirSync('node-pathwatcher-directory')
 
   beforeEach ->
     fs.writeFileSync(tempFile.path, '')
@@ -55,13 +57,13 @@ describe 'PathWatcher', ->
         eventType = type
         eventPath = path
 
-      tempRenamed = temp.openSync('node-pathwatcher-renamed')
-      fs.renameSync(tempFile.path, tempRenamed.path)
+      tempRenamed = temp.path('node-pathwatcher-renamed')
+      fs.renameSync(tempFile.path, tempRenamed)
       waitsFor -> eventType?
       runs ->
         expect(eventType).toBe 'rename'
-        expect(eventPath).toBe fs.realpathSync(tempRenamed.path)
-        expect(pathWatcher.getWatchedPaths()).toEqual [fs.realpathSync(tempRenamed.path)]
+        expect(eventPath).toBe fs.realpathSync(tempRenamed)
+        expect(pathWatcher.getWatchedPaths()).toEqual [fs.realpathSync(tempRenamed)]
 
   describe 'when a watched path is deleted', ->
     it 'fires the callback with the event type and null path', ->
@@ -76,3 +78,34 @@ describe 'PathWatcher', ->
       runs ->
         expect(eventType).toBe 'delete'
         expect(eventPath).toBe null
+
+  describe 'when a file under watched directory is deleted', ->
+    it 'fires the callback with the change event and empty path', ->
+      fileUnderDir = path.join(tempDir, 'file')
+      fs.writeFileSync(fileUnderDir, '')
+      eventType = null
+      eventPath = null
+      watcher = pathWatcher.watch tempDir, (type, path) ->
+        eventType = type
+        eventPath = path
+
+      fs.unlinkSync(fileUnderDir)
+      waitsFor -> eventType?
+      runs ->
+        expect(eventType).toBe 'change'
+        expect(eventPath).toBe ''
+
+  describe 'when a new file is created under watched directory', ->
+    it 'fires the callback with the change event and empty path', ->
+      newFile = path.join(tempDir, 'file')
+      eventType = null
+      eventPath = null
+      watcher = pathWatcher.watch tempDir, (type, path) ->
+        eventType = type
+        eventPath = path
+
+      fs.writeFileSync(newFile, '')
+      waitsFor -> eventType?
+      runs ->
+        expect(eventType).toBe 'change'
+        expect(eventPath).toBe ''
