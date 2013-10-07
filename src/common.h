@@ -11,9 +11,9 @@ void PlatformUnwatch(int handle);
 bool PlatformIsHandleValid(int handle);
 
 enum EVENT_TYPE {
-  CHANGE,
-  RENAME,
-  DELETE
+  EVENT_CHANGE,
+  EVENT_RENAME,
+  EVENT_DELETE
 };
 
 void WaitForMainThread();

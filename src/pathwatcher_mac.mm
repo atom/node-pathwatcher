@@ -30,11 +30,11 @@ void PlatformThread() {
     path[0] = 0;
 
     if (event.fflags & NOTE_WRITE) {
-      type = CHANGE;
+      type = EVENT_CHANGE;
     } else if (event.fflags & NOTE_DELETE) {
-      type = DELETE;
+      type = EVENT_DELETE;
     } else if (event.fflags & NOTE_RENAME) {
-      type = RENAME;
+      type = EVENT_RENAME;
       fcntl(fd, F_GETPATH, &path);
       close(fd);
     } else {

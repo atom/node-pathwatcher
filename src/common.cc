@@ -22,13 +22,13 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
   if (!g_callback.IsEmpty()) {
     Handle<String> type;
     switch (g_type) {
-      case CHANGE:
+      case EVENT_CHANGE:
         type = String::New("change");
         break;
-      case DELETE:
+      case EVENT_DELETE:
         type = String::New("delete");
         break;
-      case RENAME:
+      case EVENT_RENAME:
         type = String::New("rename");
         break;
     }
