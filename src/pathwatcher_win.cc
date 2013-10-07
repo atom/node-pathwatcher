@@ -16,6 +16,9 @@ std::vector<WatcherHandle> g_gabage_handles;
 // Mutex for the g_gabage_handles.
 uv_mutex_t g_gabage_handles_mutex;
 
+// Mutex for the HandleWrapper map.
+uv_mutex_t g_handle_wrap_map_mutex;
+
 // The global IOCP to be quested.
 static HANDLE g_iocp;
 
@@ -58,6 +61,8 @@ bool IsV8ValueWatcherHandle(Handle<Value> value) {
 
 void PlatformInit() {
   uv_mutex_init(&g_gabage_handles_mutex);
+  uv_mutex_init(&g_handle_wrap_map_mutex);
+
   g_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
 
   g_object_template = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
@@ -129,13 +134,17 @@ void PlatformThread() {
       } while(offset);
     }
 
-    // Safely delete handles after all events are dispatched.
     std::vector<WatcherHandle> gabage_handles;
+
     uv_mutex_lock(&g_gabage_handles_mutex);
     gabage_handles.swap(g_gabage_handles);
     uv_mutex_unlock(&g_gabage_handles_mutex);
+
+    // Safely delete handles after all events are dispatched.
+    uv_mutex_lock(&g_handle_wrap_map_mutex);
     for (int i = 0; i < gabage_handles.size(); ++i)
       delete HandleWrapper::Get(gabage_handles[i]);
+    uv_mutex_unlock(&g_handle_wrap_map_mutex);
   }
 }
 
@@ -160,8 +169,10 @@ WatcherHandle PlatformWatch(const char* path) {
   if (!PlatformIsHandleValid(handle))
     return INVALID_HANDLE_VALUE;
 
+  uv_mutex_lock(&g_handle_wrap_map_mutex);
   std::unique_ptr<HandleWrapper> handle_wrapper(new HandleWrapper(handle));
-  handle_wrapper->alive = true;
+  uv_mutex_unlock(&g_handle_wrap_map_mutex);
+
   if (CreateIoCompletionPort(handle_wrapper->dir_handle,
                              g_iocp,
                              reinterpret_cast<ULONG_PTR>(handle_wrapper.get()),

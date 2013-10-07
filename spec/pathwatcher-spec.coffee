@@ -84,11 +84,11 @@ describe 'PathWatcher', ->
       fileUnderDir = path.join(tempDir, 'file')
       fs.writeFileSync(fileUnderDir, '')
       watcher = pathWatcher.watch tempDir, (type, path) ->
+        watcher.close()
+
         expect(type).toBe 'change'
         expect(path).toBe ''
-        watcher.close()
         done()
-      watcher.close()
       fs.unlinkSync(fileUnderDir)
 
   fdescribe 'when a new file is created under watched directory', ->
