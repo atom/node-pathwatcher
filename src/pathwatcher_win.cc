@@ -21,7 +21,6 @@ struct HandleWrapper {
       : dir_handle(handle),
         path(path) {
     map_[dir_handle] = this;
-    memset(&overlapped, 0, sizeof(overlapped));
   }
 
   ~HandleWrapper() {
@@ -46,6 +45,25 @@ struct WatcherEvent {
   std::string new_path;
   std::string old_path;
 };
+
+static bool QueueReaddirchanges(HandleWrapper* handle) {
+  memset(&(handle->overlapped), 0, sizeof(handle->overlapped));
+  return ReadDirectoryChangesW(handle->dir_handle,
+                               handle->buffer,
+                               kDirectoryWatcherBufferSize,
+                               FALSE,
+                               FILE_NOTIFY_CHANGE_FILE_NAME      |
+                                 FILE_NOTIFY_CHANGE_DIR_NAME     |
+                                 FILE_NOTIFY_CHANGE_ATTRIBUTES   |
+                                 FILE_NOTIFY_CHANGE_SIZE         |
+                                 FILE_NOTIFY_CHANGE_LAST_WRITE   |
+                                 FILE_NOTIFY_CHANGE_LAST_ACCESS  |
+                                 FILE_NOTIFY_CHANGE_CREATION     |
+                                 FILE_NOTIFY_CHANGE_SECURITY,
+                               NULL,
+                               &handle->overlapped,
+                               NULL) == TRUE;
+}
 
 Handle<Value> WatcherHandleToV8Value(WatcherHandle handle) {
   Handle<Value> value = g_object_template->NewInstance();
@@ -151,6 +169,10 @@ void PlatformThread() {
 
         offset = file_info->NextEntryOffset;
       } while (offset);
+
+      // Restart the monitor, it was reset after each call.
+      QueueReaddirchanges(handle);
+
       uv_mutex_unlock(&g_handle_wrap_map_mutex);
 
       for (int i = 0; i < events.size(); ++i)
@@ -200,21 +222,7 @@ WatcherHandle PlatformWatch(const char* path) {
     return INVALID_HANDLE_VALUE;
   }
 
-  if (!ReadDirectoryChangesW(handle_wrapper->dir_handle,
-                             handle_wrapper->buffer,
-                             kDirectoryWatcherBufferSize,
-                             FALSE,
-                             FILE_NOTIFY_CHANGE_FILE_NAME      |
-                               FILE_NOTIFY_CHANGE_DIR_NAME     |
-                               FILE_NOTIFY_CHANGE_ATTRIBUTES   |
-                               FILE_NOTIFY_CHANGE_SIZE         |
-                               FILE_NOTIFY_CHANGE_LAST_WRITE   |
-                               FILE_NOTIFY_CHANGE_LAST_ACCESS  |
-                               FILE_NOTIFY_CHANGE_CREATION     |
-                               FILE_NOTIFY_CHANGE_SECURITY,
-                             NULL,
-                             &handle_wrapper->overlapped,
-                             NULL)) {
+  if (!QueueReaddirchanges(handle_wrapper.get())) {
     fprintf(stderr, "ReadDirectoryChangesW failed\n");
     return INVALID_HANDLE_VALUE;
   }
