@@ -17,9 +17,8 @@ class HandleWatcher extends EventEmitter
     if process.platform is 'win32'
       stats = fs.statSync(@path)
       @isParent = not stats.isDirectory()
-      @watchedPath = require('path').dirname(@path, '..')
 
-    @start(if @isParent then @watchedPath else @path)
+    @start()
 
   onEvent: (event, filePath, oldFilePath) ->
     switch event
@@ -56,8 +55,8 @@ class HandleWatcher extends EventEmitter
       when 'child-create'
         @onEvent('change', '') unless @isParent
 
-  start: (path) ->
-    @handle = binding.watch(path)
+  start: () ->
+    @handle = binding.watch(if @isParent then path.dirname(@path) else @path)
     handleWatchers.add(@handle, this)
 
   closeIfNoListener: ->
