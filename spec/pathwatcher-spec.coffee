@@ -6,11 +6,11 @@ temp = require 'temp'
 temp.track()
 
 describe 'PathWatcher', ->
-  tempFile = temp.openSync('node-pathwatcher-file')
   tempDir = temp.mkdirSync('node-pathwatcher-directory')
+  tempFile = path.join(tempDir, 'file')
 
   beforeEach ->
-    fs.writeFileSync(tempFile.path, '')
+    fs.writeFileSync(tempFile, '')
 
   afterEach ->
     pathWatcher.closeAllWatchers()
@@ -18,20 +18,20 @@ describe 'PathWatcher', ->
   describe '.getWatchedPaths()', ->
     it 'returns an array of all watched paths', ->
       expect(pathWatcher.getWatchedPaths()).toEqual []
-      watcher1 = pathWatcher.watch tempFile.path, ->
-      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile.path]
-      watcher2 = pathWatcher.watch tempFile.path, ->
-      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile.path]
+      watcher1 = pathWatcher.watch tempFile, ->
+      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile]
+      watcher2 = pathWatcher.watch tempFile, ->
+      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile]
       watcher1.close()
-      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile.path]
+      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile]
       watcher2.close()
       expect(pathWatcher.getWatchedPaths()).toEqual []
 
   describe '.closeAllWatchers()', ->
     it 'closes all watched paths', ->
       expect(pathWatcher.getWatchedPaths()).toEqual []
-      watcher = pathWatcher.watch tempFile.path, ->
-      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile.path]
+      watcher = pathWatcher.watch tempFile, ->
+      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile]
       pathWatcher.closeAllWatchers()
       expect(pathWatcher.getWatchedPaths()).toEqual []
 
@@ -39,11 +39,11 @@ describe 'PathWatcher', ->
     it 'fires the callback with the event type and empty path', ->
       eventType = null
       eventPath = null
-      watcher = pathWatcher.watch tempFile.path, (type, path) ->
+      watcher = pathWatcher.watch tempFile, (type, path) ->
         eventType = type
         eventPath = path
 
-      fs.writeFileSync(tempFile.path, 'changed')
+      fs.writeFileSync(tempFile, 'changed')
       waitsFor -> eventType?
       runs ->
         expect(eventType).toBe 'change'
@@ -53,12 +53,12 @@ describe 'PathWatcher', ->
     it 'fires the callback with the event type and new path and watches the new path', ->
       eventType = null
       eventPath = null
-      watcher = pathWatcher.watch tempFile.path, (type, path) ->
+      watcher = pathWatcher.watch tempFile, (type, path) ->
         eventType = type
         eventPath = path
 
       tempRenamed = temp.path('node-pathwatcher-renamed')
-      fs.renameSync(tempFile.path, tempRenamed)
+      fs.renameSync(tempFile, tempRenamed)
       waitsFor -> eventType?
       runs ->
         expect(eventType).toBe 'rename'
@@ -69,11 +69,11 @@ describe 'PathWatcher', ->
     it 'fires the callback with the event type and null path', ->
       eventType = null
       eventPath = null
-      watcher = pathWatcher.watch tempFile.path, (type, path) ->
+      watcher = pathWatcher.watch tempFile, (type, path) ->
         eventType = type
         eventPath = path
 
-      fs.unlinkSync(tempFile.path)
+      fs.unlinkSync(tempFile)
       waitsFor -> eventType?
       runs ->
         expect(eventType).toBe 'delete'
