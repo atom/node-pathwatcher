@@ -120,19 +120,24 @@ void PlatformThread() {
         }
 
         if (event != EVENT_NONE) {
-          char filename[MAX_PATH] = { 0 };
-          WideCharToMultiByte(CP_UTF8,
-                              0,
-                              file_info->FileName,
-                              file_info->FileNameLength,
-                              filename,
-                              MAX_PATH,
-                              NULL,
-                              NULL);
+          // The FileNameLength is in "bytes", but the WideCharToMultiByte
+          // requires the length to be in "characters"!
+          int file_name_length_in_characters =
+              file_info->FileNameLength / sizeof(wchar_t);
+
+          char filename[MAX_PATH + 1] = { 0 };
+          int size = WideCharToMultiByte(CP_UTF8,
+                                         0,
+                                         file_info->FileName,
+                                         file_name_length_in_characters,
+                                         filename,
+                                         MAX_PATH,
+                                         NULL,
+                                         NULL);
 
           // Convert filename to normalized path.
           std::string cat_path = handle->path + '\\' + filename;
-          char path[MAX_PATH] = { 0 };
+          char path[MAX_PATH + 1] = { 0 };
           PathCanonicalize(path, cat_path.c_str());
 
           if (file_info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
@@ -163,7 +168,7 @@ void PlatformThread() {
 }
 
 WatcherHandle PlatformWatch(const char* path) {
-  wchar_t wpath[MAX_PATH];
+  wchar_t wpath[MAX_PATH + 1];
   MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, MAX_PATH);
 
   // Requires a directory, file watching is emulated in js.
