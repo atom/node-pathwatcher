@@ -98,8 +98,6 @@ Handle<Value> SetCallback(const Arguments& args) {
 }
 
 Handle<Value> Watch(const Arguments& args) {
-  HandleScope scope;
-
   if (!args[0]->IsString())
     return node::ThrowTypeError("String required");
 
@@ -108,7 +106,7 @@ Handle<Value> Watch(const Arguments& args) {
   if (!PlatformIsHandleValid(handle))
     return node::ThrowError("Unable to watch path");
 
-  return scope.Close(WatcherHandleToV8Value(handle));
+  return WatcherHandleToV8Value(handle);
 }
 
 Handle<Value> Unwatch(const Arguments& args) {

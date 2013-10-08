@@ -13,12 +13,6 @@ static const unsigned int kDirectoryWatcherBufferSize = 4096;
 // Object template to create representation of WatcherHandle.
 Persistent<ObjectTemplate> g_object_template;
 
-// HandleWrapper that need to be deleted.
-std::vector<WatcherHandle> g_gabage_handles;
-
-// Mutex for the g_gabage_handles.
-uv_mutex_t g_gabage_handles_mutex;
-
 // Mutex for the HandleWrapper map.
 uv_mutex_t g_handle_wrap_map_mutex;
 
@@ -49,6 +43,13 @@ struct HandleWrapper {
 
 std::map<WatcherHandle, HandleWrapper*> HandleWrapper::map_;
 
+struct WatcherEvent {
+  EVENT_TYPE type;
+  WatcherHandle handle;
+  std::string new_path;
+  std::string old_path;
+};
+
 Handle<Value> WatcherHandleToV8Value(WatcherHandle handle) {
   Handle<Value> value = g_object_template->NewInstance();
   value->ToObject()->SetPointerInInternalField(0, handle);
@@ -65,7 +66,6 @@ bool IsV8ValueWatcherHandle(Handle<Value> value) {
 }
 
 void PlatformInit() {
-  uv_mutex_init(&g_gabage_handles_mutex);
   uv_mutex_init(&g_handle_wrap_map_mutex);
 
   g_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
@@ -83,10 +83,17 @@ void PlatformThread() {
 
   while (true) {
     GetQueuedCompletionStatus(g_iocp, &bytes, &key, &overlapped, 0);
-    if (overlapped) {
+    if (overlapped && overlapped->InternalHigh > 0) {
       std::string old_path;
+      std::vector<WatcherEvent> events;
 
+      uv_mutex_lock(&g_handle_wrap_map_mutex);
       HandleWrapper* handle = reinterpret_cast<HandleWrapper*>(key);
+      if (!handle) {
+        uv_mutex_unlock(&g_handle_wrap_map_mutex);
+        return;
+      }
+
       DWORD offset = 0;
       do {
         FILE_NOTIFY_INFORMATION* file_info =
@@ -113,7 +120,7 @@ void PlatformThread() {
         }
 
         if (event != EVENT_NONE) {
-          char filename[MAX_PATH];
+          char filename[MAX_PATH] = { 0 };
           WideCharToMultiByte(CP_UTF8,
                               0,
                               file_info->FileName,
@@ -133,28 +140,25 @@ void PlatformThread() {
             // a record of old name.
             old_path = path;
           } else if (file_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
-            PostEventAndWait(event, handle->dir_handle, path, old_path.c_str());
+            WatcherEvent e = { event, handle->dir_handle, path, old_path };
+            events.push_back(e);
             old_path.clear();
           } else {
-            PostEventAndWait(event, handle->dir_handle, path);
+            WatcherEvent e = { event, handle->dir_handle, path };
+            events.push_back(e);
           }
         }
 
         offset = file_info->NextEntryOffset;
       } while (offset);
+      uv_mutex_unlock(&g_handle_wrap_map_mutex);
+
+      for (int i = 0; i < events.size(); ++i)
+        PostEventAndWait(events[i].type,
+                         events[i].handle,
+                         events[i].new_path.c_str(),
+                         events[i].old_path.c_str());
     }
-
-    std::vector<WatcherHandle> gabage_handles;
-
-    uv_mutex_lock(&g_gabage_handles_mutex);
-    gabage_handles.swap(g_gabage_handles);
-    uv_mutex_unlock(&g_gabage_handles_mutex);
-
-    // Safely delete handles after all events are dispatched.
-    uv_mutex_lock(&g_handle_wrap_map_mutex);
-    for (int i = 0; i < gabage_handles.size(); ++i)
-      delete HandleWrapper::Get(gabage_handles[i]);
-    uv_mutex_unlock(&g_handle_wrap_map_mutex);
   }
 }
 
@@ -164,8 +168,10 @@ WatcherHandle PlatformWatch(const char* path) {
 
   // Requires a directory, file watching is emulated in js.
   DWORD attr = GetFileAttributesW(wpath);
-  if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY))
+  if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
+    fprintf(stderr, "%s is not a directory\n", path);
     return INVALID_HANDLE_VALUE;
+  }
 
   WatcherHandle handle = CreateFileW(wpath,
                                      FILE_LIST_DIRECTORY,
@@ -176,8 +182,10 @@ WatcherHandle PlatformWatch(const char* path) {
                                      FILE_FLAG_BACKUP_SEMANTICS |
                                        FILE_FLAG_OVERLAPPED,
                                      NULL);
-  if (!PlatformIsHandleValid(handle))
+  if (!PlatformIsHandleValid(handle)) {
+    fprintf(stderr, "Unable to call CreateFileW for %s\n", path);
     return INVALID_HANDLE_VALUE;
+  }
 
   uv_mutex_lock(&g_handle_wrap_map_mutex);
   std::unique_ptr<HandleWrapper> handle_wrapper(
@@ -187,8 +195,10 @@ WatcherHandle PlatformWatch(const char* path) {
   if (CreateIoCompletionPort(handle_wrapper->dir_handle,
                              g_iocp,
                              reinterpret_cast<ULONG_PTR>(handle_wrapper.get()),
-                             0) == NULL)
+                             0) == NULL) {
+    fprintf(stderr, "CreateIoCompletionPort failed\n");
     return INVALID_HANDLE_VALUE;
+  }
 
   if (!ReadDirectoryChangesW(handle_wrapper->dir_handle,
                              handle_wrapper->buffer,
@@ -204,8 +214,10 @@ WatcherHandle PlatformWatch(const char* path) {
                                FILE_NOTIFY_CHANGE_SECURITY,
                              NULL,
                              &handle_wrapper->overlapped,
-                             NULL))
+                             NULL)) {
+    fprintf(stderr, "ReadDirectoryChangesW failed\n");
     return INVALID_HANDLE_VALUE;
+  }
 
   // The pointer is leaked if no error happened.
   return handle_wrapper.release()->dir_handle;
@@ -213,12 +225,10 @@ WatcherHandle PlatformWatch(const char* path) {
 
 void PlatformUnwatch(WatcherHandle handle) {
   if (PlatformIsHandleValid(handle)) {
+    uv_mutex_lock(&g_handle_wrap_map_mutex);
     CloseHandle(handle);
-
-    // Add the handle to the to-be-deleted list.
-    uv_mutex_lock(&g_gabage_handles_mutex);
-    g_gabage_handles.push_back(handle);
-    uv_mutex_unlock(&g_gabage_handles_mutex);
+    delete HandleWrapper::Get(handle);
+    uv_mutex_unlock(&g_handle_wrap_map_mutex);
   }
 }
 
