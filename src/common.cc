@@ -1,7 +1,5 @@
 #include "common.h"
 
-#include <string>
-
 #include "node_internals.h"
 
 static uv_async_t g_async;
@@ -76,8 +74,8 @@ void WakeupNewThread() {
 
 void PostEventAndWait(EVENT_TYPE type,
                       WatcherHandle handle,
-                      const char* new_path,
-                      const char* old_path) {
+                      const std::string& new_path,
+                      const std::string& old_path) {
   // FIXME should not pass args by settings globals.
   g_type = type;
   g_handle = handle;

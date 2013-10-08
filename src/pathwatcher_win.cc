@@ -1,6 +1,5 @@
 #include <map>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "common.h"
@@ -161,8 +160,8 @@ void PlatformThread() {
       for (int i = 0; i < events.size(); ++i)
         PostEventAndWait(events[i].type,
                          events[i].handle,
-                         events[i].new_path.c_str(),
-                         events[i].old_path.c_str());
+                         events[i].new_path,
+                         events[i].old_path);
     }
   }
 }
