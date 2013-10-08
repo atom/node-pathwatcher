@@ -4,8 +4,6 @@
 
 #include "common.h"
 
-#include <Shlwapi.h>  // NOLINT
-
 // Size of the buffer to store result of ReadDirectoryChangesW.
 static const unsigned int kDirectoryWatcherBufferSize = 4096;
 
@@ -134,10 +132,8 @@ void PlatformThread() {
                                          NULL,
                                          NULL);
 
-          // Convert filename to normalized path.
-          std::string cat_path = handle->path + '\\' + filename;
-          char path[MAX_PATH + 1] = { 0 };
-          PathCanonicalize(path, cat_path.c_str());
+          // Convert file name to file path.
+          std::string path = handle->path + '\\' + filename;
 
           if (file_info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
             // Do not send rename event until the NEW_NAME event, but still keep

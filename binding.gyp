@@ -27,11 +27,6 @@
             4530,  # C++ exception handler used, but unwind semantics are not enabled
             4506,  # no definition for inline function
           ],
-          'link_settings': {
-            'libraries': [
-              '-lShlwapi.lib',
-            ],
-          },
         }],  # OS=="win"
         ['OS=="mac"', {
           "sources": [
