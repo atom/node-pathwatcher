@@ -74,15 +74,18 @@ void WakeupNewThread() {
   uv_sem_post(&g_semaphore);
 }
 
-void PostEvent(EVENT_TYPE type,
-               WatcherHandle handle,
-               const char* new_path,
-               const char* old_path) {
+void PostEventAndWait(EVENT_TYPE type,
+                      WatcherHandle handle,
+                      const char* new_path,
+                      const char* old_path) {
+  // FIXME should not pass args by settings globals.
   g_type = type;
   g_handle = handle;
   g_new_path = new_path;
   g_old_path = old_path;
+
   uv_async_send(&g_async);
+  WaitForMainThread();
 }
 
 Handle<Value> SetCallback(const Arguments& args) {

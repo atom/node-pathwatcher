@@ -41,9 +41,7 @@ void PlatformThread() {
       continue;
     }
 
-    PostEvent(type, fd, path);
-
-    WaitForMainThread();
+    PostEventAndWait(type, fd, path);
   }
 }
 

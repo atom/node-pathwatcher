@@ -43,10 +43,10 @@ enum EVENT_TYPE {
 
 void WaitForMainThread();
 void WakeupNewThread();
-void PostEvent(EVENT_TYPE type,
-               WatcherHandle handle,
-               const char* new_path,
-               const char* old_path = "");
+void PostEventAndWait(EVENT_TYPE type,
+                      WatcherHandle handle,
+                      const char* new_path = "",
+                      const char* old_path = "");
 
 void CommonInit();
 Handle<Value> SetCallback(const Arguments& args);

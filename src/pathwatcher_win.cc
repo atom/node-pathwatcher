@@ -100,8 +100,7 @@ void PlatformThread() {
           case FILE_ACTION_ADDED:
           case FILE_ACTION_REMOVED:
           case FILE_ACTION_RENAMED_NEW_NAME:
-            PostEvent(EVENT_CHANGE, handle->dir_handle, "");
-            WaitForMainThread();
+            PostEventAndWait(EVENT_CHANGE, handle->dir_handle);
             break;
         }
 
@@ -141,15 +140,12 @@ void PlatformThread() {
           char path[MAX_PATH] = { 0 };
           PathCanonicalize(path, cat_path.c_str());
 
-          if (file_info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
+          if (file_info->Action == FILE_ACTION_RENAMED_OLD_NAME)
             old_path = path;
-          } else if (file_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
-            PostEvent(event, handle->dir_handle, path, old_path.c_str());
-            WaitForMainThread();
-          } else {
-            PostEvent(event, handle->dir_handle, path);
-            WaitForMainThread();
-          }
+          else if (file_info->Action == FILE_ACTION_RENAMED_NEW_NAME)
+            PostEventAndWait(event, handle->dir_handle, path, old_path.c_str());
+          else
+            PostEventAndWait(event, handle->dir_handle, path);
         }
 
         offset = file_info->NextEntryOffset;
