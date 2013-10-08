@@ -10,7 +10,8 @@ static uv_thread_t g_thread;
 
 static EVENT_TYPE g_type;
 static WatcherHandle g_handle;
-static std::string g_path;
+static std::string g_new_path;
+static std::string g_old_path;
 static Persistent<Function> g_callback;
 
 static void CommonThread(void* handle) {
@@ -48,7 +49,10 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
     }
 
     Handle<Value> argv[] = {
-      type, WatcherHandleToV8Value(g_handle), String::New(g_path.c_str())
+      type,
+      WatcherHandleToV8Value(g_handle),
+      String::New(g_new_path.data(), g_new_path.size()),
+      String::New(g_old_path.data(), g_old_path.size()),
     };
     g_callback->Call(Context::GetCurrent()->Global(), 3, argv);
   }
@@ -70,10 +74,14 @@ void WakeupNewThread() {
   uv_sem_post(&g_semaphore);
 }
 
-void PostEvent(EVENT_TYPE type, WatcherHandle handle, const char* path) {
+void PostEvent(EVENT_TYPE type,
+               WatcherHandle handle,
+               const char* new_path,
+               const char* old_path) {
   g_type = type;
   g_handle = handle;
-  g_path = path;
+  g_new_path = new_path;
+  g_old_path = old_path;
   uv_async_send(&g_async);
 }
 

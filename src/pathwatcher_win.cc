@@ -23,7 +23,7 @@ uv_mutex_t g_handle_wrap_map_mutex;
 static HANDLE g_iocp;
 
 struct HandleWrapper {
-  explicit HandleWrapper(WatcherHandle handle)
+  HandleWrapper(WatcherHandle handle)
       : dir_handle(handle) {
     map_[dir_handle] = this;
     memset(&overlapped, 0, sizeof(overlapped));
@@ -81,6 +81,8 @@ void PlatformThread() {
     if (overlapped) {
       HandleWrapper* handle = reinterpret_cast<HandleWrapper*>(key);
 
+      std::string old_path;
+
       DWORD offset = 0;
       FILE_NOTIFY_INFORMATION* file_info;
       file_info = (FILE_NOTIFY_INFORMATION*)(handle->buffer + offset);
@@ -107,6 +109,9 @@ void PlatformThread() {
           case FILE_ACTION_REMOVED:
             event = EVENT_CHILD_DELETE;
             break;
+          case FILE_ACTION_RENAMED_OLD_NAME:
+            event = EVENT_CHILD_RENAME;
+            break;
           case FILE_ACTION_RENAMED_NEW_NAME:
             event = EVENT_CHILD_RENAME;
             break;
@@ -126,8 +131,15 @@ void PlatformThread() {
                               NULL,
                               NULL);
 
-          PostEvent(event, handle->dir_handle, path);
-          WaitForMainThread();
+          if (file_info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
+            old_path = path;
+          } else if (file_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
+            PostEvent(event, handle->dir_handle, path, old_path.c_str());
+            WaitForMainThread();
+          } else {
+            PostEvent(event, handle->dir_handle, path);
+            WaitForMainThread();
+          }
         }
 
         offset = file_info->NextEntryOffset;
