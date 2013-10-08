@@ -57,7 +57,7 @@ describe 'PathWatcher', ->
         eventType = type
         eventPath = path
 
-      tempRenamed = temp.path('node-pathwatcher-renamed')
+      tempRenamed = path.join(tempDir, 'renamed')
       fs.renameSync(tempFile, tempRenamed)
       waitsFor -> eventType?
       runs ->
