@@ -2,13 +2,9 @@
 #define SRC_COMMON_H_
 
 #include <node.h>
-#include <uv.h>
-
 using namespace v8;
 
 #ifdef _WIN32
-#include <windows.h>
-
 // Platform-dependent definetion of handle.
 typedef HANDLE WatcherHandle;
 

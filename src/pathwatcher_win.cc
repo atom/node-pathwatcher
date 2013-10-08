@@ -1,14 +1,14 @@
-#include "common.h"
-
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include <Shlwapi.h>
+#include "common.h"
+
+#include <Shlwapi.h>  // NOLINT
 
 // Size of the buffer to store result of ReadDirectoryChangesW.
-static const unsigned int uv_directory_watcher_buffer_size = 4096;
+static const unsigned int kDirectoryWatcherBufferSize = 4096;
 
 // Object template to create representation of WatcherHandle.
 Persistent<ObjectTemplate> g_object_template;
@@ -40,7 +40,7 @@ struct HandleWrapper {
   WatcherHandle dir_handle;
   OVERLAPPED overlapped;
   std::string path;
-  char buffer[uv_directory_watcher_buffer_size];
+  char buffer[kDirectoryWatcherBufferSize];
 
   static HandleWrapper* Get(WatcherHandle key) { return map_[key]; }
 
@@ -84,16 +84,13 @@ void PlatformThread() {
   while (true) {
     GetQueuedCompletionStatus(g_iocp, &bytes, &key, &overlapped, 0);
     if (overlapped) {
-      HandleWrapper* handle = reinterpret_cast<HandleWrapper*>(key);
-
       std::string old_path;
 
+      HandleWrapper* handle = reinterpret_cast<HandleWrapper*>(key);
       DWORD offset = 0;
-      FILE_NOTIFY_INFORMATION* file_info;
-      file_info = (FILE_NOTIFY_INFORMATION*)(handle->buffer + offset);
-
       do {
-        file_info = (FILE_NOTIFY_INFORMATION*)((char*)file_info + offset);
+        FILE_NOTIFY_INFORMATION* file_info =
+            reinterpret_cast<FILE_NOTIFY_INFORMATION*>(handle->buffer + offset);
 
         // Emit events for children.
         EVENT_TYPE event = EVENT_NONE;
@@ -144,7 +141,7 @@ void PlatformThread() {
         }
 
         offset = file_info->NextEntryOffset;
-      } while(offset);
+      } while (offset);
     }
 
     std::vector<WatcherHandle> gabage_handles;
@@ -195,7 +192,7 @@ WatcherHandle PlatformWatch(const char* path) {
 
   if (!ReadDirectoryChangesW(handle_wrapper->dir_handle,
                              handle_wrapper->buffer,
-                             uv_directory_watcher_buffer_size,
+                             kDirectoryWatcherBufferSize,
                              FALSE,
                              FILE_NOTIFY_CHANGE_FILE_NAME      |
                                FILE_NOTIFY_CHANGE_DIR_NAME     |
