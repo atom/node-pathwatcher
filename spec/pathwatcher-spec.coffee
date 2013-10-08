@@ -84,8 +84,6 @@ describe 'PathWatcher', ->
       fileUnderDir = path.join(tempDir, 'file')
       fs.writeFileSync(fileUnderDir, '')
       watcher = pathWatcher.watch tempDir, (type, path) ->
-        watcher.close()
-
         expect(type).toBe 'change'
         expect(path).toBe ''
         done()
@@ -95,7 +93,6 @@ describe 'PathWatcher', ->
     it 'fires the callback with the change event and empty path', ->
       newFile = path.join(tempDir, 'file')
       watcher = pathWatcher.watch tempDir, (type, path) ->
-        watcher.close()
         fs.unlinkSync(newFile)
 
         expect(type).toBe 'change'
@@ -104,14 +101,10 @@ describe 'PathWatcher', ->
       fs.writeFileSync(newFile, '')
 
   describe 'when a file under watched directory is moved', ->
-    it 'fires the callback with the change event and empty path', ->
-      fileUnderDir = path.join(tempDir, 'file')
+    it 'fires the callback with the change event and empty path', (done) ->
       newName = path.join(tempDir, 'file2')
-      fs.writeFileSync(fileUnderDir, '')
       watcher = pathWatcher.watch tempDir, (type, path) ->
-        watcher.close()
-
         expect(type).toBe 'change'
         expect(path).toBe ''
         done()
-      fs.renameSync(fileUnderDir, newName)
+      fs.renameSync(tempFile, newName)
