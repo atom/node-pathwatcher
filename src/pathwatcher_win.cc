@@ -95,15 +95,6 @@ void PlatformThread() {
       do {
         file_info = (FILE_NOTIFY_INFORMATION*)((char*)file_info + offset);
 
-        // Emit "change" for file creation and deletion.
-        switch (file_info->Action) {
-          case FILE_ACTION_ADDED:
-          case FILE_ACTION_REMOVED:
-          case FILE_ACTION_RENAMED_NEW_NAME:
-            PostEventAndWait(EVENT_CHANGE, handle->dir_handle);
-            break;
-        }
-
         // Emit events for children.
         EVENT_TYPE event = EVENT_NONE;
         switch (file_info->Action) {
@@ -140,12 +131,16 @@ void PlatformThread() {
           char path[MAX_PATH] = { 0 };
           PathCanonicalize(path, cat_path.c_str());
 
-          if (file_info->Action == FILE_ACTION_RENAMED_OLD_NAME)
+          if (file_info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
+            // Do not send rename event until the NEW_NAME event, but still keep
+            // a record of old name.
             old_path = path;
-          else if (file_info->Action == FILE_ACTION_RENAMED_NEW_NAME)
+          } else if (file_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
             PostEventAndWait(event, handle->dir_handle, path, old_path.c_str());
-          else
+            old_path.clear();
+          } else {
             PostEventAndWait(event, handle->dir_handle, path);
+          }
         }
 
         offset = file_info->NextEntryOffset;

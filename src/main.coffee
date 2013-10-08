@@ -11,13 +11,14 @@ binding.setCallback (event, handle, filePath, oldFilePath) ->
 
 class HandleWatcher extends EventEmitter
   constructor: (@path) ->
+    @isParent = false
+
     # On Windows watching a file is emulated by watching its parent folder.
     if process.platform is 'win32'
       stats = fs.statSync(@path)
       @isParent = not stats.isDirectory()
       @watchedPath = require('path').dirname(@path, '..')
 
-    @isParent ?= false
     @start(if @isParent then @watchedPath else @path)
 
   onEvent: (event, filePath, oldFilePath) ->
@@ -41,14 +42,19 @@ class HandleWatcher extends EventEmitter
       when 'change'
         @emit('change', 'change', filePath)
       when 'child-rename'
-        if @isParent and @path is oldFilePath
-          @onEvent('rename', filePath)
-      when 'child-delete'
-        if @isParent and @path is filePath
-          @onEvent('delete', null)
-      when 'child-change'
-        if @isParent and @path is filePath
+        if @isParent
+          @onEvent('rename', filePath) if @path is oldFilePath
+        else
           @onEvent('change', '')
+      when 'child-delete'
+        if @isParent
+          @onEvent('delete', filePath) if @path is filePath
+        else
+          @onEvent('change', '')
+      when 'child-change'
+        @onEvent('change', '') if @isParent and @path is filePath
+      when 'child-create'
+        @onEvent('change', '') unless @isParent
 
   start: (path) ->
     @handle = binding.watch(path)

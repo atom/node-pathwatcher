@@ -54,7 +54,7 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
       String::New(g_new_path.data(), g_new_path.size()),
       String::New(g_old_path.data(), g_old_path.size()),
     };
-    g_callback->Call(Context::GetCurrent()->Global(), 3, argv);
+    g_callback->Call(Context::GetCurrent()->Global(), 4, argv);
   }
 
   WakeupNewThread();
