@@ -2,7 +2,10 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
+
+#include <Shlwapi.h>
 
 // Size of the buffer to store result of ReadDirectoryChangesW.
 static const unsigned int uv_directory_watcher_buffer_size = 4096;
@@ -23,8 +26,9 @@ uv_mutex_t g_handle_wrap_map_mutex;
 static HANDLE g_iocp;
 
 struct HandleWrapper {
-  HandleWrapper(WatcherHandle handle)
-      : dir_handle(handle) {
+  HandleWrapper(WatcherHandle handle, const char* path)
+      : dir_handle(handle),
+        path(path) {
     map_[dir_handle] = this;
     memset(&overlapped, 0, sizeof(overlapped));
   }
@@ -35,6 +39,7 @@ struct HandleWrapper {
 
   WatcherHandle dir_handle;
   OVERLAPPED overlapped;
+  std::string path;
   char buffer[uv_directory_watcher_buffer_size];
 
   static HandleWrapper* Get(WatcherHandle key) { return map_[key]; }
@@ -121,15 +126,20 @@ void PlatformThread() {
         }
 
         if (event != EVENT_NONE) {
-          char path[MAX_PATH];
+          char filename[MAX_PATH];
           WideCharToMultiByte(CP_UTF8,
                               0,
                               file_info->FileName,
                               file_info->FileNameLength,
-                              path,
+                              filename,
                               MAX_PATH,
                               NULL,
                               NULL);
+
+          // Convert filename to normalized path.
+          std::string cat_path = handle->path + '\\' + filename;
+          char path[MAX_PATH] = { 0 };
+          PathCanonicalize(path, cat_path.c_str());
 
           if (file_info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
             old_path = path;
@@ -182,7 +192,8 @@ WatcherHandle PlatformWatch(const char* path) {
     return INVALID_HANDLE_VALUE;
 
   uv_mutex_lock(&g_handle_wrap_map_mutex);
-  std::unique_ptr<HandleWrapper> handle_wrapper(new HandleWrapper(handle));
+  std::unique_ptr<HandleWrapper> handle_wrapper(
+      new HandleWrapper(handle, path));
   uv_mutex_unlock(&g_handle_wrap_map_mutex);
 
   if (CreateIoCompletionPort(handle_wrapper->dir_handle,

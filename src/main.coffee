@@ -6,8 +6,8 @@ path = require 'path'
 
 handleWatchers = new HandleMap
 
-binding.setCallback (event, handle, path) ->
-  handleWatchers.get(handle).onEvent(event, path) if handleWatchers.has(handle)
+binding.setCallback (event, handle, filePath, oldFilePath) ->
+  handleWatchers.get(handle).onEvent(event, filePath, oldFilePath) if handleWatchers.has(handle)
 
 class HandleWatcher extends EventEmitter
   constructor: (@path) ->
@@ -20,10 +20,7 @@ class HandleWatcher extends EventEmitter
     @isParent ?= false
     @start(if @isParent then @watchedPath else @path)
 
-  onEvent: (event, filePath) ->
-    # The filePath only contains the filename part on Windows.
-    filePath = path.resolve(@watchedPath, filePath) if @isParent and filePath
-
+  onEvent: (event, filePath, oldFilePath) ->
     switch event
       when 'rename'
         # Detect atomic write.
@@ -44,7 +41,7 @@ class HandleWatcher extends EventEmitter
       when 'change'
         @emit('change', 'change', filePath)
       when 'child-rename'
-        if @isParent and @path is filePath
+        if @isParent and @path is oldFilePath
           @onEvent('rename', filePath)
       when 'child-delete'
         if @isParent and @path is filePath
