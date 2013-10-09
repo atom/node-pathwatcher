@@ -17,6 +17,7 @@ class HandleMap : public node::ObjectWrap {
 
   bool Has(WatcherHandle key) const;
   bool Erase(WatcherHandle key);
+  void Clear();
 
   static void DisposeHandle(Persistent<Value> value);
 
@@ -26,6 +27,7 @@ class HandleMap : public node::ObjectWrap {
   static Handle<Value> Has(const Arguments& args);
   static Handle<Value> Values(const Arguments& args);
   static Handle<Value> Remove(const Arguments& args);
+  static Handle<Value> Clear(const Arguments& args);
 
   Map map_;
 };

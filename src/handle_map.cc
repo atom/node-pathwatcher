@@ -8,8 +8,7 @@ HandleMap::HandleMap() {
 }
 
 HandleMap::~HandleMap() {
-  for (Map::const_iterator iter = map_.begin(); iter != map_.end(); ++iter)
-    DisposeHandle(iter->second);
+  Clear();
 }
 
 bool HandleMap::Has(WatcherHandle key) const {
@@ -24,6 +23,12 @@ bool HandleMap::Erase(WatcherHandle key) {
   DisposeHandle(iter->second);
   map_.erase(iter);
   return true;
+}
+
+void HandleMap::Clear() {
+  for (Map::const_iterator iter = map_.begin(); iter != map_.end(); ++iter)
+    DisposeHandle(iter->second);
+  map_.clear();
 }
 
 void HandleMap::DisposeHandle(Persistent<Value> value) {
@@ -102,6 +107,13 @@ Handle<Value> HandleMap::Remove(const Arguments& args) {
 }
 
 // static
+Handle<Value> HandleMap::Clear(const Arguments& args) {
+  UNWRAP(HandleMap);
+  wrap->Clear();
+  return Undefined();
+}
+
+// static
 void HandleMap::Initialize(Handle<Object> target) {
   HandleScope scope;
 
@@ -114,6 +126,7 @@ void HandleMap::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(t, "has", Has);
   NODE_SET_PROTOTYPE_METHOD(t, "values", Values);
   NODE_SET_PROTOTYPE_METHOD(t, "remove", Remove);
+  NODE_SET_PROTOTYPE_METHOD(t, "clear", Clear);
 
   target->Set(String::NewSymbol("HandleMap"), t->GetFunction());
 }

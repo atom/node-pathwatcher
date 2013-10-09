@@ -94,7 +94,7 @@ exports.watch = (path, callback) ->
 
 exports.closeAllWatchers = ->
   watcher.close() for watcher in handleWatchers.values()
-  handleWatchers = new HandleMap
+  handleWatchers.clear()
 
 exports.getWatchedPaths = ->
   paths = []
