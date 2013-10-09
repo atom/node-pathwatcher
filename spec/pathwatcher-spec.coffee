@@ -19,11 +19,11 @@ describe 'PathWatcher', ->
     it 'returns an array of all watched paths', ->
       expect(pathWatcher.getWatchedPaths()).toEqual []
       watcher1 = pathWatcher.watch tempFile, ->
-      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile]
+      expect(pathWatcher.getWatchedPaths()).toEqual [watcher1.handleWatcher.path]
       watcher2 = pathWatcher.watch tempFile, ->
-      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile]
+      expect(pathWatcher.getWatchedPaths()).toEqual [watcher1.handleWatcher.path]
       watcher1.close()
-      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile]
+      expect(pathWatcher.getWatchedPaths()).toEqual [watcher1.handleWatcher.path]
       watcher2.close()
       expect(pathWatcher.getWatchedPaths()).toEqual []
 
@@ -31,7 +31,7 @@ describe 'PathWatcher', ->
     it 'closes all watched paths', ->
       expect(pathWatcher.getWatchedPaths()).toEqual []
       watcher = pathWatcher.watch tempFile, ->
-      expect(pathWatcher.getWatchedPaths()).toEqual [tempFile]
+      expect(pathWatcher.getWatchedPaths()).toEqual [watcher.handleWatcher.path]
       pathWatcher.closeAllWatchers()
       expect(pathWatcher.getWatchedPaths()).toEqual []
 
@@ -63,7 +63,7 @@ describe 'PathWatcher', ->
       runs ->
         expect(eventType).toBe 'rename'
         expect(eventPath).toBe fs.realpathSync(tempRenamed)
-        expect(pathWatcher.getWatchedPaths()).toEqual [fs.realpathSync(tempRenamed)]
+        expect(pathWatcher.getWatchedPaths()).toEqual [watcher.handleWatcher.path]
 
   describe 'when a watched path is deleted', ->
     it 'fires the callback with the event type and null path', ->
@@ -120,7 +120,7 @@ describe 'PathWatcher', ->
       fs.writeFileSync(tempFile, '')
 
   describe 'when watching multiple files under the same directory', ->
-    it 'fires the callbacks', ->
+    it 'fires the callbacks when both of the files are modifiled', ->
       called = 0
       tempFile2 = path.join(tempDir, 'file2')
       fs.writeFileSync(tempFile2, '')
@@ -131,3 +131,11 @@ describe 'PathWatcher', ->
       fs.writeFileSync(tempFile, '')
       fs.writeFileSync(tempFile2, '')
       waitsFor -> called == 3
+
+    it 'shares the same handle watcher between the two files on Windows', ->
+      if process.platform is 'win32'
+        tempFile2 = path.join(tempDir, 'file2')
+        fs.writeFileSync(tempFile2, '')
+        watcher1 = pathWatcher.watch tempFile, (type, path) ->
+        watcher2 = pathWatcher.watch tempFile2, (type, path) ->
+        expect(watcher1.handleWatcher).toBe(watcher2.handleWatcher)

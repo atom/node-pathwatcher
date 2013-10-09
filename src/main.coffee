@@ -11,13 +11,6 @@ binding.setCallback (event, handle, filePath, oldFilePath) ->
 
 class HandleWatcher extends EventEmitter
   constructor: (@path) ->
-    @isParent = false
-
-    # On Windows watching a file is emulated by watching its parent folder.
-    if process.platform is 'win32'
-      stats = fs.statSync(@path)
-      @isParent = not stats.isDirectory()
-
     @start()
 
   onEvent: (event, filePath, oldFilePath) ->
@@ -38,25 +31,11 @@ class HandleWatcher extends EventEmitter
       when 'delete'
         @emit('change', 'delete', null)
         @close()
-      when 'change'
-        @emit('change', 'change', filePath)
-      when 'child-rename'
-        if @isParent
-          @onEvent('rename', filePath) if @path is oldFilePath
-        else
-          @onEvent('change', '')
-      when 'child-delete'
-        if @isParent
-          @onEvent('delete', filePath) if @path is filePath
-        else
-          @onEvent('change', '')
-      when 'child-change'
-        @onEvent('change', '') if @isParent and @path is filePath
-      when 'child-create'
-        @onEvent('change', '') unless @isParent
+      else
+        @emit('change', event, filePath, oldFilePath)
 
   start: () ->
-    @handle = binding.watch(if @isParent then path.dirname(@path) else @path)
+    @handle = binding.watch(@path)
     handleWatchers.add(@handle, this)
 
   closeIfNoListener: ->
@@ -68,19 +47,46 @@ class HandleWatcher extends EventEmitter
       handleWatchers.remove(@handle)
 
 class PathWatcher extends EventEmitter
+  isWatchingParent: false
+  path: null
   handleWatcher: null
 
-  constructor: (path, callback) ->
+  constructor: (filePath, callback) ->
+    @path = filePath
+
+    # On Windows watching a file is emulated by watching its parent folder.
+    if process.platform is 'win32'
+      stats = fs.statSync(filePath)
+      @isWatchingParent = not stats.isDirectory()
+
+    filePath = path.dirname(filePath) if @isWatchingParent
     for watcher in handleWatchers.values()
-      if watcher.path is path
+      if watcher.path is filePath
         @handleWatcher = watcher
         break
 
-    @handleWatcher ?= new HandleWatcher(path)
+    @handleWatcher ?= new HandleWatcher(filePath)
 
-    @onChange = (event, path) =>
-      callback.call(this, event, path) if typeof callback is 'function'
-      @emit('change', event, path)
+    @onChange = (event, newFilePath, oldFilePath) =>
+      switch event
+        when 'rename', 'change', 'delete'
+          @path = newFilePath if event is 'rename'
+          callback.call(this, event, newFilePath) if typeof callback is 'function'
+          @emit('change', event, newFilePath)
+        when 'child-rename'
+          if @isWatchingParent
+            @onChange('rename', newFilePath) if @path is oldFilePath
+          else
+            @onChange('change', '')
+        when 'child-delete'
+          if @isWatchingParent
+            @onChange('delete', null) if @path is newFilePath
+          else
+            @onChange('change', '')
+        when 'child-change'
+          @onChange('change', '') if @isWatchingParent and @path is newFilePath
+        when 'child-create'
+          @onChange('change', '') unless @isWatchingParent
 
     @handleWatcher.on('change', @onChange)
 
