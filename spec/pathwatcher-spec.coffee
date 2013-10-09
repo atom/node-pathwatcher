@@ -117,7 +117,7 @@ describe 'PathWatcher', ->
           throw new Error('test')
         catch e
           done()
-      fs.writeFileSync(tempFile, '')
+      fs.writeFileSync(tempFile, 'changed')
 
   describe 'when watching multiple files under the same directory', ->
     it 'fires the callbacks when both of the files are modifiled', ->
@@ -128,8 +128,8 @@ describe 'PathWatcher', ->
         called |= 1
       pathWatcher.watch tempFile2, (type, path) ->
         called |= 2
-      fs.writeFileSync(tempFile, '')
-      fs.writeFileSync(tempFile2, '')
+      fs.writeFileSync(tempFile, 'changed')
+      fs.writeFileSync(tempFile2, 'changed')
       waitsFor -> called == 3
 
     it 'shares the same handle watcher between the two files on Windows', ->
