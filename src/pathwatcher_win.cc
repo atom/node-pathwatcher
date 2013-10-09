@@ -13,27 +13,42 @@ static Persistent<ObjectTemplate> g_object_template;
 // Mutex for the HandleWrapper map.
 static uv_mutex_t g_handle_wrap_map_mutex;
 
-// The global IOCP to be quested.
-static HANDLE g_iocp;
+// The events to be waited on.
+static std::vector<HANDLE> g_events;
+
+// The dummy event to wakeup the thread.
+static HANDLE g_wake_up_event;
 
 struct HandleWrapper {
   HandleWrapper(WatcherHandle handle, const char* path_str)
       : dir_handle(handle),
-        path(strlen(path_str)) {
+        path(strlen(path_str)),
+        canceled(false) {
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    g_events.push_back(overlapped.hEvent);
+
     std::copy(path_str, path_str + path.size(), path.data());
-    map_[dir_handle] = this;
+    map_[overlapped.hEvent] = this;
   }
 
   ~HandleWrapper() {
     map_.erase(dir_handle);
+    CloseHandle(dir_handle);
+
+    CloseHandle(overlapped.hEvent);
+    g_events.erase(
+        std::remove(g_events.begin(), g_events.end(), overlapped.hEvent),
+        g_events.end());
   }
 
   WatcherHandle dir_handle;
-  OVERLAPPED overlapped;
   std::vector<char> path;
+  bool canceled;
+  OVERLAPPED overlapped;
   char buffer[kDirectoryWatcherBufferSize];
 
-  static HandleWrapper* Get(WatcherHandle key) { return map_[key]; }
+  static HandleWrapper* Get(HANDLE key) { return map_[key]; }
 
   static std::map<WatcherHandle, HandleWrapper*> map_;
 };
@@ -48,7 +63,6 @@ struct WatcherEvent {
 };
 
 static bool QueueReaddirchanges(HandleWrapper* handle) {
-  memset(&(handle->overlapped), 0, sizeof(handle->overlapped));
   return ReadDirectoryChangesW(handle->dir_handle,
                                handle->buffer,
                                kDirectoryWatcherBufferSize,
@@ -84,7 +98,8 @@ bool IsV8ValueWatcherHandle(Handle<Value> value) {
 void PlatformInit() {
   uv_mutex_init(&g_handle_wrap_map_mutex);
 
-  g_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0x1127, 1);
+  g_wake_up_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+  g_events.push_back(g_wake_up_event);
 
   g_object_template = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
   g_object_template->SetInternalFieldCount(1);
@@ -93,22 +108,37 @@ void PlatformInit() {
 }
 
 void PlatformThread() {
-  DWORD bytes;
-  ULONG_PTR key;
-  OVERLAPPED* overlapped;
-
   while (true) {
-    GetQueuedCompletionStatus(g_iocp, &bytes, &key, &overlapped, 0);
-    if (overlapped && overlapped->InternalHigh > 0) {
+    DWORD r = WaitForMultipleObjects(g_events.size(),
+                                     g_events.data(),
+                                     FALSE,
+                                     INFINITE);
+    int i = r - WAIT_OBJECT_0;
+    if (i >= 0 && i < g_events.size()) {
+      if (g_events[i] == g_wake_up_event)
+        continue;
+
       std::vector<char> old_path;
       std::vector<WatcherEvent> events;
 
       uv_mutex_lock(&g_handle_wrap_map_mutex);
-      HandleWrapper* handle = reinterpret_cast<HandleWrapper*>(key);
+      HandleWrapper* handle = HandleWrapper::Get(g_events[i]);
       if (!handle) {
         uv_mutex_unlock(&g_handle_wrap_map_mutex);
-        return;
+        continue;
       }
+
+      if (handle->canceled) {
+        delete handle;
+        uv_mutex_unlock(&g_handle_wrap_map_mutex);
+        continue;
+      }
+
+      DWORD bytes;
+      GetOverlappedResult(handle->dir_handle,
+                          &handle->overlapped,
+                          &bytes,
+                          FALSE);
 
       DWORD offset = 0;
       do {
@@ -164,12 +194,12 @@ void PlatformThread() {
             // a record of old name.
             old_path.swap(path);
           } else if (file_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
-            WatcherEvent e = { event, handle->dir_handle };
+            WatcherEvent e = { event, handle->overlapped.hEvent };
             e.new_path.swap(path);
             e.old_path.swap(old_path);
             events.push_back(e);
           } else {
-            WatcherEvent e = { event, handle->dir_handle };
+            WatcherEvent e = { event, handle->overlapped.hEvent };
             e.new_path.swap(path);
             events.push_back(e);
           }
@@ -222,28 +252,24 @@ WatcherHandle PlatformWatch(const char* path) {
       new HandleWrapper(handle, path));
   uv_mutex_unlock(&g_handle_wrap_map_mutex);
 
-  if (CreateIoCompletionPort(handle_wrapper->dir_handle,
-                             g_iocp,
-                             reinterpret_cast<ULONG_PTR>(handle_wrapper.get()),
-                             0) == NULL) {
-    fprintf(stderr, "CreateIoCompletionPort failed\n");
-    return INVALID_HANDLE_VALUE;
-  }
-
   if (!QueueReaddirchanges(handle_wrapper.get())) {
     fprintf(stderr, "ReadDirectoryChangesW failed\n");
     return INVALID_HANDLE_VALUE;
   }
 
+  // Wake up the thread to add the new event.
+  SetEvent(g_wake_up_event);
+
   // The pointer is leaked if no error happened.
-  return handle_wrapper.release()->dir_handle;
+  return handle_wrapper.release()->overlapped.hEvent;
 }
 
-void PlatformUnwatch(WatcherHandle handle) {
-  if (PlatformIsHandleValid(handle)) {
+void PlatformUnwatch(WatcherHandle key) {
+  if (PlatformIsHandleValid(key)) {
     uv_mutex_lock(&g_handle_wrap_map_mutex);
-    CloseHandle(handle);
-    delete HandleWrapper::Get(handle);
+    HandleWrapper* handle = HandleWrapper::Get(key);
+    handle->canceled = true;
+    CancelIoEx(handle->dir_handle, &handle->overlapped);
     uv_mutex_unlock(&g_handle_wrap_map_mutex);
   }
 }

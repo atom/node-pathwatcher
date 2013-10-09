@@ -19,7 +19,8 @@
           ],
           'msvs_settings': {
             'VCCLCompilerTool': {
-              'ExceptionHandling': 0, # /EHsc
+              'ExceptionHandling': 1, # /EHsc
+              'WarnAsError': 'true',
             },
           },
           'msvs_disabled_warnings': [
