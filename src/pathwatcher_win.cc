@@ -1,6 +1,6 @@
+#include <algorithm>
 #include <map>
 #include <memory>
-#include <vector>
 
 #include "common.h"
 
@@ -8,18 +8,19 @@
 static const unsigned int kDirectoryWatcherBufferSize = 4096;
 
 // Object template to create representation of WatcherHandle.
-Persistent<ObjectTemplate> g_object_template;
+static Persistent<ObjectTemplate> g_object_template;
 
 // Mutex for the HandleWrapper map.
-uv_mutex_t g_handle_wrap_map_mutex;
+static uv_mutex_t g_handle_wrap_map_mutex;
 
 // The global IOCP to be quested.
 static HANDLE g_iocp;
 
 struct HandleWrapper {
-  HandleWrapper(WatcherHandle handle, const char* path)
+  HandleWrapper(WatcherHandle handle, const char* path_str)
       : dir_handle(handle),
-        path(path) {
+        path(strlen(path_str)) {
+    std::copy(path_str, path_str + path.size(), path.data());
     map_[dir_handle] = this;
   }
 
@@ -29,7 +30,7 @@ struct HandleWrapper {
 
   WatcherHandle dir_handle;
   OVERLAPPED overlapped;
-  std::string path;
+  std::vector<char> path;
   char buffer[kDirectoryWatcherBufferSize];
 
   static HandleWrapper* Get(WatcherHandle key) { return map_[key]; }
@@ -42,8 +43,8 @@ std::map<WatcherHandle, HandleWrapper*> HandleWrapper::map_;
 struct WatcherEvent {
   EVENT_TYPE type;
   WatcherHandle handle;
-  std::string new_path;
-  std::string old_path;
+  std::vector<char> new_path;
+  std::vector<char> old_path;
 };
 
 static bool QueueReaddirchanges(HandleWrapper* handle) {
@@ -83,7 +84,7 @@ bool IsV8ValueWatcherHandle(Handle<Value> value) {
 void PlatformInit() {
   uv_mutex_init(&g_handle_wrap_map_mutex);
 
-  g_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
+  g_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0x1127, 1);
 
   g_object_template = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
   g_object_template->SetInternalFieldCount(1);
@@ -99,7 +100,7 @@ void PlatformThread() {
   while (true) {
     GetQueuedCompletionStatus(g_iocp, &bytes, &key, &overlapped, 0);
     if (overlapped && overlapped->InternalHigh > 0) {
-      std::string old_path;
+      std::vector<char> old_path;
       std::vector<WatcherEvent> events;
 
       uv_mutex_lock(&g_handle_wrap_map_mutex);
@@ -140,7 +141,7 @@ void PlatformThread() {
           int file_name_length_in_characters =
               file_info->FileNameLength / sizeof(wchar_t);
 
-          char filename[MAX_PATH + 1] = { 0 };
+          char filename[MAX_PATH] = { 0 };
           int size = WideCharToMultiByte(CP_UTF8,
                                          0,
                                          file_info->FileName,
@@ -150,19 +151,26 @@ void PlatformThread() {
                                          NULL,
                                          NULL);
 
-          // Convert file name to file path.
-          std::string path = handle->path + '\\' + filename;
+          // Convert file name to file path, same with:
+          // path = handle->path + '\\' + filename
+          std::vector<char> path(handle->path.size() + 1 + size);
+          std::vector<char>::iterator iter = path.begin();
+          iter = std::copy(handle->path.begin(), handle->path.end(), iter);
+          *(iter++) = '\\';
+          std::copy(filename, filename + size, iter);
 
           if (file_info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
             // Do not send rename event until the NEW_NAME event, but still keep
             // a record of old name.
-            old_path = path;
+            old_path.swap(path);
           } else if (file_info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
-            WatcherEvent e = { event, handle->dir_handle, path, old_path };
+            WatcherEvent e = { event, handle->dir_handle };
+            e.new_path.swap(path);
+            e.old_path.swap(old_path);
             events.push_back(e);
-            old_path.clear();
           } else {
-            WatcherEvent e = { event, handle->dir_handle, path };
+            WatcherEvent e = { event, handle->dir_handle };
+            e.new_path.swap(path);
             events.push_back(e);
           }
         }
@@ -185,7 +193,7 @@ void PlatformThread() {
 }
 
 WatcherHandle PlatformWatch(const char* path) {
-  wchar_t wpath[MAX_PATH + 1];
+  wchar_t wpath[MAX_PATH] = { 0 };
   MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, MAX_PATH);
 
   // Requires a directory, file watching is emulated in js.

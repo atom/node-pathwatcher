@@ -8,8 +8,8 @@ static uv_thread_t g_thread;
 
 static EVENT_TYPE g_type;
 static WatcherHandle g_handle;
-static std::string g_new_path;
-static std::string g_old_path;
+static std::vector<char> g_new_path;
+static std::vector<char> g_old_path;
 static Persistent<Function> g_callback;
 
 static void CommonThread(void* handle) {
@@ -77,8 +77,8 @@ void WakeupNewThread() {
 
 void PostEventAndWait(EVENT_TYPE type,
                       WatcherHandle handle,
-                      const std::string& new_path,
-                      const std::string& old_path) {
+                      const std::vector<char>& new_path,
+                      const std::vector<char>& old_path) {
   // FIXME should not pass args by settings globals.
   g_type = type;
   g_handle = handle;

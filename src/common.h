@@ -1,7 +1,7 @@
 #ifndef SRC_COMMON_H_
 #define SRC_COMMON_H_
 
-#include <string>
+#include <vector>
 
 #include <node.h>
 using namespace v8;
@@ -43,8 +43,8 @@ void WaitForMainThread();
 void WakeupNewThread();
 void PostEventAndWait(EVENT_TYPE type,
                       WatcherHandle handle,
-                      const std::string& new_path = "",
-                      const std::string& old_path = "");
+                      const std::vector<char>& new_path,
+                      const std::vector<char>& old_path = std::vector<char>());
 
 void CommonInit();
 Handle<Value> SetCallback(const Arguments& args);
