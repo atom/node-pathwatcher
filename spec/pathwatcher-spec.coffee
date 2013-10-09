@@ -118,3 +118,16 @@ describe 'PathWatcher', ->
         catch e
           done()
       fs.writeFileSync(tempFile, '')
+
+  describe 'when watching multiple files under the same directory', ->
+    it 'fires the callbacks', ->
+      called = 0
+      tempFile2 = path.join(tempDir, 'file2')
+      fs.writeFileSync(tempFile2, '')
+      pathWatcher.watch tempFile, (type, path) ->
+        called |= 1
+      pathWatcher.watch tempFile2, (type, path) ->
+        called |= 2
+      fs.writeFileSync(tempFile, '')
+      fs.writeFileSync(tempFile2, '')
+      waitsFor -> called == 3
