@@ -34,7 +34,7 @@ class HandleWatcher extends EventEmitter
       else
         @emit('change', event, filePath, oldFilePath)
 
-  start: () ->
+  start: ->
     @handle = binding.watch(@path)
     handleWatchers.add(@handle, this)
 
