@@ -108,3 +108,13 @@ describe 'PathWatcher', ->
         expect(path).toBe ''
         done()
       fs.renameSync(tempFile, newName)
+
+  describe 'when en exception is thrown in the closed watcher\'s callback', ->
+    it 'does not crash', (done) ->
+      watcher = pathWatcher.watch tempFile, (type, path) ->
+        watcher.close()
+        try
+          throw new Error('test')
+        catch e
+          done()
+      fs.writeFileSync(tempFile, '')
