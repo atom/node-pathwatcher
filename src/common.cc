@@ -44,6 +44,9 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
       case EVENT_CHILD_RENAME:
         type = String::New("child-rename");
         break;
+      default:
+        fprintf(stderr, "Got unknown event: %d\n", g_type);
+        return;
     }
 
     Handle<Value> argv[] = {
