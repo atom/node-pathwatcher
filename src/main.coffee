@@ -31,6 +31,8 @@ class HandleWatcher extends EventEmitter
       when 'delete'
         @emit('change', 'delete', null)
         @close()
+      when 'unknown'
+        throw new Error("Received unknown event for path: #{@path}")
       else
         @emit('change', event, filePath, oldFilePath)
 
