@@ -109,12 +109,20 @@ void PlatformInit() {
 
 void PlatformThread() {
   while (true) {
-    DWORD r = WaitForMultipleObjects(g_events.size(),
-                                     g_events.data(),
+    // Do not use g_events directly, since reallocation could happen when there
+    // are new watchers adding to g_events when WaitForMultipleObjects is still
+    // polling.
+    std::vector<HANDLE> copied_events;
+    uv_mutex_lock(&g_handle_wrap_map_mutex);
+    copied_events = g_events;
+    uv_mutex_unlock(&g_handle_wrap_map_mutex);
+
+    DWORD r = WaitForMultipleObjects(copied_events.size(),
+                                     copied_events.data(),
                                      FALSE,
                                      INFINITE);
     int i = r - WAIT_OBJECT_0;
-    if (i >= 0 && i < g_events.size()) {
+    if (i >= 0 && i < copied_events.size()) {
       if (g_events[i] == g_wake_up_event)
         continue;
 
@@ -122,7 +130,7 @@ void PlatformThread() {
       std::vector<WatcherEvent> events;
 
       uv_mutex_lock(&g_handle_wrap_map_mutex);
-      HandleWrapper* handle = HandleWrapper::Get(g_events[i]);
+      HandleWrapper* handle = HandleWrapper::Get(copied_events[i]);
       if (!handle) {
         uv_mutex_unlock(&g_handle_wrap_map_mutex);
         continue;
