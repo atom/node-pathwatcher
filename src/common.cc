@@ -1,14 +1,15 @@
 #include "common.h"
 
-#include <string>
+#include "node_internals.h"
 
 static uv_async_t g_async;
 static uv_sem_t g_semaphore;
 static uv_thread_t g_thread;
 
 static EVENT_TYPE g_type;
-static int g_handle;
-static std::string g_path;
+static WatcherHandle g_handle;
+static std::vector<char> g_new_path;
+static std::vector<char> g_old_path;
 static Persistent<Function> g_callback;
 
 static void CommonThread(void* handle) {
@@ -22,21 +23,40 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
   if (!g_callback.IsEmpty()) {
     Handle<String> type;
     switch (g_type) {
-      case CHANGE:
+      case EVENT_CHANGE:
         type = String::New("change");
         break;
-      case DELETE:
+      case EVENT_DELETE:
         type = String::New("delete");
         break;
-      case RENAME:
+      case EVENT_RENAME:
         type = String::New("rename");
         break;
+      case EVENT_CHILD_CREATE:
+        type = String::New("child-create");
+        break;
+      case EVENT_CHILD_CHANGE:
+        type = String::New("child-change");
+        break;
+      case EVENT_CHILD_DELETE:
+        type = String::New("child-delete");
+        break;
+      case EVENT_CHILD_RENAME:
+        type = String::New("child-rename");
+        break;
+      default:
+        type = String::New("unknown");
+        fprintf(stderr, "Got unknown event: %d\n", g_type);
+        return;
     }
 
     Handle<Value> argv[] = {
-      type, Integer::New(g_handle), String::New(g_path.c_str())
+      type,
+      WatcherHandleToV8Value(g_handle),
+      String::New(g_new_path.data(), g_new_path.size()),
+      String::New(g_old_path.data(), g_old_path.size()),
     };
-    g_callback->Call(Context::GetCurrent()->Global(), 3, argv);
+    g_callback->Call(Context::GetCurrent()->Global(), 4, argv);
   }
 
   WakeupNewThread();
@@ -56,16 +76,23 @@ void WakeupNewThread() {
   uv_sem_post(&g_semaphore);
 }
 
-void PostEvent(EVENT_TYPE type, int handle, const char* path) {
+void PostEventAndWait(EVENT_TYPE type,
+                      WatcherHandle handle,
+                      const std::vector<char>& new_path,
+                      const std::vector<char>& old_path) {
+  // FIXME should not pass args by settings globals.
   g_type = type;
   g_handle = handle;
-  g_path = path;
+  g_new_path = new_path;
+  g_old_path = old_path;
+
   uv_async_send(&g_async);
+  WaitForMainThread();
 }
 
 Handle<Value> SetCallback(const Arguments& args) {
   if (!args[0]->IsFunction())
-    return ThrowException(Exception::Error(String::New("Function required")));
+    return node::ThrowTypeError("Function required");
 
   g_callback = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
 
@@ -73,25 +100,23 @@ Handle<Value> SetCallback(const Arguments& args) {
 }
 
 Handle<Value> Watch(const Arguments& args) {
-  HandleScope scope;
-
   if (!args[0]->IsString())
-    return ThrowException(Exception::Error(String::New("String required")));
+    return node::ThrowTypeError("String required");
 
   Handle<String> path = args[0]->ToString();
-  int handle = PlatformWatch(*String::Utf8Value(path));
+  WatcherHandle handle = PlatformWatch(*String::Utf8Value(path));
   if (!PlatformIsHandleValid(handle))
-    return ThrowException(Exception::Error(String::New("Unable to watch path")));
+    return node::ThrowError("Unable to watch path");
 
-  return scope.Close(Integer::New(handle));
+  return WatcherHandleToV8Value(handle);
 }
 
 Handle<Value> Unwatch(const Arguments& args) {
   HandleScope scope;
 
-  if (!args[0]->IsNumber())
-    return ThrowException(Exception::Error(String::New("Handle type required")));
+  if (!IsV8ValueWatcherHandle(args[0]))
+    return node::ThrowTypeError("Handle type required");
 
-  PlatformUnwatch(args[0]->Int32Value());
+  PlatformUnwatch(V8ValueToWatcherHandle(args[0]));
   return Undefined();
 }

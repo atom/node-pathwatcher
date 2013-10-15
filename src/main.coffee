@@ -1,17 +1,19 @@
 binding = require('bindings')('pathwatcher.node')
+HandleMap = binding.HandleMap
 {EventEmitter} = require 'events'
 fs = require 'fs'
+path = require 'path'
 
-handleWatchers = {}
+handleWatchers = new HandleMap
 
-binding.setCallback (event, handle, path) ->
-  handleWatchers[handle]?.onEvent(event, path)
+binding.setCallback (event, handle, filePath, oldFilePath) ->
+  handleWatchers.get(handle).onEvent(event, filePath, oldFilePath) if handleWatchers.has(handle)
 
 class HandleWatcher extends EventEmitter
   constructor: (@path) ->
     @start()
 
-  onEvent: (event, path) ->
+  onEvent: (event, filePath, oldFilePath) ->
     switch event
       when 'rename'
         # Detect atomic write.
@@ -19,9 +21,9 @@ class HandleWatcher extends EventEmitter
         detectRename = =>
           fs.stat @path, (err) =>
             if err # original file is gone it's a rename.
-              @path = path
+              @path = filePath
               @start()
-              @emit('change', 'rename', path)
+              @emit('change', 'rename', filePath)
             else # atomic write.
               @start()
               @emit('change', 'change', null)
@@ -29,35 +31,64 @@ class HandleWatcher extends EventEmitter
       when 'delete'
         @emit('change', 'delete', null)
         @close()
+      when 'unknown'
+        throw new Error("Received unknown event for path: #{@path}")
       else
-        @emit('change', event, path)
+        @emit('change', event, filePath, oldFilePath)
 
   start: ->
     @handle = binding.watch(@path)
-    handleWatchers[@handle] = this
+    handleWatchers.add(@handle, this)
 
   closeIfNoListener: ->
     @close() if @listeners('change').length is 0
 
   close: ->
-    if handleWatchers[@handle]?
+    if handleWatchers.has(@handle)
       binding.unwatch(@handle)
-      delete handleWatchers[@handle]
+      handleWatchers.remove(@handle)
 
 class PathWatcher extends EventEmitter
+  isWatchingParent: false
+  path: null
   handleWatcher: null
 
-  constructor: (path, callback) ->
-    for handle, watcher of handleWatchers
-      if watcher.path is path
+  constructor: (filePath, callback) ->
+    @path = filePath
+
+    # On Windows watching a file is emulated by watching its parent folder.
+    if process.platform is 'win32'
+      stats = fs.statSync(filePath)
+      @isWatchingParent = not stats.isDirectory()
+
+    filePath = path.dirname(filePath) if @isWatchingParent
+    for watcher in handleWatchers.values()
+      if watcher.path is filePath
         @handleWatcher = watcher
         break
 
-    @handleWatcher ?= new HandleWatcher(path)
+    @handleWatcher ?= new HandleWatcher(filePath)
 
-    @onChange = (event, path) =>
-      callback.call(this, event, path) if typeof callback is 'function'
-      @emit('change', event, path)
+    @onChange = (event, newFilePath, oldFilePath) =>
+      switch event
+        when 'rename', 'change', 'delete'
+          @path = newFilePath if event is 'rename'
+          callback.call(this, event, newFilePath) if typeof callback is 'function'
+          @emit('change', event, newFilePath)
+        when 'child-rename'
+          if @isWatchingParent
+            @onChange('rename', newFilePath) if @path is oldFilePath
+          else
+            @onChange('change', '')
+        when 'child-delete'
+          if @isWatchingParent
+            @onChange('delete', null) if @path is newFilePath
+          else
+            @onChange('change', '')
+        when 'child-change'
+          @onChange('change', '') if @isWatchingParent and @path is newFilePath
+        when 'child-create'
+          @onChange('change', '') unless @isWatchingParent
 
     @handleWatcher.on('change', @onChange)
 
@@ -70,10 +101,10 @@ exports.watch = (path, callback) ->
   new PathWatcher(path, callback)
 
 exports.closeAllWatchers = ->
-  watcher.close() for handle, watcher of handleWatchers
-  handleWatchers = {}
+  watcher.close() for watcher in handleWatchers.values()
+  handleWatchers.clear()
 
 exports.getWatchedPaths = ->
   paths = []
-  paths.push(watcher.path) for handle, watcher of handleWatchers
+  paths.push(watcher.path) for watcher in handleWatchers.values()
   paths
