@@ -19,7 +19,7 @@
   },
   "homepage": "http://atom.github.io/node-pathwatcher",
   "scripts": {
-    "prepublish": "grunt clean lint coffee",
+    "prepublish": "grunt clean coffee lint",
     "test": "grunt test"
   },
   "devDependencies": {
