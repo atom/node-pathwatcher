@@ -123,7 +123,7 @@ void PlatformThread() {
                                      INFINITE);
     int i = r - WAIT_OBJECT_0;
     if (i >= 0 && i < copied_events.size()) {
-      if (g_events[i] == g_wake_up_event)
+      if (copied_events[i] == g_wake_up_event)
         continue;
 
       std::vector<char> old_path;
