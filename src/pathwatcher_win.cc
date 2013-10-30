@@ -33,9 +33,9 @@ struct HandleWrapper {
   }
 
   ~HandleWrapper() {
-    map_.erase(dir_handle);
     CloseHandle(dir_handle);
 
+    map_.erase(overlapped.hEvent);
     CloseHandle(overlapped.hEvent);
     g_events.erase(
         std::remove(g_events.begin(), g_events.end(), overlapped.hEvent),
