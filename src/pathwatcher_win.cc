@@ -153,29 +153,10 @@ void PlatformThread() {
                               FALSE) == FALSE)
         continue;
 
-      // Count how many events would be sent.
-      size_t events_size = 0;
-      DWORD offset = 0;
-      while (true) {
-        FILE_NOTIFY_INFORMATION* file_info =
-            reinterpret_cast<FILE_NOTIFY_INFORMATION*>(handle->buffer + offset);
-        switch (file_info->Action) {
-          case FILE_ACTION_ADDED:
-          case FILE_ACTION_REMOVED:
-          case FILE_ACTION_RENAMED_NEW_NAME:
-          case FILE_ACTION_MODIFIED:
-            events_size++;
-        }
-
-        if (file_info->NextEntryOffset == 0) break;
-        offset += file_info->NextEntryOffset;
-      }
-
       std::vector<char> old_path;
-      std::vector<WatcherEvent> events(events_size);
+      std::vector<WatcherEvent> events;
 
-      int events_index = 0;
-      offset = 0;
+      DWORD offset = 0;
       while (true) {
         FILE_NOTIFY_INFORMATION* file_info =
             reinterpret_cast<FILE_NOTIFY_INFORMATION*>(handle->buffer + offset);
@@ -232,11 +213,11 @@ void PlatformThread() {
             WatcherEvent e = { event, handle->overlapped.hEvent };
             e.new_path.swap(path);
             e.old_path.swap(old_path);
-            std::swap(events[events_index++], e);
+            events.push_back(e);
           } else {
             WatcherEvent e = { event, handle->overlapped.hEvent };
             e.new_path.swap(path);
-            std::swap(events[events_index++], e);
+            events.push_back(e);
           }
         }
 
