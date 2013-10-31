@@ -56,7 +56,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks('grunt-coffeelint')
   grunt.loadNpmTasks('node-cpplint')
   grunt.registerTask('lint', ['coffeelint', 'cpplint'])
-  grunt.registerTask('default', ['coffee', 'shell:rebuild'])
+  grunt.registerTask('default', ['coffee', 'lint', 'shell:rebuild'])
   grunt.registerTask('test', ['default', 'shell:test'])
   grunt.registerTask 'clean', ->
     rm = require('rimraf').sync
