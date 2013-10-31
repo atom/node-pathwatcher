@@ -19,6 +19,15 @@ static std::vector<HANDLE> g_events;
 // The dummy event to wakeup the thread.
 static HANDLE g_wake_up_event;
 
+struct ScopedLocker {
+  ScopedLocker(uv_mutex_t& mutex) : mutex_(&mutex) { uv_mutex_lock(mutex_); }
+  ~ScopedLocker() { Unlock(); }
+
+  void Unlock() { uv_mutex_unlock(mutex_); }
+
+  uv_mutex_t* mutext_;
+};
+
 struct HandleWrapper {
   HandleWrapper(WatcherHandle handle, const char* path_str)
       : dir_handle(handle),
@@ -112,10 +121,9 @@ void PlatformThread() {
     // Do not use g_events directly, since reallocation could happen when there
     // are new watchers adding to g_events when WaitForMultipleObjects is still
     // polling.
-    std::vector<HANDLE> copied_events;
-    uv_mutex_lock(&g_handle_wrap_map_mutex);
-    copied_events = g_events;
-    uv_mutex_unlock(&g_handle_wrap_map_mutex);
+    ScopedLocker locker(g_handle_wrap_map_mutex);
+    std::vector<HANDLE> copied_events(g_events);
+    locker.Unlock();
 
     DWORD r = WaitForMultipleObjects(copied_events.size(),
                                      copied_events.data(),
@@ -123,27 +131,27 @@ void PlatformThread() {
                                      INFINITE);
     int i = r - WAIT_OBJECT_0;
     if (i >= 0 && i < copied_events.size()) {
+      // It's a wake up event, there is no fs events.
       if (copied_events[i] == g_wake_up_event)
         continue;
 
-      uv_mutex_lock(&g_handle_wrap_map_mutex);
+      ScopedLocker locker(g_handle_wrap_map_mutex);
+
       HandleWrapper* handle = HandleWrapper::Get(copied_events[i]);
-      if (!handle) {
-        uv_mutex_unlock(&g_handle_wrap_map_mutex);
+      if (!handle)
         continue;
-      }
 
       if (handle->canceled) {
         delete handle;
-        uv_mutex_unlock(&g_handle_wrap_map_mutex);
         continue;
       }
 
       DWORD bytes;
-      GetOverlappedResult(handle->dir_handle,
-                          &handle->overlapped,
-                          &bytes,
-                          FALSE);
+      if (GetOverlappedResult(handle->dir_handle,
+                              &handle->overlapped,
+                              &bytes,
+                              FALSE) == FALSE)
+        continue;
 
       // Count how many events would be sent.
       size_t events_size = 0;
@@ -237,7 +245,7 @@ void PlatformThread() {
       // Restart the monitor, it was reset after each call.
       QueueReaddirchanges(handle);
 
-      uv_mutex_unlock(&g_handle_wrap_map_mutex);
+      locker.Unlock();
 
       for (size_t i = 0; i < events.size(); ++i)
         PostEventAndWait(events[i].type,
@@ -259,26 +267,27 @@ WatcherHandle PlatformWatch(const char* path) {
     return INVALID_HANDLE_VALUE;
   }
 
-  WatcherHandle handle = CreateFileW(wpath,
-                                     FILE_LIST_DIRECTORY,
-                                     FILE_SHARE_READ | FILE_SHARE_DELETE |
-                                       FILE_SHARE_WRITE,
-                                     NULL,
-                                     OPEN_EXISTING,
-                                     FILE_FLAG_BACKUP_SEMANTICS |
-                                       FILE_FLAG_OVERLAPPED,
-                                     NULL);
-  if (!PlatformIsHandleValid(handle)) {
+  WatcherHandle dir_handle = CreateFileW(wpath,
+                                         FILE_LIST_DIRECTORY,
+                                         FILE_SHARE_READ | FILE_SHARE_DELETE |
+                                           FILE_SHARE_WRITE,
+                                         NULL,
+                                         OPEN_EXISTING,
+                                         FILE_FLAG_BACKUP_SEMANTICS |
+                                           FILE_FLAG_OVERLAPPED,
+                                         NULL);
+  if (!PlatformIsHandleValid(dir_handle)) {
     fprintf(stderr, "Unable to call CreateFileW for %s\n", path);
     return INVALID_HANDLE_VALUE;
   }
 
-  uv_mutex_lock(&g_handle_wrap_map_mutex);
-  std::unique_ptr<HandleWrapper> handle_wrapper(
-      new HandleWrapper(handle, path));
-  uv_mutex_unlock(&g_handle_wrap_map_mutex);
+  std::unique_ptr<HandleWrapper> handle;
+  {
+    ScopedLocker locker(g_handle_wrap_map_mutex);
+    handle.reset(new HandleWrapper(dir_handle, path));
+  }
 
-  if (!QueueReaddirchanges(handle_wrapper.get())) {
+  if (!QueueReaddirchanges(handle.get())) {
     fprintf(stderr, "ReadDirectoryChangesW failed\n");
     return INVALID_HANDLE_VALUE;
   }
@@ -292,11 +301,11 @@ WatcherHandle PlatformWatch(const char* path) {
 
 void PlatformUnwatch(WatcherHandle key) {
   if (PlatformIsHandleValid(key)) {
-    uv_mutex_lock(&g_handle_wrap_map_mutex);
+    ScopedLocker locker(g_handle_wrap_map_mutex);
+
     HandleWrapper* handle = HandleWrapper::Get(key);
     handle->canceled = true;
     CancelIoEx(handle->dir_handle, &handle->overlapped);
-    uv_mutex_unlock(&g_handle_wrap_map_mutex);
   }
 }
 
