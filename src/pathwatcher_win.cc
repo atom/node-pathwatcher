@@ -20,7 +20,7 @@ static std::vector<HANDLE> g_events;
 static HANDLE g_wake_up_event;
 
 struct ScopedLocker {
-  ScopedLocker(uv_mutex_t& mutex) : mutex_(&mutex) { uv_mutex_lock(mutex_); }
+  explicit ScopedLocker(const uv_mutex_t& mutex) : mutex_(&mutex) { uv_mutex_lock(mutex_); }
   ~ScopedLocker() { Unlock(); }
 
   void Unlock() { uv_mutex_unlock(mutex_); }
