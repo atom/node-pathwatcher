@@ -126,9 +126,6 @@ void PlatformThread() {
       if (copied_events[i] == g_wake_up_event)
         continue;
 
-      std::vector<char> old_path;
-      std::vector<WatcherEvent> events;
-
       uv_mutex_lock(&g_handle_wrap_map_mutex);
       HandleWrapper* handle = HandleWrapper::Get(copied_events[i]);
       if (!handle) {
@@ -148,7 +145,28 @@ void PlatformThread() {
                           &bytes,
                           FALSE);
 
+      // Count how many events would be sent.
+      size_t events_size = 0;
       DWORD offset = 0;
+      do {
+        FILE_NOTIFY_INFORMATION* file_info =
+            reinterpret_cast<FILE_NOTIFY_INFORMATION*>(handle->buffer + offset);
+        switch (file_info->Action) {
+          case FILE_ACTION_ADDED:
+          case FILE_ACTION_REMOVED:
+          case FILE_ACTION_RENAMED_NEW_NAME:
+          case FILE_ACTION_MODIFIED:
+            events_size++;
+        }
+
+        offset = file_info->NextEntryOffset;
+      } while(offset);
+
+      std::vector<char> old_path;
+      std::vector<WatcherEvent> events(events_size);
+
+      int events_index = 0;
+      offset = 0;
       do {
         FILE_NOTIFY_INFORMATION* file_info =
             reinterpret_cast<FILE_NOTIFY_INFORMATION*>(handle->buffer + offset);
@@ -205,11 +223,11 @@ void PlatformThread() {
             WatcherEvent e = { event, handle->overlapped.hEvent };
             e.new_path.swap(path);
             e.old_path.swap(old_path);
-            events.push_back(e);
+            std::swap(events[events_index++], e);
           } else {
             WatcherEvent e = { event, handle->overlapped.hEvent };
             e.new_path.swap(path);
-            events.push_back(e);
+            std::swap(events[events_index++], e);
           }
         }
 
@@ -221,7 +239,7 @@ void PlatformThread() {
 
       uv_mutex_unlock(&g_handle_wrap_map_mutex);
 
-      for (int i = 0; i < events.size(); ++i)
+      for (size_t i = 0; i < events.size(); ++i)
         PostEventAndWait(events[i].type,
                          events[i].handle,
                          events[i].new_path,
