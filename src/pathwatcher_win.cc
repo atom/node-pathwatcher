@@ -25,7 +25,7 @@ struct ScopedLocker {
 
   void Unlock() { uv_mutex_unlock(mutex_); }
 
-  uv_mutex_t* mutext_;
+  uv_mutex_t* mutex_;
 };
 
 struct HandleWrapper {
@@ -298,7 +298,7 @@ WatcherHandle PlatformWatch(const char* path) {
   SetEvent(g_wake_up_event);
 
   // The pointer is leaked if no error happened.
-  return handle_wrapper.release()->overlapped.hEvent;
+  return handle.release()->overlapped.hEvent;
 }
 
 void PlatformUnwatch(WatcherHandle key) {
