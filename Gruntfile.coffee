@@ -32,6 +32,7 @@ module.exports = (grunt) ->
         readability:
           braces: false
         runtime:
+          references: false
           sizeof: false
         whitespace:
           line_length: false
