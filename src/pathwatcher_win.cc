@@ -156,7 +156,7 @@ void PlatformThread() {
       // Count how many events would be sent.
       size_t events_size = 0;
       DWORD offset = 0;
-      do {
+      while (true) {
         FILE_NOTIFY_INFORMATION* file_info =
             reinterpret_cast<FILE_NOTIFY_INFORMATION*>(handle->buffer + offset);
         switch (file_info->Action) {
@@ -167,15 +167,16 @@ void PlatformThread() {
             events_size++;
         }
 
-        offset = file_info->NextEntryOffset;
-      } while(offset);
+        if (file_info->NextEntryOffset == 0) break;
+        offset += file_info->NextEntryOffset;
+      }
 
       std::vector<char> old_path;
       std::vector<WatcherEvent> events(events_size);
 
       int events_index = 0;
       offset = 0;
-      do {
+      while (true) {
         FILE_NOTIFY_INFORMATION* file_info =
             reinterpret_cast<FILE_NOTIFY_INFORMATION*>(handle->buffer + offset);
 
@@ -239,8 +240,9 @@ void PlatformThread() {
           }
         }
 
-        offset = file_info->NextEntryOffset;
-      } while (offset);
+        if (file_info->NextEntryOffset == 0) break;
+        offset += file_info->NextEntryOffset;
+      }
 
       // Restart the monitor, it was reset after each call.
       QueueReaddirchanges(handle);
