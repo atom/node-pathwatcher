@@ -16,10 +16,10 @@ WatcherHandle V8ValueToWatcherHandle(Handle<Value> value);
 bool IsV8ValueWatcherHandle(Handle<Value> value);
 #else
 // Correspoding definetions on OS X and Linux.
-typedef int WatcherHandle;
+typedef int32_t WatcherHandle;
 #define WatcherHandleToV8Value(h) Integer::New(h)
-#define V8ValueToWatcherHandle(v) v->IntegerValue()
-#define IsV8ValueWatcherHandle(v) v->IsNumber()
+#define V8ValueToWatcherHandle(v) v->Int32Value()
+#define IsV8ValueWatcherHandle(v) v->IsInt32()
 #endif
 
 void PlatformInit();
