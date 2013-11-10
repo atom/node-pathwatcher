@@ -38,6 +38,9 @@ class HandleWatcher extends EventEmitter
 
   start: ->
     @handle = binding.watch(@path)
+    if handleWatchers.has(@handle)
+      troubleWatcher = handleWatchers.get(@handle)
+      throw new Error("The handle(#{@handle}) returned by watching #{@path} is the same with an already watched path(#{troubleWatcher.path})")
     handleWatchers.add(@handle, this)
 
   closeIfNoListener: ->
