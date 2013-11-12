@@ -42,13 +42,20 @@ struct HandleWrapper {
   }
 
   ~HandleWrapper() {
-    CloseHandle(dir_handle);
+    CloseFile();
 
     map_.erase(overlapped.hEvent);
     CloseHandle(overlapped.hEvent);
     g_events.erase(
         std::remove(g_events.begin(), g_events.end(), overlapped.hEvent),
         g_events.end());
+  }
+
+  void CloseFile() {
+    if (dir_handle != INVALID_HANDLE_VALUE) {
+      CloseHandle(dir_handle);
+      dir_handle = INVALID_HANDLE_VALUE;
+    }
   }
 
   WatcherHandle dir_handle;
@@ -289,6 +296,7 @@ void PlatformUnwatch(WatcherHandle key) {
     HandleWrapper* handle = HandleWrapper::Get(key);
     handle->canceled = true;
     CancelIoEx(handle->dir_handle, &handle->overlapped);
+    handle->CloseFile();
   }
 }
 

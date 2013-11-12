@@ -139,3 +139,24 @@ describe 'PathWatcher', ->
         watcher1 = pathWatcher.watch tempFile, (type, path) ->
         watcher2 = pathWatcher.watch tempFile2, (type, path) ->
         expect(watcher1.handleWatcher).toBe(watcher2.handleWatcher)
+
+  describe 'when a file is unwatched', ->
+    it 'it does not lock the filesystem tree', ->
+      nested1 = path.join(tempDir, 'nested1')
+      nested2 = path.join(nested1, 'nested2')
+      nested3 = path.join(nested2, 'nested3')
+      fs.mkdirSync(nested1)
+      fs.mkdirSync(nested2)
+      fs.writeFileSync(nested3)
+
+      subscription1 = pathWatcher.watch nested1, ->
+      subscription2 = pathWatcher.watch nested2, ->
+      subscription3 = pathWatcher.watch nested3, ->
+
+      subscription1.close()
+      subscription2.close()
+      subscription3.close()
+
+      fs.unlinkSync(nested3)
+      fs.rmdirSync(nested2)
+      fs.rmdirSync(nested1)
