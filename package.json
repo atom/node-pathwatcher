@@ -35,6 +35,7 @@
     "temp": "0.6.0"
   },
   "dependencies": {
-    "bindings": "~1.1.0"
+    "bindings": "~1.1.0",
+    "nan": "0.7.0"
   }
 }

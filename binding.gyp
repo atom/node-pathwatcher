@@ -10,7 +10,8 @@
         "src/handle_map.h",
       ],
       "include_dirs": [
-        "src"
+        "src",
+        '<!(node -e "require(\'nan\')")'
       ],
       "conditions": [
         ['OS=="win"', {
