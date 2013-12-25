@@ -5,12 +5,9 @@ void Init(Handle<Object> exports) {
   CommonInit();
   PlatformInit();
 
-  exports->Set(String::NewSymbol("setCallback"),
-      FunctionTemplate::New(SetCallback)->GetFunction());
-  exports->Set(String::NewSymbol("watch"),
-      FunctionTemplate::New(Watch)->GetFunction());
-  exports->Set(String::NewSymbol("unwatch"),
-      FunctionTemplate::New(Unwatch)->GetFunction());
+  NODE_SET_METHOD(exports, "setCallback", SetCallback);
+  NODE_SET_METHOD(exports, "watch", Watch);
+  NODE_SET_METHOD(exports, "unwatch", Unwatch);
 
   HandleMap::Initialize(exports);
 }

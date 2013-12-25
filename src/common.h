@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include <node.h>
+#include "nan.h"
 using namespace v8;
 
 #ifdef _WIN32
@@ -47,8 +47,9 @@ void PostEventAndWait(EVENT_TYPE type,
                       const std::vector<char>& old_path = std::vector<char>());
 
 void CommonInit();
-Handle<Value> SetCallback(const Arguments& args);
-Handle<Value> Watch(const Arguments& args);
-Handle<Value> Unwatch(const Arguments& args);
+
+NAN_METHOD(SetCallback);
+NAN_METHOD(Watch);
+NAN_METHOD(Unwatch);
 
 #endif  // SRC_COMMON_H_

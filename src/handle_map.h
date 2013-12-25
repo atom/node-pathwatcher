@@ -19,15 +19,15 @@ class HandleMap : public node::ObjectWrap {
   bool Erase(WatcherHandle key);
   void Clear();
 
-  static void DisposeHandle(Persistent<Value> value);
+  static void DisposeHandle(Persistent<Value>& value);
 
-  static Handle<Value> New(const Arguments& args);
-  static Handle<Value> Add(const Arguments& args);
-  static Handle<Value> Get(const Arguments& args);
-  static Handle<Value> Has(const Arguments& args);
-  static Handle<Value> Values(const Arguments& args);
-  static Handle<Value> Remove(const Arguments& args);
-  static Handle<Value> Clear(const Arguments& args);
+  static NAN_METHOD(New);
+  static NAN_METHOD(Add);
+  static NAN_METHOD(Get);
+  static NAN_METHOD(Has);
+  static NAN_METHOD(Values);
+  static NAN_METHOD(Remove);
+  static NAN_METHOD(Clear);
 
   Map map_;
 };
