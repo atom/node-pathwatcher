@@ -30,11 +30,12 @@
     "coffee-script": "~1.6.2",
     "jasmine-focused": "~0.15.0",
     "rimraf": "~2.2.0",
-    "node-cpplint": "~0.1.4",
+    "node-cpplint": "~0.1.5",
     "grunt-coffeelint": "0.0.6",
     "temp": "0.6.0"
   },
   "dependencies": {
-    "bindings": "~1.1.0"
+    "bindings": "~1.1.0",
+    "nan": "git://github.com/zcbenz/nan.git#08dd21a2b62a7790ae68c497769bfb081616c21e"
   }
 }

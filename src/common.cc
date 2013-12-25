@@ -1,7 +1,5 @@
 #include "common.h"
 
-#include "node_internals.h"
-
 static uv_async_t g_async;
 static uv_sem_t g_semaphore;
 static uv_thread_t g_thread;
@@ -18,7 +16,7 @@ static void CommonThread(void* handle) {
 }
 
 static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
-  HandleScope scope;
+  NanScope();
 
   if (!g_callback.IsEmpty()) {
     Handle<String> type;
@@ -51,12 +49,13 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
     }
 
     Handle<Value> argv[] = {
-      type,
-      WatcherHandleToV8Value(g_handle),
-      String::New(g_new_path.data(), g_new_path.size()),
-      String::New(g_old_path.data(), g_old_path.size()),
+        type,
+        WatcherHandleToV8Value(g_handle),
+        String::New(g_new_path.data(), g_new_path.size()),
+        String::New(g_old_path.data(), g_old_path.size()),
     };
-    g_callback->Call(Context::GetCurrent()->Global(), 4, argv);
+    NanPersistentToLocal(g_callback)->Call(
+        Context::GetCurrent()->Global(), 4, argv);
   }
 
   WakeupNewThread();
@@ -90,33 +89,36 @@ void PostEventAndWait(EVENT_TYPE type,
   WaitForMainThread();
 }
 
-Handle<Value> SetCallback(const Arguments& args) {
+NAN_METHOD(SetCallback) {
+  NanScope();
+
   if (!args[0]->IsFunction())
-    return node::ThrowTypeError("Function required");
+    return NanThrowTypeError("Function required");
 
-  g_callback = Persistent<Function>::New(Handle<Function>::Cast(args[0]));
-
-  return Undefined();
+  NanAssignPersistent(Function, g_callback, Handle<Function>::Cast(args[0]));
+  NanReturnUndefined();
 }
 
-Handle<Value> Watch(const Arguments& args) {
+NAN_METHOD(Watch) {
+  NanScope();
+
   if (!args[0]->IsString())
-    return node::ThrowTypeError("String required");
+    return NanThrowTypeError("String required");
 
   Handle<String> path = args[0]->ToString();
   WatcherHandle handle = PlatformWatch(*String::Utf8Value(path));
   if (!PlatformIsHandleValid(handle))
-    return node::ThrowError("Unable to watch path");
+    return NanThrowTypeError("Unable to watch path");
 
-  return WatcherHandleToV8Value(handle);
+  NanReturnValue(WatcherHandleToV8Value(handle));
 }
 
-Handle<Value> Unwatch(const Arguments& args) {
-  HandleScope scope;
+NAN_METHOD(Unwatch) {
+  NanScope();
 
   if (!IsV8ValueWatcherHandle(args[0]))
-    return node::ThrowTypeError("Handle type required");
+    return NanThrowTypeError("Handle type required");
 
   PlatformUnwatch(V8ValueToWatcherHandle(args[0]));
-  return Undefined();
+  NanReturnUndefined();
 }

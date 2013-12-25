@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-#include "node_internals.h"
-
 HandleMap::HandleMap() {
 }
 
@@ -20,106 +18,112 @@ bool HandleMap::Erase(WatcherHandle key) {
   if (iter == map_.end())
     return false;
 
-  DisposeHandle(iter->second);
+  NanDispose(iter->second);
   map_.erase(iter);
   return true;
 }
 
 void HandleMap::Clear() {
-  for (Map::const_iterator iter = map_.begin(); iter != map_.end(); ++iter)
-    DisposeHandle(iter->second);
+  for (Map::iterator iter = map_.begin(); iter != map_.end(); ++iter)
+    NanDispose(iter->second);
   map_.clear();
 }
 
-void HandleMap::DisposeHandle(Persistent<Value> value) {
-  value.Dispose();
-  value.Clear();
-}
-
 // static
-Handle<Value> HandleMap::New(const Arguments& args) {
+NAN_METHOD(HandleMap::New) {
   HandleMap* obj = new HandleMap();
   obj->Wrap(args.This());
-  return args.This();
 }
 
 // static
-Handle<Value> HandleMap::Add(const Arguments& args) {
+NAN_METHOD(HandleMap::Add) {
+  NanScope();
+
   if (!IsV8ValueWatcherHandle(args[0]))
-    return node::ThrowTypeError("Bad argument");
+    return NanThrowTypeError("Bad argument");
 
   HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
   WatcherHandle key = V8ValueToWatcherHandle(args[0]);
   if (obj->Has(key))
-    return node::ThrowError("Duplicate key");
+    return NanThrowError("Duplicate key");
 
-  obj->map_[key] = Persistent<Value>::New(args[1]);
-  return Undefined();
+  NanAssignUnsafePersistent(Value, obj->map_[key], args[1]);
+  NanReturnUndefined();
 }
 
 // static
-Handle<Value> HandleMap::Get(const Arguments& args) {
+NAN_METHOD(HandleMap::Get) {
+  NanScope();
+
   if (!IsV8ValueWatcherHandle(args[0]))
-    return node::ThrowTypeError("Bad argument");
+    return NanThrowTypeError("Bad argument");
 
   HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
   WatcherHandle key = V8ValueToWatcherHandle(args[0]);
   if (!obj->Has(key))
-    return node::ThrowError("Invalid key");
+    return NanThrowError("Invalid key");
 
-  return obj->map_[key];
+  NanReturnValue(NanPersistentToLocal(obj->map_[key]));
 }
 
 // static
-Handle<Value> HandleMap::Has(const Arguments& args) {
+NAN_METHOD(HandleMap::Has) {
+  NanScope();
+
   if (!IsV8ValueWatcherHandle(args[0]))
-    return node::ThrowTypeError("Bad argument");
+    return NanThrowTypeError("Bad argument");
 
   HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
-  return Boolean::New(obj->Has(V8ValueToWatcherHandle(args[0])));
+  NanReturnValue(Boolean::New(obj->Has(V8ValueToWatcherHandle(args[0]))));
 }
 
 // static
-Handle<Value> HandleMap::Values(const Arguments& args) {
+NAN_METHOD(HandleMap::Values) {
+  NanScope();
+
   HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
 
   int i = 0;
   Handle<Array> keys = Array::New(obj->map_.size());
   for (Map::const_iterator iter = obj->map_.begin();
        iter != obj->map_.end();
-       ++iter, ++i) {
-    keys->Set(i, iter->second);
-  }
+       ++iter, ++i)
+    keys->Set(i, NanPersistentToLocal(iter->second));
 
-  return keys;
+  NanReturnValue(keys);
 }
 
 // static
-Handle<Value> HandleMap::Remove(const Arguments& args) {
+NAN_METHOD(HandleMap::Remove) {
+  NanScope();
+
   if (!IsV8ValueWatcherHandle(args[0]))
-    return node::ThrowTypeError("Bad argument");
+    return NanThrowTypeError("Bad argument");
 
   HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
   if (!obj->Erase(V8ValueToWatcherHandle(args[0])))
-    return node::ThrowError("Invalid key");
+    return NanThrowError("Invalid key");
 
-  return Undefined();
+  NanReturnUndefined();
 }
 
 // static
-Handle<Value> HandleMap::Clear(const Arguments& args) {
-  UNWRAP(HandleMap);
-  wrap->Clear();
-  return Undefined();
+NAN_METHOD(HandleMap::Clear) {
+  NanScope();
+
+  HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
+  obj->Clear();
+
+  NanReturnUndefined();
 }
 
 // static
 void HandleMap::Initialize(Handle<Object> target) {
-  HandleScope scope;
+  NanScope();
 
   Local<FunctionTemplate> t = FunctionTemplate::New(HandleMap::New);
   t->InstanceTemplate()->SetInternalFieldCount(1);
-  t->SetClassName(String::NewSymbol("HandleMap"));
+  t->SetClassName(NanSymbol("HandleMap"));
 
   NODE_SET_PROTOTYPE_METHOD(t, "add", Add);
   NODE_SET_PROTOTYPE_METHOD(t, "get", Get);
@@ -128,5 +132,5 @@ void HandleMap::Initialize(Handle<Object> target) {
   NODE_SET_PROTOTYPE_METHOD(t, "remove", Remove);
   NODE_SET_PROTOTYPE_METHOD(t, "clear", Clear);
 
-  target->Set(String::NewSymbol("HandleMap"), t->GetFunction());
+  target->Set(NanSymbol("HandleMap"), t->GetFunction());
 }
