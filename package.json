@@ -36,6 +36,6 @@
   },
   "dependencies": {
     "bindings": "~1.1.0",
-    "nan": "0.7.0"
+    "nan": "https://github.com/zcbenz/nan.git"
   }
 }
