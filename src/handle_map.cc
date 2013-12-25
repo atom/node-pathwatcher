@@ -18,20 +18,15 @@ bool HandleMap::Erase(WatcherHandle key) {
   if (iter == map_.end())
     return false;
 
-  DisposeHandle(iter->second);
+  NanDispose(iter->second);
   map_.erase(iter);
   return true;
 }
 
 void HandleMap::Clear() {
   for (Map::iterator iter = map_.begin(); iter != map_.end(); ++iter)
-    DisposeHandle(iter->second);
+    NanDispose(iter->second);
   map_.clear();
-}
-
-void HandleMap::DisposeHandle(Persistent<Value>& value) {
-  value.Dispose();
-  value.Clear();
 }
 
 // static
@@ -52,7 +47,7 @@ NAN_METHOD(HandleMap::Add) {
   if (obj->Has(key))
     return NanThrowError("Duplicate key");
 
-  NanAssignPersistent(Value, obj->map_[key], args[1]);
+  NanAssignUnsafePersistent(Value, obj->map_[key], args[1]);
   NanReturnUndefined();
 }
 

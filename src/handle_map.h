@@ -10,7 +10,7 @@ class HandleMap : public node::ObjectWrap {
   static void Initialize(Handle<Object> target);
 
  private:
-  typedef std::map<WatcherHandle, Persistent<Value> > Map;
+  typedef std::map<WatcherHandle, NanUnsafePersistent<Value> > Map;
 
   HandleMap();
   virtual ~HandleMap();
@@ -19,7 +19,7 @@ class HandleMap : public node::ObjectWrap {
   bool Erase(WatcherHandle key);
   void Clear();
 
-  static void DisposeHandle(Persistent<Value>& value);
+  static void DisposeHandle(NanUnsafePersistent<Value>& value);
 
   static NAN_METHOD(New);
   static NAN_METHOD(Add);
