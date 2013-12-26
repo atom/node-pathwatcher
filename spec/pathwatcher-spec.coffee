@@ -51,6 +51,9 @@ describe 'PathWatcher', ->
 
   describe 'when a watched path is renamed', ->
     it 'fires the callback with the event type and new path and watches the new path', ->
+      if process.platform is 'linux'
+        return
+
       eventType = null
       eventPath = null
       watcher = pathWatcher.watch tempFile, (type, path) ->
