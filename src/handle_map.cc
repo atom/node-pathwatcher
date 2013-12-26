@@ -31,8 +31,10 @@ void HandleMap::Clear() {
 
 // static
 NAN_METHOD(HandleMap::New) {
+  NanScope();
   HandleMap* obj = new HandleMap();
   obj->Wrap(args.This());
+  NanReturnUndefined();
 }
 
 // static
