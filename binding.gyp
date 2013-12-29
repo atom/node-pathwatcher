@@ -37,6 +37,11 @@
             "src/pathwatcher_mac.mm",
           ],
         }],  # OS=="mac"
+        ['OS=="linux"', {
+          "sources": [
+            "src/pathwatcher_linux.cc",
+          ],
+        }],  # OS=="linux"
       ],
     }
   ]
