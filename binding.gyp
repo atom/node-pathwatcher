@@ -8,6 +8,7 @@
         "src/common.h",
         "src/handle_map.cc",
         "src/handle_map.h",
+        "src/unsafe_persistent.h",
       ],
       "include_dirs": [
         "src",

@@ -4,6 +4,7 @@
 #include <map>
 
 #include "common.h"
+#include "unsafe_persistent.h"
 
 class HandleMap : public node::ObjectWrap {
  public:
