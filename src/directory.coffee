@@ -126,7 +126,7 @@ class Directory
         callback(null, directories.concat(files))
 
   subscribeToNativeChangeEvents: ->
-    @watchSubscription ?= pathWatcher.watch @path, (eventType) =>
+    @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
       @emit "contents-changed" if eventType is "change"
 
   unsubscribeFromNativeChangeEvents: ->
