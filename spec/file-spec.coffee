@@ -8,7 +8,7 @@ describe 'File', ->
   [filePath, file] = []
 
   beforeEach ->
-    filePath = path.join(__dirname, 'fixtures', 'atom-file-test.txt') # Don't put in /tmp because /tmp symlinks to /private/tmp and screws up the rename test
+    filePath = path.join(__dirname, 'fixtures', 'file-test.txt') # Don't put in /tmp because /tmp symlinks to /private/tmp and screws up the rename test
     fs.removeSync(filePath)
     fs.writeFileSync(filePath, "this is old!")
     file = new File(filePath)
@@ -60,7 +60,7 @@ describe 'File', ->
       newPath = null
 
       beforeEach ->
-        newPath = path.join(path.dirname(filePath), "atom-file-was-moved-test.txt")
+        newPath = path.join(path.dirname(filePath), "file-was-moved-test.txt")
 
       afterEach ->
         if fs.existsSync(newPath)
