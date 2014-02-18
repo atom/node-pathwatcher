@@ -19,6 +19,7 @@ module.exports = (grunt) ->
 
       src: ['src/**/*.coffee']
       test: ['spec/**/*.coffee']
+      gruntfile: ['Gruntfile.coffee']
 
     cpplint:
       files: ['src/**/*.cc']
