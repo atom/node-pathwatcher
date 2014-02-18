@@ -9,8 +9,7 @@ npm install pathwatcher
 ## Building
 
   * Clone the repository
-  * Run `npm install`
-  * Run `grunt` to compile the CoffeeScript and native code
+  * Run `npm install` to install the dependencies
   * Run `npm test` to run the specs
 
 ## Using
