@@ -49,11 +49,8 @@ describe 'PathWatcher', ->
         expect(eventType).toBe 'change'
         expect(eventPath).toBe ''
 
-  describe 'when a watched path is renamed', ->
+  describe 'when a watched path is renamed #darwin #win32', ->
     it 'fires the callback with the event type and new path and watches the new path', ->
-      if process.platform is 'linux'
-        return
-
       eventType = null
       eventPath = null
       watcher = pathWatcher.watch tempFile, (type, path) ->
@@ -68,11 +65,8 @@ describe 'PathWatcher', ->
         expect(eventPath).toBe fs.realpathSync(tempRenamed)
         expect(pathWatcher.getWatchedPaths()).toEqual [watcher.handleWatcher.path]
 
-  describe 'when a watched path is deleted', ->
+  describe 'when a watched path is deleted #win32 #darwin', ->
     it 'fires the callback with the event type and null path', ->
-      # FIXME Fails on Travis CI
-      return if process.platform is 'linux'
-
       deleted = false
       watcher = pathWatcher.watch tempFile, (type, path) ->
         deleted = true if type is 'delete' and path is null
@@ -133,13 +127,12 @@ describe 'PathWatcher', ->
       fs.writeFileSync(tempFile2, 'changed')
       waitsFor -> called == 3
 
-    it 'shares the same handle watcher between the two files on Windows', ->
-      if process.platform is 'win32'
-        tempFile2 = path.join(tempDir, 'file2')
-        fs.writeFileSync(tempFile2, '')
-        watcher1 = pathWatcher.watch tempFile, (type, path) ->
-        watcher2 = pathWatcher.watch tempFile2, (type, path) ->
-        expect(watcher1.handleWatcher).toBe(watcher2.handleWatcher)
+    it 'shares the same handle watcher between the two files on #win32', ->
+      tempFile2 = path.join(tempDir, 'file2')
+      fs.writeFileSync(tempFile2, '')
+      watcher1 = pathWatcher.watch tempFile, (type, path) ->
+      watcher2 = pathWatcher.watch tempFile2, (type, path) ->
+      expect(watcher1.handleWatcher).toBe(watcher2.handleWatcher)
 
   describe 'when a file is unwatched', ->
     it 'it does not lock the filesystem tree', ->

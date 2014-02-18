@@ -27,7 +27,7 @@
     "grunt-cli": "~0.1.7",
     "grunt-shell": "~0.2.2",
     "coffee-script": "~1.6.2",
-    "jasmine-focused": "1.x",
+    "jasmine-tagged": ">=1.1 <2.0",
     "rimraf": "~2.2.0",
     "node-cpplint": "~0.1.5",
     "grunt-coffeelint": "0.0.6",
@@ -35,6 +35,11 @@
   },
   "dependencies": {
     "bindings": "~1.1.0",
-    "nan": "0.8.0"
+    "nan": "0.8.0",
+    "q": "~1.0.0",
+    "emissary": "1.x",
+    "underscore-plus": "~1.x",
+    "fs-plus": "~2.x",
+    "async": "~0.2.10"
   }
 }

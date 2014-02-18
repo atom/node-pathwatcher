@@ -112,3 +112,6 @@ exports.getWatchedPaths = ->
   paths = []
   paths.push(watcher.path) for watcher in handleWatchers.values()
   paths
+
+exports.File = require './file'
+exports.Directory = require './directory'
