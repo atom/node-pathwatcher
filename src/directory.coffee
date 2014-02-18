@@ -86,13 +86,14 @@ class Directory
     directories = []
     files = []
     for entryPath in fs.listSync(@path)
-      if stat = fs.lstatSyncNoException(entryPath)
+      try
+        stat = fs.lstatSync(entryPath)
         symlink = stat.isSymbolicLink()
-        stat = fs.statSyncNoException(entryPath) if symlink
-      continue unless stat
-      if stat.isDirectory()
+        stat = fs.statSync(entryPath) if symlink
+
+      if stat?.isDirectory()
         directories.push(new Directory(entryPath, symlink))
-      else if stat.isFile()
+      else if stat?.isFile()
         files.push(new File(entryPath, symlink))
 
     directories.concat(files)
