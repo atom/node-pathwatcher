@@ -26,7 +26,7 @@ describe 'File', ->
         waitsFor "change event", ->
           changeHandler.callCount > 0
 
-  describe "when the file has already been read", ->
+  describe "when the file has already been read #darwin", ->
     beforeEach ->
       file.readSync()
 
