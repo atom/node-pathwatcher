@@ -109,16 +109,17 @@ class File
     @digest ? @setDigest(@readSync())
 
   handleNativeChangeEvent: (eventType, path) ->
-    if eventType is "delete"
-      @unsubscribeFromNativeChangeEvents()
-      @detectResurrectionAfterDelay()
-    else if eventType is "rename"
-      @setPath(path)
-      @emit "moved"
-    else if eventType is "change"
-      oldContents = @cachedContents
-      @read(true).done (newContents) =>
-        @emit 'contents-changed' unless oldContents == newContents
+    switch eventType
+      when 'delete'
+        @unsubscribeFromNativeChangeEvents()
+        @detectResurrectionAfterDelay()
+      when 'rename'
+        @setPath(path)
+        @emit "moved"
+      when 'change'
+        oldContents = @cachedContents
+        @read(true).done (newContents) =>
+          @emit 'contents-changed' unless oldContents is newContents
 
   detectResurrectionAfterDelay: ->
     _.delay (=> @detectResurrection()), 50
