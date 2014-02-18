@@ -27,7 +27,7 @@
     "grunt-cli": "~0.1.7",
     "grunt-shell": "~0.2.2",
     "coffee-script": "~1.6.2",
-    "jasmine-tagged": "1.x",
+    "jasmine-tagged": ">=1.1 <2.0",
     "rimraf": "~2.2.0",
     "node-cpplint": "~0.1.5",
     "grunt-coffeelint": "0.0.6",
