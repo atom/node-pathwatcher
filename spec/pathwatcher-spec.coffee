@@ -133,13 +133,12 @@ describe 'PathWatcher', ->
       fs.writeFileSync(tempFile2, 'changed')
       waitsFor -> called == 3
 
-    it 'shares the same handle watcher between the two files on Windows', ->
-      if process.platform is 'win32'
-        tempFile2 = path.join(tempDir, 'file2')
-        fs.writeFileSync(tempFile2, '')
-        watcher1 = pathWatcher.watch tempFile, (type, path) ->
-        watcher2 = pathWatcher.watch tempFile2, (type, path) ->
-        expect(watcher1.handleWatcher).toBe(watcher2.handleWatcher)
+    it 'shares the same handle watcher between the two files on #win32', ->
+      tempFile2 = path.join(tempDir, 'file2')
+      fs.writeFileSync(tempFile2, '')
+      watcher1 = pathWatcher.watch tempFile, (type, path) ->
+      watcher2 = pathWatcher.watch tempFile2, (type, path) ->
+      expect(watcher1.handleWatcher).toBe(watcher2.handleWatcher)
 
   describe 'when a file is unwatched', ->
     it 'it does not lock the filesystem tree', ->
