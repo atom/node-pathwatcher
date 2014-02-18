@@ -70,17 +70,12 @@ describe 'PathWatcher', ->
 
   describe 'when a watched path is deleted', ->
     it 'fires the callback with the event type and null path', ->
-      eventType = null
-      eventPath = null
+      deleted = false
       watcher = pathWatcher.watch tempFile, (type, path) ->
-        eventType = type
-        eventPath = path
+        deleted = true if type is 'delete' and path is null
 
       fs.unlinkSync(tempFile)
-      waitsFor -> eventType?
-      runs ->
-        expect(eventType).toBe 'delete'
-        expect(eventPath).toBe null
+      waitsFor -> deleted
 
   describe 'when a file under watched directory is deleted', ->
     it 'fires the callback with the change event and empty path', (done) ->
