@@ -1,6 +1,5 @@
 path = require 'path'
 fs = require 'fs-plus'
-
 File = require '../lib/file'
 PathWatcher = require '../lib/main'
 
@@ -15,7 +14,7 @@ describe 'File', ->
 
   afterEach ->
     file.off()
-    fs.removeSync(filePath) if fs.existsSync(filePath)
+    fs.removeSync(filePath)
     PathWatcher.closeAllWatchers()
 
   describe "when the file has not been read", ->
