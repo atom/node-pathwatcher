@@ -114,3 +114,4 @@ exports.getWatchedPaths = ->
   paths
 
 exports.File = require './file'
+exports.Directory = require './directory'
