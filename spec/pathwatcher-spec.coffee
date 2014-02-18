@@ -49,11 +49,8 @@ describe 'PathWatcher', ->
         expect(eventType).toBe 'change'
         expect(eventPath).toBe ''
 
-  describe 'when a watched path is renamed', ->
+  describe 'when a watched path is renamed #darwin #win32', ->
     it 'fires the callback with the event type and new path and watches the new path', ->
-      if process.platform is 'linux'
-        return
-
       eventType = null
       eventPath = null
       watcher = pathWatcher.watch tempFile, (type, path) ->
@@ -68,11 +65,8 @@ describe 'PathWatcher', ->
         expect(eventPath).toBe fs.realpathSync(tempRenamed)
         expect(pathWatcher.getWatchedPaths()).toEqual [watcher.handleWatcher.path]
 
-  describe 'when a watched path is deleted', ->
+  describe 'when a watched path is deleted #win32 #darwin', ->
     it 'fires the callback with the event type and null path', ->
-      # FIXME Fails on Travis CI
-      return if process.platform is 'linux'
-
       deleted = false
       watcher = pathWatcher.watch tempFile, (type, path) ->
         deleted = true if type is 'delete' and path is null
