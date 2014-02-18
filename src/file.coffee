@@ -61,8 +61,6 @@ class File
       @cachedContents = null
     else if not @cachedContents? or flushCache
       @cachedContents = fs.readFileSync(@getPath(), 'utf8')
-    else
-      @cachedContents
 
     @setDigest(@cachedContents)
     @cachedContents
