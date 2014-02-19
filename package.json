@@ -41,6 +41,6 @@
     "underscore-plus": "~1.x",
     "fs-plus": "~2.x",
     "async": "~0.2.10",
-    "runas": "~0.5.3"
+    "runas": "~0.5.4"
   }
 }
