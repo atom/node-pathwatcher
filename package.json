@@ -40,6 +40,7 @@
     "emissary": "1.x",
     "underscore-plus": "~1.x",
     "fs-plus": "~2.x",
-    "async": "~0.2.10"
+    "async": "~0.2.10",
+    "runas": "~0.5.3"
   }
 }

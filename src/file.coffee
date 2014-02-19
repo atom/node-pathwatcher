@@ -5,6 +5,7 @@ _ = require 'underscore-plus'
 {Emitter} = require 'emissary'
 fs = require 'fs-plus'
 Q = require 'q'
+runas = require 'runas'
 
 PathWatcher = require './main'
 
@@ -52,7 +53,7 @@ class File
   # Public: Overwrites the file with the given String.
   write: (text) ->
     previouslyExisted = @exists()
-    fs.writeFileSync(@getPath(), text)
+    @writeFileWithPrivilegeEscalationSync(@getPath(), text)
     @cachedContents = text
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
 
@@ -107,6 +108,21 @@ class File
   # Public: Get the SHA-1 digest of this file
   getDigest: ->
     @digest ? @setDigest(@readSync())
+
+  # Writes the text to specified path.
+  #
+  # Privilege escalation would be asked when current user doesn't have
+  # permission to the path.
+  writeFileWithPrivilegeEscalationSync: (filePath, text) ->
+    try
+      fs.writeFileSync(filePath, text)
+    catch error
+      if error.code is 'EACCES' and process.platform is 'darwin'
+        authopen = '/usr/libexec/authopen'  # man 1 authopen
+        unless runas(authopen, ['-w', '-c', filePath], stdin: text) is 0
+          throw error
+      else
+        throw error
 
   handleNativeChangeEvent: (eventType, eventPath) ->
     switch eventType
