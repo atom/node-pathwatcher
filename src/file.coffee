@@ -118,8 +118,9 @@ class File
       fs.writeFileSync(filePath, text)
     catch error
       if error.code is 'EACCES' and process.platform is 'darwin'
-        authopen = '/usr/libexec/authopen'  # man 1 authopen
-        unless runas(authopen, ['-w', '-c', filePath], stdin: text) is 0
+        # Use dd to read from stdin and write to filePath, same thing could be
+        # done with tee but it would also copy the file to stdout.
+        unless runas('dd', ["of=#{filePath}"], stdin: text, admin: true) is 0
           throw error
       else
         throw error
