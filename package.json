@@ -2,7 +2,7 @@
   "main": "./lib/main.js",
   "name": "pathwatcher",
   "description": "Watch file events",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "licenses": [
     {
       "type": "MIT",
