@@ -120,7 +120,7 @@ class File
       if error.code is 'EACCES' and process.platform is 'darwin'
         # Use dd to read from stdin and write to filePath, same thing could be
         # done with tee but it would also copy the file to stdout.
-        unless runas('dd', ["of=#{filePath}"], stdin: text, admin: true) is 0
+        unless runas('/bin/dd', ["of=#{filePath}"], stdin: text, admin: true) is 0
           throw error
       else
         throw error
