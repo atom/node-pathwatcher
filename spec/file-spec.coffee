@@ -1,5 +1,6 @@
 path = require 'path'
 fs = require 'fs-plus'
+temp = require 'temp'
 File = require '../lib/file'
 PathWatcher = require '../lib/main'
 
@@ -127,3 +128,18 @@ describe 'File', ->
 
         waitsFor "post-resurrection change event", ->
           changeHandler.callCount > 0
+
+  describe "getRealPathSync()", ->
+    it "returns the resolved path to the file", ->
+      tempDir = temp.mkdirSync('node-pathwatcher-directory')
+      fs.writeFileSync(path.join(tempDir, 'file'), '')
+      fs.writeFileSync(path.join(tempDir, 'file2'), '')
+
+      tempFile = new File(path.join(tempDir, 'file'))
+      expect(tempFile.getRealPathSync()).toBe fs.realpathSync(path.join(tempDir, 'file'))
+      tempFile.setPath(path.join(tempDir, 'file2'))
+      expect(tempFile.getRealPathSync()).toBe fs.realpathSync(path.join(tempDir, 'file2'))
+
+      fs.symlinkSync(path.join(tempDir, 'file2'), path.join(tempDir, 'file3'))
+      tempFile.setPath(path.join(tempDir, 'file3'))
+      expect(tempFile.getRealPathSync()).toBe fs.realpathSync(path.join(tempDir, 'file2'))

@@ -15,6 +15,8 @@ module.exports =
 class File
   Emitter.includeInto(this)
 
+  realPath: null
+
   # Public: Creates a new file.
   #
   # path - A {String} containing the absolute path to the file
@@ -42,9 +44,19 @@ class File
 
   # Sets the path for the file.
   setPath: (@path) ->
+    @realPath = null
 
   # Public: Returns the {String} path for the file.
   getPath: -> @path
+
+  # Public: Returns this file's completely resolved path.
+  getRealPathSync: ->
+    unless @realPath?
+      try
+        @realPath = fs.realpathSync(@path)
+      catch error
+        @realPath = @path
+    @realPath
 
   # Public: Return the {String} filename without any directory information.
   getBaseName: ->
