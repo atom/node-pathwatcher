@@ -38,7 +38,7 @@
     "q": "~1.0.1",
     "emissary": "^1.1.0",
     "underscore-plus": "~1.x",
-    "fs-plus": "~2.x",
+    "fs-plus": "^2.1",
     "async": "~0.2.10",
     "runas": "~0.5.3"
   }
