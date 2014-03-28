@@ -1,5 +1,6 @@
 path = require 'path'
 fs = require 'fs-plus'
+temp = require 'temp'
 Directory = require '../lib/directory'
 PathWatcher = require '../lib/main'
 
@@ -111,6 +112,26 @@ describe "Directory", ->
       it "returns the full path if the directory's path is not a prefix of the path", ->
         expect(directory.relativize('/not/relative')).toBe '/not/relative'
 
+      it "handled case insensitive filesystems", ->
+        spyOn(fs, 'isCaseInsensitive').andReturn true
+        directoryPath = temp.mkdirSync('Mixed-case-directory-')
+        directory = new Directory(directoryPath)
+
+        expect(directory.relativize(directoryPath.toUpperCase())).toBe ""
+        expect(directory.relativize(path.join(directoryPath.toUpperCase(), "b"))).toBe "b"
+        expect(directory.relativize(path.join(directoryPath.toUpperCase(), "b/file.coffee"))).toBe "b/file.coffee"
+        expect(directory.relativize(path.join(directoryPath.toUpperCase(), "file.coffee"))).toBe "file.coffee"
+
+        expect(directory.relativize(directoryPath.toLowerCase())).toBe ""
+        expect(directory.relativize(path.join(directoryPath.toLowerCase(), "b"))).toBe "b"
+        expect(directory.relativize(path.join(directoryPath.toLowerCase(), "b/file.coffee"))).toBe "b/file.coffee"
+        expect(directory.relativize(path.join(directoryPath.toLowerCase(), "file.coffee"))).toBe "file.coffee"
+
+        expect(directory.relativize(directoryPath)).toBe ""
+        expect(directory.relativize(path.join(directoryPath, "b"))).toBe "b"
+        expect(directory.relativize(path.join(directoryPath, "b/file.coffee"))).toBe "b/file.coffee"
+        expect(directory.relativize(path.join(directoryPath, "file.coffee"))).toBe "file.coffee"
+
     describe "on #win32", ->
       it "returns a relative path based on the directory's path", ->
         absolutePath = directory.getPath()
@@ -125,12 +146,33 @@ describe "Directory", ->
   describe ".contains(path)", ->
     it "returns true if the path is a child of the directory's path", ->
       absolutePath = directory.getPath()
+      expect(directory.contains(path.join(absolutePath))).toBe false
       expect(directory.contains(path.join(absolutePath, "b"))).toBe true
       expect(directory.contains(path.join(absolutePath, "b", "file.coffee"))).toBe true
       expect(directory.contains(path.join(absolutePath, "file.coffee"))).toBe true
 
     it "returns false if the directory's path is not a prefix of the path", ->
       expect(directory.contains('/not/relative')).toBe false
+
+    it "handles case insensitive filesystems", ->
+      spyOn(fs, 'isCaseInsensitive').andReturn true
+      directoryPath = temp.mkdirSync('Mixed-case-directory-')
+      directory = new Directory(directoryPath)
+
+      expect(directory.contains(directoryPath.toUpperCase())).toBe false
+      expect(directory.contains(path.join(directoryPath.toUpperCase(), "b"))).toBe true
+      expect(directory.contains(path.join(directoryPath.toUpperCase(), "b", "file.coffee"))).toBe true
+      expect(directory.contains(path.join(directoryPath.toUpperCase(), "file.coffee"))).toBe true
+
+      expect(directory.contains(directoryPath.toLowerCase())).toBe false
+      expect(directory.contains(path.join(directoryPath.toLowerCase(), "b"))).toBe true
+      expect(directory.contains(path.join(directoryPath.toLowerCase(), "b", "file.coffee"))).toBe true
+      expect(directory.contains(path.join(directoryPath.toLowerCase(), "file.coffee"))).toBe true
+
+      expect(directory.contains(directoryPath)).toBe false
+      expect(directory.contains(path.join(directoryPath, "b"))).toBe true
+      expect(directory.contains(path.join(directoryPath, "b", "file.coffee"))).toBe true
+      expect(directory.contains(path.join(directoryPath, "file.coffee"))).toBe true
 
     describe "on #darwin or #linux", ->
       it "returns true if the path is a child of the directory's symlinked source path", ->

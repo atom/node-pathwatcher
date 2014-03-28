@@ -27,6 +27,8 @@ class Directory
       # Triggered by emissary, when the last contents-changed listener detaches
       @unsubscribeFromNativeChangeEvents()
 
+    @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
+
   # Public: Returns the {String} basename of the directory.
   getBaseName: ->
     path.basename(@path)
@@ -45,8 +47,10 @@ class Directory
     unless @realPath?
       try
         @realPath = fs.realpathSync(@path)
+        @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
       catch e
         @realPath = @path
+        @lowerCaseRealPath = @lowerCasePath if fs.isCaseInsensitive()
     @realPath
 
   # Public: Returns whether the given path (real or symbolic) is inside this
@@ -54,7 +58,22 @@ class Directory
   contains: (pathToCheck) ->
     return false unless pathToCheck
 
-    @isPathPrefixOf(@getPath(), pathToCheck) or @isPathPrefixOf(@getRealPathSync(), pathToCheck)
+    if fs.isCaseInsensitive()
+      directoryPath = @lowerCasePath
+      pathToCheck = pathToCheck.toLowerCase()
+    else
+      directoryPath = @path
+
+    return true if @isPathPrefixOf(directoryPath, pathToCheck)
+
+    # Check real path
+    @getRealPathSync()
+    if fs.isCaseInsensitive()
+      directoryPath = @lowerCaseRealPath
+    else
+      directoryPath = @realPath
+
+    @isPathPrefixOf(directoryPath, pathToCheck)
 
   # Public: Returns the relative path to the given path from this directory.
   relativize: (fullPath) ->
@@ -63,14 +82,29 @@ class Directory
     # Normalize forward slashes to back slashes on windows
     fullPath = fullPath.replace(/\//g, '\\') if process.platform is 'win32'
 
-    if fullPath is @getPath()
+    if fs.isCaseInsensitive()
+      pathToCheck = fullPath.toLowerCase()
+      directoryPath = @lowerCasePath
+    else
+      pathToCheck = fullPath
+      directoryPath = @path
+
+    if pathToCheck is directoryPath
+      return ''
+    else if @isPathPrefixOf(directoryPath, pathToCheck)
+      return fullPath.substring(directoryPath.length + 1)
+
+    # Check real path
+    @getRealPathSync()
+    if fs.isCaseInsensitive()
+      directoryPath = @lowerCaseRealPath
+    else
+      directoryPath = @realPath
+
+    if pathToCheck is directoryPath
       ''
-    else if @isPathPrefixOf(@getPath(), fullPath)
-      fullPath.substring(@getPath().length + 1)
-    else if fullPath is @getRealPathSync()
-      ''
-    else if @isPathPrefixOf(@getRealPathSync(), fullPath)
-      fullPath.substring(@getRealPathSync().length + 1)
+    else if @isPathPrefixOf(directoryPath, pathToCheck)
+      fullPath.substring(directoryPath.length + 1)
     else
       fullPath
 
