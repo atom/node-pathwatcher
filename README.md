@@ -1,4 +1,4 @@
-# Path Watcher Node Module [![Build Status](https://travis-ci.org/atom/node-pathwatcher.png?branch=master)](https://travis-ci.org/atom/node-pathwatcher)
+# Path Watcher Node Module [![Build Status](https://travis-ci.org/atom/node-pathwatcher.svg?branch=master)](https://travis-ci.org/atom/node-pathwatcher)
 
 ## Installing
 
