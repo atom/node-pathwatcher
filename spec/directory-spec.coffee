@@ -119,16 +119,19 @@ describe "Directory", ->
 
         expect(directory.relativize(directoryPath.toUpperCase())).toBe ""
         expect(directory.relativize(path.join(directoryPath.toUpperCase(), "b"))).toBe "b"
+        expect(directory.relativize(path.join(directoryPath.toUpperCase(), "B"))).toBe "B"
         expect(directory.relativize(path.join(directoryPath.toUpperCase(), "b/file.coffee"))).toBe "b/file.coffee"
         expect(directory.relativize(path.join(directoryPath.toUpperCase(), "file.coffee"))).toBe "file.coffee"
 
         expect(directory.relativize(directoryPath.toLowerCase())).toBe ""
         expect(directory.relativize(path.join(directoryPath.toLowerCase(), "b"))).toBe "b"
+        expect(directory.relativize(path.join(directoryPath.toLowerCase(), "B"))).toBe "B"
         expect(directory.relativize(path.join(directoryPath.toLowerCase(), "b/file.coffee"))).toBe "b/file.coffee"
         expect(directory.relativize(path.join(directoryPath.toLowerCase(), "file.coffee"))).toBe "file.coffee"
 
         expect(directory.relativize(directoryPath)).toBe ""
         expect(directory.relativize(path.join(directoryPath, "b"))).toBe "b"
+        expect(directory.relativize(path.join(directoryPath, "B"))).toBe "B"
         expect(directory.relativize(path.join(directoryPath, "b/file.coffee"))).toBe "b/file.coffee"
         expect(directory.relativize(path.join(directoryPath, "file.coffee"))).toBe "file.coffee"
 
@@ -161,16 +164,19 @@ describe "Directory", ->
 
       expect(directory.contains(directoryPath.toUpperCase())).toBe false
       expect(directory.contains(path.join(directoryPath.toUpperCase(), "b"))).toBe true
+      expect(directory.contains(path.join(directoryPath.toUpperCase(), "B"))).toBe true
       expect(directory.contains(path.join(directoryPath.toUpperCase(), "b", "file.coffee"))).toBe true
       expect(directory.contains(path.join(directoryPath.toUpperCase(), "file.coffee"))).toBe true
 
       expect(directory.contains(directoryPath.toLowerCase())).toBe false
       expect(directory.contains(path.join(directoryPath.toLowerCase(), "b"))).toBe true
+      expect(directory.contains(path.join(directoryPath.toLowerCase(), "B"))).toBe true
       expect(directory.contains(path.join(directoryPath.toLowerCase(), "b", "file.coffee"))).toBe true
       expect(directory.contains(path.join(directoryPath.toLowerCase(), "file.coffee"))).toBe true
 
       expect(directory.contains(directoryPath)).toBe false
       expect(directory.contains(path.join(directoryPath, "b"))).toBe true
+      expect(directory.contains(path.join(directoryPath, "B"))).toBe true
       expect(directory.contains(path.join(directoryPath, "b", "file.coffee"))).toBe true
       expect(directory.contains(path.join(directoryPath, "file.coffee"))).toBe true
 
