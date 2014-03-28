@@ -54,12 +54,7 @@ class Directory
   contains: (pathToCheck) ->
     return false unless pathToCheck
 
-    if pathToCheck.indexOf(path.join(@getPath(), path.sep)) is 0
-      true
-    else if pathToCheck.indexOf(path.join(@getRealPathSync(), path.sep)) is 0
-      true
-    else
-      false
+    @isPathPrefixOf(@getPath(), pathToCheck) or @isPathPrefixOf(@getRealPathSync(), pathToCheck)
 
   # Public: Returns the relative path to the given path from this directory.
   relativize: (fullPath) ->
