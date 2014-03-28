@@ -54,7 +54,8 @@ class Directory
     @realPath
 
   # Public: Returns whether the given path (real or symbolic) is inside this
-  # directory.
+  # directory. This method does not actually check if the path exists, it just
+  # checks if the path is under this directory.
   contains: (pathToCheck) ->
     return false unless pathToCheck
 
