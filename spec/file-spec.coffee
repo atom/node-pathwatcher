@@ -18,13 +18,11 @@ describe 'File', ->
     fs.removeSync(filePath)
     PathWatcher.closeAllWatchers()
 
-  describe 'identification', ->
+  it 'returns true from isFile()', ->
+    expect(file.isFile()).toBe true
 
-    it 'is a file', ->
-      expect(file.isFile()).toBe(true)
-
-    it "isn't a directory", ->
-      expect(file.isDirectory()).toBe(false)
+  it 'returns false from isDirectory()', ->
+    expect(file.isDirectory()).toBe false
 
   describe "when the file has not been read", ->
     describe "when the contents of the file change", ->
