@@ -42,6 +42,12 @@ class File
       subscriptionsEmpty = _.every eventNames, (eventName) => @getSubscriptionCount(eventName) is 0
       @unsubscribeFromNativeChangeEvents() if subscriptionsEmpty
 
+  # Public: Distinguishes Files from Directories during traversal.
+  isFile: -> true
+
+  # Public: Distinguishes Files from Directories during traversal.
+  isDirectory: -> false
+
   # Sets the path for the file.
   setPath: (@path) ->
     @realPath = null

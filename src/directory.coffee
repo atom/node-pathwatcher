@@ -39,6 +39,12 @@ class Directory
   # may be fully resolved, it depends on what you give it.
   getPath: -> @path
 
+  # Public: Distinguishes Files from Directories during traversal.
+  isFile: -> false
+
+  # Public: Distinguishes Files from Directories during traversal.
+  isDirectory: -> true
+
   # Public: Returns this directory's completely resolved path.
   #
   # All relative directory entries are removed and symlinks are resolved to
