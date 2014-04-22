@@ -14,6 +14,14 @@ describe "Directory", ->
     directory.off()
     PathWatcher.closeAllWatchers()
 
+  describe 'identification', ->
+
+    it 'is a directory', ->
+      expect(directory.isDirectory()).toBe(true)
+
+    it "isn't a file", ->
+      expect(directory.isFile()).toBe(false)
+
   describe "when the contents of the directory change on disk", ->
     temporaryFilePath = null
 
