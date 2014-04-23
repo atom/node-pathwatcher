@@ -33,6 +33,14 @@ describe 'File', ->
         waitsFor "change event", ->
           changeHandler.callCount > 0
 
+    describe "when the contents of the file are deleted", ->
+      it "triggers 'contents-changed' event handlers", ->
+        file.on 'contents-changed', changeHandler = jasmine.createSpy('changeHandler')
+        fs.writeFileSync(file.getPath(), "")
+
+        waitsFor "change event", ->
+          changeHandler.callCount > 0
+
   describe "when the file has already been read #darwin", ->
     beforeEach ->
       file.readSync()

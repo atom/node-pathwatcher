@@ -43,6 +43,10 @@ void PlatformThread() {
       int length = strlen(buffer);
       path.resize(length);
       std::copy(buffer, buffer + length, path.data());
+    } else if (event.fflags & NOTE_ATTRIB && lseek(fd, 0, SEEK_END) == 0) {
+      // The file became empty, this does not fire as a NOTE_WRITE event for
+      // some reason.
+      type = EVENT_CHANGE;
     } else {
       continue;
     }
@@ -63,7 +67,7 @@ WatcherHandle PlatformWatch(const char* path) {
   struct kevent event;
   int filter = EVFILT_VNODE;
   int flags = EV_ADD | EV_ENABLE | EV_CLEAR;
-  int fflags = NOTE_WRITE | NOTE_DELETE | NOTE_RENAME;
+  int fflags = NOTE_WRITE | NOTE_DELETE | NOTE_RENAME | NOTE_ATTRIB;
   EV_SET(&event, fd, filter, flags, fflags, 0, (void*)path);
   kevent(g_kqueue, &event, 1, NULL, 0, &timeout);
 
