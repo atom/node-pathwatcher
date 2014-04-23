@@ -43,7 +43,9 @@ void PlatformThread() {
       int length = strlen(buffer);
       path.resize(length);
       std::copy(buffer, buffer + length, path.data());
-    } else if (event.fflags & NOTE_ATTRIB && lseek(fd, 0, SEEK_END) == 0) { // Empty file event
+    } else if (event.fflags & NOTE_ATTRIB && lseek(fd, 0, SEEK_END) == 0) {
+      // The file became empty, this does not fire as a NOTE_WRITE event for
+      // some reason.
       type = EVENT_CHANGE;
     } else {
       continue;
