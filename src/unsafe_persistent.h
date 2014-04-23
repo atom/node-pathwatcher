@@ -21,7 +21,7 @@ template<typename TypeName> class NanUnsafePersistent {
   }
 
   NAN_INLINE(void Dispose()) {
-    NanDispose(*persistent());
+    NanDisposePersistent(*persistent());
     value = 0;
   }
 
