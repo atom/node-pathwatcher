@@ -167,6 +167,7 @@ class File
       @handleNativeChangeEvent("change", @getPath())
     else
       @cachedContents = null
+      @lastContentsChangedDigest = null
       @emit "removed"
 
   subscribeToNativeChangeEvents: ->
