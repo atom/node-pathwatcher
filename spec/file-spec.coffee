@@ -33,6 +33,9 @@ describe 'File', ->
         waitsFor "change event", ->
           changeHandler.callCount > 0
 
+        runs ->
+          expect(changeHandler.callCount).toBe 1
+
     describe "when the contents of the file are deleted", ->
       it "triggers 'contents-changed' event handlers", ->
         file.on 'contents-changed', changeHandler = jasmine.createSpy('changeHandler')
@@ -40,6 +43,9 @@ describe 'File', ->
 
         waitsFor "change event", ->
           changeHandler.callCount > 0
+
+        runs ->
+          expect(changeHandler.callCount).toBe 1
 
   describe "when the file has already been read #darwin", ->
     beforeEach ->

@@ -152,9 +152,10 @@ class File
         @setPath(eventPath)
         @emit "moved"
       when 'change'
-        oldContents = @cachedContents
         @read(true).done (newContents) =>
-          @emit 'contents-changed' unless oldContents is newContents
+          oldDigest = @lastContentsChangedDigest
+          @lastContentsChangedDigest = @digest
+          @emit 'contents-changed' unless oldDigest is @digest
 
   detectResurrectionAfterDelay: ->
     _.delay (=> @detectResurrection()), 50
