@@ -25,6 +25,7 @@ class File
     throw new Error("#{@path} is a directory") if fs.isDirectorySync(@path)
 
     @cachedContents = null
+    @lastContentsChangedDigest = null
     @handleEventSubscriptions()
 
   # Subscribes to file system notifications when necessary.
