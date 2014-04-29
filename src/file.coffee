@@ -15,8 +15,6 @@ module.exports =
 class File
   Emitter.includeInto(this)
 
-  realPath: null
-
   # Public: Creates a new file.
   #
   # path - A {String} containing the absolute path to the file
@@ -26,6 +24,8 @@ class File
 
     @cachedContents = null
     @lastContentsChangedDigest = null
+    @realPath = null
+
     @handleEventSubscriptions()
 
   # Subscribes to file system notifications when necessary.
