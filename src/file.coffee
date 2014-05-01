@@ -7,6 +7,7 @@ fs = require 'fs-plus'
 Q = require 'q'
 runas = require 'runas'
 
+Directory = null
 PathWatcher = require './main'
 
 # Public: Represents an individual file that can be watched, read from, and
@@ -54,6 +55,11 @@ class File
 
   # Public: Returns the {String} path for the file.
   getPath: -> @path
+
+  # Public: Return the {Directory} that contains this file.
+  getParent: ->
+    Directory = require './directory' unless Directory?
+    new Directory(path.dirname @getRealPathSync())
 
   # Public: Returns this file's completely resolved path.
   getRealPathSync: ->
