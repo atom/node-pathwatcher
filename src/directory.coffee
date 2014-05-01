@@ -64,6 +64,11 @@ class Directory
   getParent: ->
     new Directory(path.dirname @getRealPathSync())
 
+  # Public: Return true if this {Directory} is the root directory of the
+  # filesystem, or false if it isn't.
+  isRoot: ->
+    @getParent().getPath() is @getPath()
+
   # Public: Returns this directory's completely resolved path.
   #
   # All relative directory entries are removed and symlinks are resolved to

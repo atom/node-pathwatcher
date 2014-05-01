@@ -240,3 +240,15 @@ describe "Directory", ->
           d = directory.getParent()
           expect(d.isDirectory()).toBe(true)
           expect(d.getRealPathSync()).toBe(fixturePath())
+
+      describe "isRoot()", ->
+        it "returns false if the Directory isn't the root", ->
+          expect(directory.isRoot()).toBe(false)
+
+        it "returns true if the Directory is the root", ->
+          [current, previous] = [directory, null]
+          while current.getPath() isnt previous?.getPath()
+            previous = current
+            current = current.getParent()
+
+          expect(current.isRoot()).toBe(true)
