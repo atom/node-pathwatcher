@@ -192,3 +192,23 @@ describe "Directory", ->
         symlinkDirectory = new Directory(symlinkPath)
         realFilePath = require.resolve('./fixtures/dir/a')
         expect(symlinkDirectory.contains(realFilePath)).toBe true
+
+    describe "traversal", ->
+      beforeEach ->
+        directory = new Directory(path.join __dirname, 'fixtures', 'dir')
+
+      describe "file(filename)", ->
+        it "returns a File within this directory", ->
+          f = directory.file("a")
+          expect(f.isFile()).toBe(true)
+
+          expected = path.join __dirname, 'fixtures', 'dir', 'a'
+          expect(f.getRealPathSync()).toBe(expected)
+
+      describe "directory(dirname)", ->
+        it "returns a subdirectory within this directory", ->
+          d = directory.subdirectory("subdir")
+          expect(d.isDirectory()).toBe(true)
+
+          expected = path.join __dirname, 'fixtures', 'dir', 'subdir'
+          expect(d.getRealPathSync()).toBe(expected)

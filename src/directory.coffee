@@ -45,6 +45,21 @@ class Directory
   # Public: Distinguishes Files from Directories during traversal.
   isDirectory: -> true
 
+  # Public: Traverse within this Directory to a child File. This method doesn't
+  # actually check to see if the File exists, it just creates the File object.
+  #
+  # filename - The name of a File within this Directory.
+  file: (filename) ->
+    new File(path.join @getRealPathSync(), filename)
+
+  # Public: Traverse within this a Directory to a child Directory. This method
+  # doesn't actually check to see if the Directory exists, it just creates the
+  # Directory object.
+  #
+  # dirname - The name of the child Directory.
+  subdirectory: (dirname) ->
+    new Directory(path.join @getRealPathSync(), dirname)
+
   # Public: Returns this directory's completely resolved path.
   #
   # All relative directory entries are removed and symlinks are resolved to
