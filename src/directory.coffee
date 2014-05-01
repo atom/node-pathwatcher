@@ -50,7 +50,7 @@ class Directory
   #
   # filename - The name of a File within this Directory.
   getFile: (filename...) ->
-    new File(path.join @getRealPathSync(), filename...)
+    new File(path.join @getPath(), filename...)
 
   # Public: Traverse within this a Directory to a child Directory. This method
   # doesn't actually check to see if the Directory exists, it just creates the
@@ -58,16 +58,16 @@ class Directory
   #
   # dirname - The name of the child Directory.
   getSubdirectory: (dirname...) ->
-    new Directory(path.join @getRealPathSync(), dirname...)
+    new Directory(path.join @path, dirname...)
 
   # Public: Traverse to the parent Directory.
   getParent: ->
-    new Directory(path.dirname @getRealPathSync())
+    new Directory(path.join @path, '..')
 
   # Public: Return true if this {Directory} is the root directory of the
   # filesystem, or false if it isn't.
   isRoot: ->
-    @getParent().getPath() is @getPath()
+    @getParent().getRealPathSync() is @getRealPathSync()
 
   # Public: Returns this directory's completely resolved path.
   #

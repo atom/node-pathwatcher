@@ -59,7 +59,7 @@ class File
   # Public: Return the {Directory} that contains this file.
   getParent: ->
     Directory = require './directory' unless Directory?
-    new Directory(path.dirname @getRealPathSync())
+    new Directory(path.dirname @path)
 
   # Public: Returns this file's completely resolved path.
   getRealPathSync: ->
