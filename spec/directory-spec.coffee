@@ -197,18 +197,40 @@ describe "Directory", ->
       beforeEach ->
         directory = new Directory(path.join __dirname, 'fixtures', 'dir')
 
-      describe "file(filename)", ->
+      fixturePath = (parts...) ->
+        path.join __dirname, 'fixtures', parts...
+
+      describe "getFile(filename)", ->
         it "returns a File within this directory", ->
-          f = directory.file("a")
+          f = directory.getFile("a")
           expect(f.isFile()).toBe(true)
+          expect(f.getRealPathSync()).toBe(fixturePath 'dir', 'a')
 
-          expected = path.join __dirname, 'fixtures', 'dir', 'a'
-          expect(f.getRealPathSync()).toBe(expected)
+        it "can descend more than one directory at a time", ->
+          f = directory.getFile("subdir", "b")
+          expect(f.isFile()).toBe(true)
+          expect(f.getRealPathSync()).toBe(fixturePath 'dir', 'subdir', 'b')
 
-      describe "directory(dirname)", ->
+        it "doesn't have to actually exist", ->
+          f = directory.getFile("the-silver-bullet")
+          expect(f.isFile()).toBe(true)
+          expect(f.exists()).toBe(false)
+
+        it "does fail if you give it a directory though", ->
+          tryit = -> directory.getFile("subdir")
+          expect(tryit).toThrow()
+
+      describe "getSubdir(dirname)", ->
         it "returns a subdirectory within this directory", ->
-          d = directory.subdirectory("subdir")
+          d = directory.getSubdirectory("subdir")
           expect(d.isDirectory()).toBe(true)
+          expect(d.getRealPathSync()).toBe(fixturePath 'dir', 'subdir')
 
-          expected = path.join __dirname, 'fixtures', 'dir', 'subdir'
-          expect(d.getRealPathSync()).toBe(expected)
+        it "can descend more than one directory at a time", ->
+          d = directory.getSubdirectory("subdir", "subsubdir")
+          expect(d.isDirectory()).toBe(true)
+          expect(d.getRealPathSync()).toBe(fixturePath 'dir', 'subdir', 'subsubdir')
+
+        it "doesn't have to exist", ->
+          d = directory.getSubdirectory("why-would-you-call-a-directory-this-come-on-now")
+          expect(d.isDirectory()).toBe(true)

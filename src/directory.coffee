@@ -49,16 +49,16 @@ class Directory
   # actually check to see if the File exists, it just creates the File object.
   #
   # filename - The name of a File within this Directory.
-  file: (filename) ->
-    new File(path.join @getRealPathSync(), filename)
+  getFile: (filename...) ->
+    new File(path.join @getRealPathSync(), filename...)
 
   # Public: Traverse within this a Directory to a child Directory. This method
   # doesn't actually check to see if the Directory exists, it just creates the
   # Directory object.
   #
   # dirname - The name of the child Directory.
-  subdirectory: (dirname) ->
-    new Directory(path.join @getRealPathSync(), dirname)
+  getSubdirectory: (dirname...) ->
+    new Directory(path.join @getRealPathSync(), dirname...)
 
   # Public: Returns this directory's completely resolved path.
   #
