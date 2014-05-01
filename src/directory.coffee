@@ -60,6 +60,10 @@ class Directory
   getSubdirectory: (dirname...) ->
     new Directory(path.join @getRealPathSync(), dirname...)
 
+  # Public: Traverse to the parent Directory.
+  getParent: ->
+    new Directory(path.dirname @getRealPathSync())
+
   # Public: Returns this directory's completely resolved path.
   #
   # All relative directory entries are removed and symlinks are resolved to

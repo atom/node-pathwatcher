@@ -234,3 +234,9 @@ describe "Directory", ->
         it "doesn't have to exist", ->
           d = directory.getSubdirectory("why-would-you-call-a-directory-this-come-on-now")
           expect(d.isDirectory()).toBe(true)
+
+      describe "getParent()", ->
+        it "returns the parent Directory", ->
+          d = directory.getParent()
+          expect(d.isDirectory()).toBe(true)
+          expect(d.getRealPathSync()).toBe(fixturePath())
