@@ -58,7 +58,7 @@ class File
 
   # Public: Return the {Directory} that contains this file.
   getParent: ->
-    Directory = require './directory' unless Directory?
+    Directory ?= require './directory'
     new Directory(path.dirname @path)
 
   # Public: Returns this file's completely resolved path.
