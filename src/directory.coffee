@@ -66,7 +66,7 @@ class Directory
     return false unless pathToCheck
 
     # Normalize forward slashes to back slashes on windows
-    fullPath = fullPath.replace(/\//g, '\\') if process.platform is 'win32'
+    pathToCheck = pathToCheck.replace(/\//g, '\\') if process.platform is 'win32'
 
     if fs.isCaseInsensitive()
       directoryPath = @lowerCasePath
