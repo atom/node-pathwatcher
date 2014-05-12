@@ -7,6 +7,7 @@ fs = require 'fs-plus'
 Q = require 'q'
 runas = require 'runas'
 
+Directory = null
 PathWatcher = require './main'
 
 # Public: Represents an individual file that can be watched, read from, and
