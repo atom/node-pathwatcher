@@ -192,3 +192,63 @@ describe "Directory", ->
         symlinkDirectory = new Directory(symlinkPath)
         realFilePath = require.resolve('./fixtures/dir/a')
         expect(symlinkDirectory.contains(realFilePath)).toBe true
+
+    describe "traversal", ->
+      beforeEach ->
+        directory = new Directory(path.join __dirname, 'fixtures', 'dir')
+
+      fixturePath = (parts...) ->
+        path.join __dirname, 'fixtures', parts...
+
+      describe "getFile(filename)", ->
+        it "returns a File within this directory", ->
+          f = directory.getFile("a")
+          expect(f.isFile()).toBe(true)
+          expect(f.getRealPathSync()).toBe(fixturePath 'dir', 'a')
+
+        it "can descend more than one directory at a time", ->
+          f = directory.getFile("subdir", "b")
+          expect(f.isFile()).toBe(true)
+          expect(f.getRealPathSync()).toBe(fixturePath 'dir', 'subdir', 'b')
+
+        it "doesn't have to actually exist", ->
+          f = directory.getFile("the-silver-bullet")
+          expect(f.isFile()).toBe(true)
+          expect(f.exists()).toBe(false)
+
+        it "does fail if you give it a directory though", ->
+          tryit = -> directory.getFile("subdir")
+          expect(tryit).toThrow()
+
+      describe "getSubdir(dirname)", ->
+        it "returns a subdirectory within this directory", ->
+          d = directory.getSubdirectory("subdir")
+          expect(d.isDirectory()).toBe(true)
+          expect(d.getRealPathSync()).toBe(fixturePath 'dir', 'subdir')
+
+        it "can descend more than one directory at a time", ->
+          d = directory.getSubdirectory("subdir", "subsubdir")
+          expect(d.isDirectory()).toBe(true)
+          expect(d.getRealPathSync()).toBe(fixturePath 'dir', 'subdir', 'subsubdir')
+
+        it "doesn't have to exist", ->
+          d = directory.getSubdirectory("why-would-you-call-a-directory-this-come-on-now")
+          expect(d.isDirectory()).toBe(true)
+
+      describe "getParent()", ->
+        it "returns the parent Directory", ->
+          d = directory.getParent()
+          expect(d.isDirectory()).toBe(true)
+          expect(d.getRealPathSync()).toBe(fixturePath())
+
+      describe "isRoot()", ->
+        it "returns false if the Directory isn't the root", ->
+          expect(directory.isRoot()).toBe(false)
+
+        it "returns true if the Directory is the root", ->
+          [current, previous] = [directory, null]
+          while current.getPath() isnt previous?.getPath()
+            previous = current
+            current = current.getParent()
+
+          expect(current.isRoot()).toBe(true)

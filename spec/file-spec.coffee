@@ -157,3 +157,9 @@ describe 'File', ->
       fs.symlinkSync(path.join(tempDir, 'file2'), path.join(tempDir, 'file3'))
       tempFile.setPath(path.join(tempDir, 'file3'))
       expect(tempFile.getRealPathSync()).toBe fs.realpathSync(path.join(tempDir, 'file2'))
+
+  describe "getParent()", ->
+    it "gets the parent Directory", ->
+      d = file.getParent()
+      expected = path.join __dirname, 'fixtures'
+      expect(d.getRealPathSync()).toBe(expected)
