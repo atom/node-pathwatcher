@@ -144,19 +144,24 @@ describe 'File', ->
           changeHandler.callCount > 0
 
   describe "getRealPathSync()", ->
-    it "returns the resolved path to the file", ->
+    tempDir = null
+
+    beforeEach ->
       tempDir = temp.mkdirSync('node-pathwatcher-directory')
       fs.writeFileSync(path.join(tempDir, 'file'), '')
       fs.writeFileSync(path.join(tempDir, 'file2'), '')
 
+    it "returns the resolved path to the file", ->
       tempFile = new File(path.join(tempDir, 'file'))
       expect(tempFile.getRealPathSync()).toBe fs.realpathSync(path.join(tempDir, 'file'))
       tempFile.setPath(path.join(tempDir, 'file2'))
       expect(tempFile.getRealPathSync()).toBe fs.realpathSync(path.join(tempDir, 'file2'))
 
-      fs.symlinkSync(path.join(tempDir, 'file2'), path.join(tempDir, 'file3'))
-      tempFile.setPath(path.join(tempDir, 'file3'))
-      expect(tempFile.getRealPathSync()).toBe fs.realpathSync(path.join(tempDir, 'file2'))
+    describe "on #darwin and #linux", ->
+      it "returns the target path for symlinks", ->
+        fs.symlinkSync(path.join(tempDir, 'file2'), path.join(tempDir, 'file3'))
+        tempFile = new File(path.join(tempDir, 'file3'))
+        expect(tempFile.getRealPathSync()).toBe fs.realpathSync(path.join(tempDir, 'file2'))
 
   describe "getParent()", ->
     it "gets the parent Directory", ->
