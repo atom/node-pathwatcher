@@ -29,7 +29,7 @@
     "jasmine-tagged": "^1.1",
     "rimraf": "~2.2.0",
     "node-cpplint": "~0.1.5",
-    "grunt-coffeelint": "0.0.6",
+    "grunt-coffeelint": "git+https://github.com/atom/grunt-coffeelint.git",
     "temp": "~0.7.0"
   },
   "dependencies": {
