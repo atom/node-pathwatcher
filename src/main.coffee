@@ -11,6 +11,7 @@ binding.setCallback (event, handle, filePath, oldFilePath) ->
 
 class HandleWatcher extends EventEmitter
   constructor: (@path) ->
+    @setMaxListeners(Infinity)
     @start()
 
   onEvent: (event, filePath, oldFilePath) ->
