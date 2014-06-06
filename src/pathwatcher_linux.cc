@@ -8,9 +8,14 @@
 
 #include <algorithm>
 
+#include <map>
+#include <string>
+
 #include "common.h"
 
 static int g_inotify;
+
+static std::map<int, std::string> handlemap;
 
 void PlatformInit() {
   g_inotify = inotify_init();
@@ -43,7 +48,14 @@ void PlatformThread() {
 
       int fd = e->wd;
       EVENT_TYPE type;
-      std::vector<char> path;
+      std::string fullpath = handlemap[fd];
+
+      if (e->len > 0) {
+        fullpath +=  "/";
+        fullpath += e->name;
+      }
+
+      std::vector<char> path(fullpath.begin(), fullpath.end());
 
       // Note that inotify won't tell us where the file or directory has been
       // moved to, so we just treat IN_MOVE_SELF as file being deleted.
@@ -63,11 +75,15 @@ void PlatformThread() {
 WatcherHandle PlatformWatch(const char* path) {
   int fd = inotify_add_watch(g_inotify, path, IN_ATTRIB | IN_CREATE |
       IN_DELETE | IN_MODIFY | IN_MOVE | IN_MOVE_SELF | IN_DELETE_SELF);
+
+  handlemap[fd] = std::string(path);
+
   return fd;
 }
 
 void PlatformUnwatch(WatcherHandle fd) {
   inotify_rm_watch(g_inotify, fd);
+  handlemap.erase(fd);
 }
 
 bool PlatformIsHandleValid(WatcherHandle handle) {
