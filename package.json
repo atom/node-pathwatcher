@@ -34,12 +34,12 @@
   },
   "dependencies": {
     "bindings": "~1.1.0",
-    "nan": "0.8.0",
+    "nan": "1.2.0",
     "q": "~1.0.1",
     "emissary": "^1.1.0",
     "underscore-plus": "~1.x",
     "fs-plus": "^2.1",
     "async": "~0.2.10",
-    "runas": "~0.5.3"
+    "runas": "~0.6.1"
   }
 }
