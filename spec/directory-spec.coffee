@@ -14,6 +14,19 @@ describe "Directory", ->
     directory.off()
     PathWatcher.closeAllWatchers()
 
+  it "normalizes the specified path", ->
+    expect(new Directory(directory.path + path.sep + 'abc' + path.sep + '..').getBaseName()).toBe 'fixtures'
+    expect(new Directory(directory.path + path.sep + 'abc' + path.sep + '..').path.toLowerCase()).toBe directory.path.toLowerCase()
+
+    expect(new Directory(directory.path + path.sep).getBaseName()).toBe 'fixtures'
+    expect(new Directory(directory.path + path.sep).path.toLowerCase()).toBe directory.path.toLowerCase()
+
+    expect(new Directory(directory.path + path.sep + path.sep).getBaseName()).toBe 'fixtures'
+    expect(new Directory(directory.path + path.sep + path.sep).path.toLowerCase()).toBe directory.path.toLowerCase()
+
+    expect(new Directory(path.sep).getBaseName()).toBe ''
+    expect(new Directory(path.sep).path).toBe path.sep
+
   it 'returns false from isFile()', ->
     expect(directory.isFile()).toBe false
 
