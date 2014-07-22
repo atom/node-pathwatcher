@@ -18,6 +18,10 @@ describe 'File', ->
     fs.removeSync(filePath)
     PathWatcher.closeAllWatchers()
 
+  it "normalizes the specified path", ->
+    expect(new File(__dirname + path.sep + 'fixtures' + path.sep + 'abc' + path.sep + '..' + path.sep + 'file-test.txt').getBaseName()).toBe 'file-test.txt'
+    expect(new File(__dirname + path.sep + 'fixtures' + path.sep + 'abc' + path.sep + '..' + path.sep + 'file-test.txt').path.toLowerCase()).toBe file.path.toLowerCase()
+
   it 'returns true from isFile()', ->
     expect(file.isFile()).toBe true
 

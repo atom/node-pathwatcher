@@ -16,9 +16,16 @@ class Directory
 
   # Public: Configures a new Directory instance, no files are accessed.
   #
-  # path - A {String} containing the absolute path to the directory.
+  # directoryPath - A {String} containing the absolute path to the directory.
   # symlink - A {Boolean} indicating if the path is a symlink (default: false).
-  constructor: (@path, @symlink=false) ->
+  constructor: (directoryPath, @symlink=false) ->
+    if directoryPath
+      directoryPath = path.normalize(directoryPath)
+      # Remove a trailing slash
+      if directoryPath.length > 1 and directoryPath[directoryPath.length - 1] is path.sep
+        directoryPath = directoryPath.substring(0, directoryPath.length - 1)
+    @path = directoryPath
+
     @on 'first-contents-changed-subscription-will-be-added', =>
       # Triggered by emissary, when a new contents-changed listener attaches
       @subscribeToNativeChangeEvents()

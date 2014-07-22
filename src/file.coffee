@@ -20,10 +20,13 @@ class File
 
   # Public: Creates a new file.
   #
-  # path - A {String} containing the absolute path to the file
+  # filePath - A {String} containing the absolute path to the file
   # symlink - A {Boolean} indicating if the path is a symlink (default: false).
-  constructor: (@path, @symlink=false) ->
-    throw new Error("#{@path} is a directory") if fs.isDirectorySync(@path)
+  constructor: (filePath, @symlink=false) ->
+    throw new Error("#{filePath} is a directory") if fs.isDirectorySync(filePath)
+
+    filePath = path.normalize(filePath) if filePath
+    @path = filePath
 
     @cachedContents = null
     @handleEventSubscriptions()
