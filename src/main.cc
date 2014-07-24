@@ -1,6 +1,8 @@
 #include "common.h"
 #include "handle_map.h"
 
+namespace {
+
 void Init(Handle<Object> exports) {
   CommonInit();
   PlatformInit();
@@ -11,5 +13,7 @@ void Init(Handle<Object> exports) {
 
   HandleMap::Initialize(exports);
 }
+
+}  // namespace
 
 NODE_MODULE(pathwatcher, Init)
