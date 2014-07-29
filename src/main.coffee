@@ -1,4 +1,4 @@
-binding = require('bindings')('pathwatcher.node')
+binding = require('../build/Release/pathwatcher.node')
 HandleMap = binding.HandleMap
 {EventEmitter} = require 'events'
 fs = require 'fs'
