@@ -48,7 +48,6 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
         break;
       default:
         type = NanNew<String>("unknown");
-        fprintf(stderr, "Got unknown event: %d\n", g_type);
         return;
     }
 

@@ -15,7 +15,6 @@ static int g_inotify;
 void PlatformInit() {
   g_inotify = inotify_init();
   if (g_inotify == -1) {
-    perror("inotify_init");
     return;
   }
 
@@ -33,10 +32,8 @@ void PlatformThread() {
     } while (size == -1 && errno == EINTR);
 
     if (size == -1) {
-      perror("read");
       break;
     } else if (size == 0) {
-      fprintf(stderr, "read returns 0, buffer size is too small\n");
       break;
     }
 
@@ -66,9 +63,6 @@ void PlatformThread() {
 WatcherHandle PlatformWatch(const char* path) {
   int fd = inotify_add_watch(g_inotify, path, IN_ATTRIB | IN_CREATE |
       IN_DELETE | IN_MODIFY | IN_MOVE | IN_MOVE_SELF | IN_DELETE_SELF);
-  if (fd == -1)
-    perror("inotify_add_watch");
-
   return fd;
 }
 

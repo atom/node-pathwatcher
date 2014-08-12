@@ -253,7 +253,6 @@ WatcherHandle PlatformWatch(const char* path) {
   // Requires a directory, file watching is emulated in js.
   DWORD attr = GetFileAttributesW(wpath);
   if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
-    fprintf(stderr, "%s is not a directory\n", path);
     return INVALID_HANDLE_VALUE;
   }
 
@@ -267,7 +266,6 @@ WatcherHandle PlatformWatch(const char* path) {
                                            FILE_FLAG_OVERLAPPED,
                                          NULL);
   if (!PlatformIsHandleValid(dir_handle)) {
-    fprintf(stderr, "Unable to call CreateFileW for %s\n", path);
     return INVALID_HANDLE_VALUE;
   }
 
@@ -278,7 +276,6 @@ WatcherHandle PlatformWatch(const char* path) {
   }
 
   if (!QueueReaddirchanges(handle.get())) {
-    fprintf(stderr, "ReadDirectoryChangesW failed\n");
     return INVALID_HANDLE_VALUE;
   }
 
