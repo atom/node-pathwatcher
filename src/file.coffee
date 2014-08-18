@@ -16,8 +16,6 @@ module.exports =
 class File
   Emitter.includeInto(this)
 
-  realPath: null
-
   # Public: Creates a new file.
   #
   # filePath - A {String} containing the absolute path to the file
@@ -29,6 +27,9 @@ class File
     @path = filePath
 
     @cachedContents = null
+    @lastContentsChangedDigest = null
+    @realPath = null
+
     @handleEventSubscriptions()
 
   # Subscribes to file system notifications when necessary.
@@ -161,9 +162,10 @@ class File
         @setPath(eventPath)
         @emit "moved"
       when 'change'
-        oldContents = @cachedContents
         @read(true).done (newContents) =>
-          @emit 'contents-changed' unless oldContents is newContents
+          oldDigest = @lastContentsChangedDigest
+          @lastContentsChangedDigest = @digest
+          @emit 'contents-changed' unless oldDigest is @digest
 
   detectResurrectionAfterDelay: ->
     _.delay (=> @detectResurrection()), 50
@@ -174,6 +176,7 @@ class File
       @handleNativeChangeEvent("change", @getPath())
     else
       @cachedContents = null
+      @lastContentsChangedDigest = null
       @emit "removed"
 
   subscribeToNativeChangeEvents: ->
