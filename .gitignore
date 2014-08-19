@@ -4,3 +4,4 @@ node_modules/
 lib/
 .node-version
 npm-debug.log
+api.json
