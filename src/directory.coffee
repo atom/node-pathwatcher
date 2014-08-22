@@ -8,6 +8,13 @@ File = require './file'
 PathWatcher = require './main'
 
 # Public: Represents a directory on disk that can be watched for changes.
+#
+# ## Events
+#
+# ### contents-changed
+#
+# Fired when the contents of the directory has changed.
+#
 module.exports =
 class Directory
   Emitter.includeInto(this)
@@ -16,8 +23,9 @@ class Directory
 
   # Public: Configures a new Directory instance, no files are accessed.
   #
-  # directoryPath - A {String} containing the absolute path to the directory.
-  # symlink - A {Boolean} indicating if the path is a symlink (default: false).
+  # * `directoryPath` A {String} containing the absolute path to the directory
+  # * `symlink` (optional) A {Boolean} indicating if the path is a symlink,
+  #                        defaults to false.
   constructor: (directoryPath, @symlink=false) ->
     if directoryPath
       directoryPath = path.normalize(directoryPath)
@@ -40,22 +48,24 @@ class Directory
   getBaseName: ->
     path.basename(@path)
 
-  # Public: Returns the directory's symbolic path.
+  # Public: Returns the directory's {String} path.
   #
   # This may include unfollowed symlinks or relative directory entries. Or it
   # may be fully resolved, it depends on what you give it.
   getPath: -> @path
 
-  # Public: Distinguishes Files from Directories during traversal.
+  # Public: Returns a {Boolean}, always false.
   isFile: -> false
 
-  # Public: Distinguishes Files from Directories during traversal.
+  # Public: Returns a {Boolean}, always true.
   isDirectory: -> true
 
   # Public: Traverse within this Directory to a child File. This method doesn't
   # actually check to see if the File exists, it just creates the File object.
   #
-  # filename - The name of a File within this Directory.
+  # * `filename` The {String} name of a File within this Directory.
+  #
+  # Returns a {File}.
   getFile: (filename...) ->
     new File(path.join @getPath(), filename...)
 
@@ -63,20 +73,24 @@ class Directory
   # doesn't actually check to see if the Directory exists, it just creates the
   # Directory object.
   #
-  # dirname - The name of the child Directory.
+  # * `dirname` The {String} name of the child Directory.
+  #
+  # Returns a {Directory}.
   getSubdirectory: (dirname...) ->
     new Directory(path.join @path, dirname...)
 
-  # Public: Traverse to the parent Directory.
+  # Public: Traverse to the parent directory.
+  #
+  # Returns a {Directory}.
   getParent: ->
     new Directory(path.join @path, '..')
 
-  # Public: Return true if this {Directory} is the root directory of the
-  # filesystem, or false if it isn't.
+  # Public: Return a {Boolean}, true if this {Directory} is the root directory
+  # of the filesystem, or false if it isn't.
   isRoot: ->
     @getParent().getRealPathSync() is @getRealPathSync()
 
-  # Public: Returns this directory's completely resolved path.
+  # Public: Returns this directory's completely resolved {String} path.
   #
   # All relative directory entries are removed and symlinks are resolved to
   # their final destination.
@@ -116,7 +130,8 @@ class Directory
 
     @isPathPrefixOf(directoryPath, pathToCheck)
 
-  # Public: Returns the relative path to the given path from this directory.
+  # Public: Returns the relative {String} path to the given path from this
+  # directory.
   relativize: (fullPath) ->
     return fullPath unless fullPath
 
@@ -170,8 +185,9 @@ class Directory
 
   # Public: Reads file entries in this directory from disk asynchronously.
   #
-  # callback - A {Function} to call with an {Error} as the 1st argument and
-  #            an {Array} of {File} and {Directory} objects as the 2nd argument.
+  # * `callback` A {Function} to call with the following arguments:
+  #   * `error` An {Error}, may be null.
+  #   * `entries` An {Array} of {File} and {Directory} objects.
   getEntries: (callback) ->
     fs.list @path, (error, entries) ->
       return callback(error) if error?
@@ -198,7 +214,7 @@ class Directory
 
   subscribeToNativeChangeEvents: ->
     @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
-      @emit "contents-changed" if eventType is "change"
+      @emit 'contents-changed' if eventType is 'change'
 
   unsubscribeFromNativeChangeEvents: ->
     if @watchSubscription?

@@ -12,6 +12,21 @@ PathWatcher = require './main'
 
 # Public: Represents an individual file that can be watched, read from, and
 # written to.
+#
+# ## Events
+#
+# ### contents-changed
+#
+# Fired when the contents of the file has changed.
+#
+# ### moved
+#
+# Fired when the file has been renamed. {::getPath} will reflect the new path.
+#
+# ### removed
+#
+# Fired when the file has been deleted.
+#
 module.exports =
 class File
   Emitter.includeInto(this)
@@ -20,8 +35,8 @@ class File
 
   # Public: Creates a new file.
   #
-  # filePath - A {String} containing the absolute path to the file
-  # symlink - A {Boolean} indicating if the path is a symlink (default: false).
+  # `filePath` A {String} containing the absolute path to the file
+  # `symlink` A {Boolean} indicating if the path is a symlink (default: false).
   constructor: (filePath, @symlink=false) ->
     throw new Error("#{filePath} is a directory") if fs.isDirectorySync(filePath)
 
@@ -46,10 +61,10 @@ class File
       subscriptionsEmpty = _.every eventNames, (eventName) => @getSubscriptionCount(eventName) is 0
       @unsubscribeFromNativeChangeEvents() if subscriptionsEmpty
 
-  # Public: Distinguishes Files from Directories during traversal.
+  # Public: Returns a {Boolean}, always true.
   isFile: -> true
 
-  # Public: Distinguishes Files from Directories during traversal.
+  # Public: Returns a {Boolean}, always false.
   isDirectory: -> false
 
   # Sets the path for the file.
@@ -64,7 +79,7 @@ class File
     Directory ?= require './directory'
     new Directory(path.dirname @path)
 
-  # Public: Returns this file's completely resolved path.
+  # Public: Returns this file's completely resolved {String} path.
   getRealPathSync: ->
     unless @realPath?
       try
@@ -77,12 +92,17 @@ class File
   getBaseName: ->
     path.basename(@path)
 
-  # Public: Overwrites the file with the given String.
+  # Public: Overwrites the file with the given text.
+  #
+  # `text` - The {String} text to write to the underlying file.
+  #
+  # Return undefined.
   write: (text) ->
     previouslyExisted = @exists()
     @writeFileWithPrivilegeEscalationSync(@getPath(), text)
     @cachedContents = text
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
+    undefined
 
   readSync: (flushCache) ->
     if not @exists()
@@ -95,7 +115,7 @@ class File
 
   # Public: Reads the contents of the file.
   #
-  # flushCache - A {Boolean} indicating whether to require a direct read or if
+  # `flushCache` A {Boolean} indicating whether to require a direct read or if
   #              a cached copy is acceptable.
   #
   # Returns a promise that resovles to a String.
@@ -125,7 +145,7 @@ class File
       @setDigest(contents)
       @cachedContents = contents
 
-  # Public: Returns whether the file exists.
+  # Public: Returns a {Boolean}, true if the file exists, false otherwise.
   exists: ->
     fs.existsSync(@getPath())
 
@@ -133,6 +153,8 @@ class File
     @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
 
   # Public: Get the SHA-1 digest of this file
+  #
+  # Returns a {String}.
   getDigest: ->
     @digest ? @setDigest(@readSync())
 
@@ -159,7 +181,7 @@ class File
         @detectResurrectionAfterDelay()
       when 'rename'
         @setPath(eventPath)
-        @emit "moved"
+        @emit 'moved'
       when 'change'
         oldContents = @cachedContents
         @read(true).done (newContents) =>
@@ -171,10 +193,10 @@ class File
   detectResurrection: ->
     if @exists()
       @subscribeToNativeChangeEvents()
-      @handleNativeChangeEvent("change", @getPath())
+      @handleNativeChangeEvent('change', @getPath())
     else
       @cachedContents = null
-      @emit "removed"
+      @emit 'removed'
 
   subscribeToNativeChangeEvents: ->
     @watchSubscription ?= PathWatcher.watch @path, (args...) =>
