@@ -17,15 +17,15 @@ PathWatcher = require './main'
 #
 # ### contents-changed
 #
-# Fired when the contents of the file has changed.
+# Public: Fired when the contents of the file has changed.
 #
 # ### moved
 #
-# Fired when the file has been renamed. {::getPath} will reflect the new path.
+# Public: Fired when the file has been renamed. {::getPath} will reflect the new path.
 #
 # ### removed
 #
-# Fired when the file has been deleted.
+# Public: Fired when the file has been deleted.
 #
 module.exports =
 class File
@@ -35,8 +35,8 @@ class File
 
   # Public: Creates a new file.
   #
-  # `filePath` A {String} containing the absolute path to the file
-  # `symlink` A {Boolean} indicating if the path is a symlink (default: false).
+  # * `filePath` A {String} containing the absolute path to the file
+  # * `symlink` A {Boolean} indicating if the path is a symlink (default: false).
   constructor: (filePath, @symlink=false) ->
     throw new Error("#{filePath} is a directory") if fs.isDirectorySync(filePath)
 
@@ -94,7 +94,7 @@ class File
 
   # Public: Overwrites the file with the given text.
   #
-  # `text` - The {String} text to write to the underlying file.
+  # * `text` The {String} text to write to the underlying file.
   #
   # Return undefined.
   write: (text) ->
@@ -115,8 +115,8 @@ class File
 
   # Public: Reads the contents of the file.
   #
-  # `flushCache` A {Boolean} indicating whether to require a direct read or if
-  #              a cached copy is acceptable.
+  # * `flushCache` A {Boolean} indicating whether to require a direct read or if
+  #   a cached copy is acceptable.
   #
   # Returns a promise that resovles to a String.
   read: (flushCache) ->

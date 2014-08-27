@@ -13,7 +13,7 @@ PathWatcher = require './main'
 #
 # ### contents-changed
 #
-# Fired when the contents of the directory has changed.
+# Public: Fired when the contents of the directory has changed.
 #
 module.exports =
 class Directory
@@ -24,8 +24,8 @@ class Directory
   # Public: Configures a new Directory instance, no files are accessed.
   #
   # * `directoryPath` A {String} containing the absolute path to the directory
-  # * `symlink` (optional) A {Boolean} indicating if the path is a symlink,
-  #                        defaults to false.
+  # * `symlink` (optional) A {Boolean} indicating if the path is a symlink.
+  #   (default: false)
   constructor: (directoryPath, @symlink=false) ->
     if directoryPath
       directoryPath = path.normalize(directoryPath)
