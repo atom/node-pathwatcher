@@ -31,7 +31,7 @@
     "node-cpplint": "~0.1.5",
     "grunt-coffeelint": "git+https://github.com/atom/grunt-coffeelint.git",
     "temp": "~0.7.0",
-    "grunt-atomdoc": "^0.2.0"
+    "grunt-atomdoc": "^1.0"
   },
   "dependencies": {
     "nan": "1.2.0",
