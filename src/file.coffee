@@ -120,10 +120,11 @@ class File
   #
   # Returns a promise that resovles to a String.
   read: (flushCache) ->
+    Q ?= require 'q'
+
     if not @exists()
       promise = Q(null)
     else if not @cachedContents? or flushCache
-      Q ?= require 'q'
       deferred = Q.defer()
       promise = deferred.promise
       content = []
