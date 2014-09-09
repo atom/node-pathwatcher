@@ -4,8 +4,8 @@ path = require 'path'
 _ = require 'underscore-plus'
 {Emitter} = require 'emissary'
 fs = require 'fs-plus'
-Q = require 'q'
-runas = require 'runas'
+Q = null # Defer until used
+runas = null # Defer until used
 
 Directory = null
 PathWatcher = require './main'
@@ -123,6 +123,7 @@ class File
     if not @exists()
       promise = Q(null)
     else if not @cachedContents? or flushCache
+      Q ?= require 'q'
       deferred = Q.defer()
       promise = deferred.promise
       content = []
@@ -167,6 +168,7 @@ class File
       fs.writeFileSync(filePath, text)
     catch error
       if error.code is 'EACCES' and process.platform is 'darwin'
+        runas ?= require 'runas'
         # Use dd to read from stdin and write to filePath, same thing could be
         # done with tee but it would also copy the file to stdout.
         unless runas('/bin/dd', ["of=#{filePath}"], stdin: text, admin: true) is 0
