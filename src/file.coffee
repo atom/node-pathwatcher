@@ -69,14 +69,29 @@ class File
 
     EmitterMixin::on.apply(this, arguments)
 
+  # Public: Invoke the given callback when the file's contents change.
+  #
+  # * `callback` {Function} to be called when the file's contents change.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidChange: (callback) ->
     @willAddSubscription()
     @trackUnsubscription(@emitter.on('did-change', callback))
 
+  # Public: Invoke the given callback when the file's path changes.
+  #
+  # * `callback` {Function} to be called when the file's path changes.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidRename: (callback) ->
     @willAddSubscription()
     @trackUnsubscription(@emitter.on('did-rename', callback))
 
+  # Public: Invoke the given callback when the file is deleted.
+  #
+  # * `callback` {Function} to be called when the file is deleted.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidDelete: (callback) ->
     @willAddSubscription()
     @trackUnsubscription(@emitter.on('did-delete', callback))

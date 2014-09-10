@@ -44,6 +44,11 @@ class Directory
 
     @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
 
+  # Public: Invoke the given callback when the directory's contents change.
+  #
+  # * `callback` {Function} to be called when the directory's contents change.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
   onDidChange: (callback) ->
     @willAddSubscription()
     @trackUnsubscription(@emitter.on('did-change', callback))
