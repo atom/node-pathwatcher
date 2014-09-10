@@ -61,7 +61,7 @@ class File
         Grim.deprecate("Use explictly-named event subscription methods instead")
 
     @willAddSubscription()
-    EmitterMixin::on.apply(this, arguments)
+    @trackUnsubscription(EmitterMixin::on.apply(this, arguments))
 
   onDidChange: (callback) ->
     @willAddSubscription()
