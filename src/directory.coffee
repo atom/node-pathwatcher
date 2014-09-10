@@ -62,8 +62,6 @@ class Directory
   on: (eventName) ->
     if eventName is 'contents-changed'
       Grim.deprecate("Use Directory::onDidChange instead")
-    else
-      Grim.deprecate("Use explictly-named event subscription methods instead")
 
     EmitterMixin::on.apply(this, arguments)
 
