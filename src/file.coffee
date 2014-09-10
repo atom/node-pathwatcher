@@ -47,6 +47,13 @@ class File
     @path = filePath
     @emitter = new Emitter
 
+    @on 'contents-changed-subscription-will-be-added', @willAddSubscription
+    @on 'moved-subscription-will-be-added', @willAddSubscription
+    @on 'removed-subscription-will-be-added', @willAddSubscription
+    @on 'contents-changed-subscription-removed', @didRemoveSubscription
+    @on 'moved-subscription-removed', @didRemoveSubscription
+    @on 'removed-subscription-removed', @didRemoveSubscription
+
     @cachedContents = null
 
   on: (eventName) ->
@@ -60,8 +67,7 @@ class File
       else
         Grim.deprecate("Use explictly-named event subscription methods instead")
 
-    @willAddSubscription()
-    @trackUnsubscription(EmitterMixin::on.apply(this, arguments))
+    EmitterMixin::on.apply(this, arguments)
 
   onDidChange: (callback) ->
     @willAddSubscription()
@@ -75,11 +81,11 @@ class File
     @willAddSubscription()
     @trackUnsubscription(@emitter.on('did-delete', callback))
 
-  willAddSubscription: ->
+  willAddSubscription: =>
     @subscribeToNativeChangeEvents() if @exists() and @subscriptionCount is 0
     @subscriptionCount++
 
-  didRemoveSubscription: ->
+  didRemoveSubscription: =>
     @unsubscribeFromNativeChangeEvents() if @subscriptionCount is 0
     @subscriptionCount--
 

@@ -32,6 +32,9 @@ class Directory
   constructor: (directoryPath, @symlink=false) ->
     @emitter = new Emitter
 
+    @on 'contents-changed-subscription-will-be-added', @willAddSubscription
+    @on 'contents-changed-subscription-removed', @didRemoveSubscription
+
     if directoryPath
       directoryPath = path.normalize(directoryPath)
       # Remove a trailing slash
@@ -45,11 +48,11 @@ class Directory
     @willAddSubscription()
     @trackUnsubscription(@emitter.on('did-change', callback))
 
-  willAddSubscription: ->
+  willAddSubscription: =>
     @subscribeToNativeChangeEvents() if @subscriptionCount is 0
     @subscriptionCount++
 
-  didRemoveSubscription: ->
+  didRemoveSubscription: =>
     @unsubscribeFromNativeChangeEvents() if @subscriptionCount is 0
     @subscriptionCount--
 
@@ -64,8 +67,7 @@ class Directory
     else
       Grim.deprecate("Use explictly-named event subscription methods instead")
 
-    @willAddSubscription()
-    @trackUnsubscription(EmitterMixin::on.apply(this, arguments))
+    EmitterMixin::on.apply(this, arguments)
 
   # Public: Returns the {String} basename of the directory.
   getBaseName: ->
