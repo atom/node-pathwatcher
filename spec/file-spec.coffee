@@ -14,7 +14,7 @@ describe 'File', ->
     file = new File(filePath)
 
   afterEach ->
-    file.off()
+    file.unsubscribeFromNativeChangeEvents()
     fs.removeSync(filePath)
     PathWatcher.closeAllWatchers()
 
