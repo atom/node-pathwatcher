@@ -99,8 +99,8 @@ class File
     @subscriptionCount++
 
   didRemoveSubscription: =>
-    @unsubscribeFromNativeChangeEvents() if @subscriptionCount is 0
     @subscriptionCount--
+    @unsubscribeFromNativeChangeEvents() if @subscriptionCount is 0
 
   trackUnsubscription: (subscription) ->
     new Disposable =>
