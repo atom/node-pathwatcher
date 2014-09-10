@@ -1,8 +1,10 @@
 path = require 'path'
 
 async = require 'async'
-{Emitter} = require 'emissary'
+EmitterMixin = require('emissary').Emitter
+{Emitter, Disposable} = require 'event-kit'
 fs = require 'fs-plus'
+Grim = require 'grim'
 
 File = require './file'
 PathWatcher = require './main'
@@ -17,9 +19,10 @@ PathWatcher = require './main'
 #
 module.exports =
 class Directory
-  Emitter.includeInto(this)
+  EmitterMixin.includeInto(this)
 
   realPath: null
+  subscriptionCount: 0
 
   # Public: Configures a new Directory instance, no files are accessed.
   #
@@ -27,6 +30,8 @@ class Directory
   # * `symlink` (optional) A {Boolean} indicating if the path is a symlink.
   #   (default: false)
   constructor: (directoryPath, @symlink=false) ->
+    @emitter = new Emitter
+
     if directoryPath
       directoryPath = path.normalize(directoryPath)
       # Remove a trailing slash
@@ -34,15 +39,33 @@ class Directory
         directoryPath = directoryPath.substring(0, directoryPath.length - 1)
     @path = directoryPath
 
-    @on 'first-contents-changed-subscription-will-be-added', =>
-      # Triggered by emissary, when a new contents-changed listener attaches
-      @subscribeToNativeChangeEvents()
-
-    @on 'last-contents-changed-subscription-removed', =>
-      # Triggered by emissary, when the last contents-changed listener detaches
-      @unsubscribeFromNativeChangeEvents()
-
     @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
+
+  onDidChange: (callback) ->
+    @willAddSubscription()
+    @trackUnsubscription(@emitter.on('did-change', callback))
+
+  willAddSubscription: ->
+    @subscribeToNativeChangeEvents() if @subscriptionCount is 0
+    @subscriptionCount++
+
+  didRemoveSubscription: ->
+    @unsubscribeFromNativeChangeEvents() if @subscriptionCount is 0
+    @subscriptionCount--
+
+  trackUnsubscription: (subscription) ->
+    new Disposable =>
+      subscription.dispose()
+      @didRemoveSubscription()
+
+  on: (eventName) ->
+    if eventName is 'contents-changed'
+      Grim.deprecate("Use Directory::onDidChange instead")
+    else
+      Grim.deprecate("Use explictly-named event subscription methods instead")
+
+    @willAddSubscription()
+    @trackUnsubscription(EmitterMixin::on.apply(this, arguments))
 
   # Public: Returns the {String} basename of the directory.
   getBaseName: ->
@@ -214,7 +237,9 @@ class Directory
 
   subscribeToNativeChangeEvents: ->
     @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
-      @emit 'contents-changed' if eventType is 'change'
+      if eventType is 'change'
+        @emit 'contents-changed'
+        @emitter.emit 'did-change'
 
   unsubscribeFromNativeChangeEvents: ->
     if @watchSubscription?
