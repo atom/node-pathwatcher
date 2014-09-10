@@ -2,8 +2,10 @@ crypto = require 'crypto'
 path = require 'path'
 
 _ = require 'underscore-plus'
-{Emitter} = require 'emissary'
+EmitterMixin = require('emissary').Emitter
+{Emitter, Disposable} = require 'event-kit'
 fs = require 'fs-plus'
+Grim = require 'grim'
 Q = null # Defer until used
 runas = null # Defer until used
 
@@ -29,9 +31,10 @@ PathWatcher = require './main'
 #
 module.exports =
 class File
-  Emitter.includeInto(this)
+  EmitterMixin.includeInto(this)
 
   realPath: null
+  subscriptionCount: 0
 
   # Public: Creates a new file.
   #
@@ -42,24 +45,67 @@ class File
 
     filePath = path.normalize(filePath) if filePath
     @path = filePath
+    @emitter = new Emitter
+
+    @on 'contents-changed-subscription-will-be-added', @willAddSubscription
+    @on 'moved-subscription-will-be-added', @willAddSubscription
+    @on 'removed-subscription-will-be-added', @willAddSubscription
+    @on 'contents-changed-subscription-removed', @didRemoveSubscription
+    @on 'moved-subscription-removed', @didRemoveSubscription
+    @on 'removed-subscription-removed', @didRemoveSubscription
 
     @cachedContents = null
-    @handleEventSubscriptions()
 
-  # Subscribes to file system notifications when necessary.
-  handleEventSubscriptions: ->
-    eventNames = ['contents-changed', 'moved', 'removed']
+  on: (eventName) ->
+    switch eventName
+      when 'content-changed'
+        Grim.deprecate("Use File::onDidChange instead")
+      when 'moved'
+        Grim.deprecate("Use File::onDidRename instead")
+      when 'removed'
+        Grim.deprecate("Use File::onDidDelete instead")
 
-    subscriptionsAdded = eventNames.map (eventName) -> "first-#{eventName}-subscription-will-be-added"
-    @on subscriptionsAdded.join(' '), =>
-      # Only subscribe when a listener of eventName attaches (triggered by emissary)
-      @subscribeToNativeChangeEvents() if @exists()
+    EmitterMixin::on.apply(this, arguments)
 
-    subscriptionsRemoved = eventNames.map (eventName) -> "last-#{eventName}-subscription-removed"
-    @on subscriptionsRemoved.join(' '), =>
-      # Detach when the last listener of eventName detaches (triggered by emissary)
-      subscriptionsEmpty = _.every eventNames, (eventName) => @getSubscriptionCount(eventName) is 0
-      @unsubscribeFromNativeChangeEvents() if subscriptionsEmpty
+  # Public: Invoke the given callback when the file's contents change.
+  #
+  # * `callback` {Function} to be called when the file's contents change.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+  onDidChange: (callback) ->
+    @willAddSubscription()
+    @trackUnsubscription(@emitter.on('did-change', callback))
+
+  # Public: Invoke the given callback when the file's path changes.
+  #
+  # * `callback` {Function} to be called when the file's path changes.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+  onDidRename: (callback) ->
+    @willAddSubscription()
+    @trackUnsubscription(@emitter.on('did-rename', callback))
+
+  # Public: Invoke the given callback when the file is deleted.
+  #
+  # * `callback` {Function} to be called when the file is deleted.
+  #
+  # Returns a {Disposable} on which `.dispose()` can be called to unsubscribe.
+  onDidDelete: (callback) ->
+    @willAddSubscription()
+    @trackUnsubscription(@emitter.on('did-delete', callback))
+
+  willAddSubscription: =>
+    @subscribeToNativeChangeEvents() if @exists() and @subscriptionCount is 0
+    @subscriptionCount++
+
+  didRemoveSubscription: =>
+    @subscriptionCount--
+    @unsubscribeFromNativeChangeEvents() if @subscriptionCount is 0
+
+  trackUnsubscription: (subscription) ->
+    new Disposable =>
+      subscription.dispose()
+      @didRemoveSubscription()
 
   # Public: Returns a {Boolean}, always true.
   isFile: -> true
@@ -185,10 +231,13 @@ class File
       when 'rename'
         @setPath(eventPath)
         @emit 'moved'
+        @emitter.emit 'did-rename'
       when 'change'
         oldContents = @cachedContents
         @read(true).done (newContents) =>
-          @emit 'contents-changed' unless oldContents is newContents
+          unless oldContents is newContents
+            @emit 'contents-changed'
+            @emitter.emit 'did-change'
 
   detectResurrectionAfterDelay: ->
     _.delay (=> @detectResurrection()), 50
@@ -200,6 +249,7 @@ class File
     else
       @cachedContents = null
       @emit 'removed'
+      @emitter.emit 'did-delete'
 
   subscribeToNativeChangeEvents: ->
     @watchSubscription ?= PathWatcher.watch @path, (args...) =>
