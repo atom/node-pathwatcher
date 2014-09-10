@@ -10,13 +10,6 @@ File = require './file'
 PathWatcher = require './main'
 
 # Public: Represents a directory on disk that can be watched for changes.
-#
-# ## Events
-#
-# ### contents-changed
-#
-# Public: Fired when the contents of the directory has changed.
-#
 module.exports =
 class Directory
   EmitterMixin.includeInto(this)
