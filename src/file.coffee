@@ -57,6 +57,8 @@ class File
         Grim.deprecate("Use File::onDidRename instead")
       when 'removed'
         Grim.deprecate("Use File::onDidDelete instead")
+      else
+        Grim.deprecate("Use explictly-named event subscription methods instead")
 
     @willAddSubscription()
     EmitterMixin::on.apply(this, arguments)
