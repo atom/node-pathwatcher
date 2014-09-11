@@ -98,9 +98,6 @@ class Directory
   # may be fully resolved, it depends on what you give it.
   getPath: -> @path
 
-  # Public: Returns the {String} basename of the directory.
-  getBaseName: ->
-    path.basename(@path)
 
   # Public: Traverse within this Directory to a child File. This method doesn't
   # actually check to see if the File exists, it just creates the File object.
@@ -166,6 +163,9 @@ class Directory
       directoryPath = @realPath
 
     @isPathPrefixOf(directoryPath, pathToCheck)
+  # Public: Returns the {String} basename of the directory.
+  getBaseName: ->
+    path.basename(@path)
 
   # Public: Returns the relative {String} path to the given path from this
   # directory.
