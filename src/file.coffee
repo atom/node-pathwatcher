@@ -14,21 +14,6 @@ PathWatcher = require './main'
 
 # Public: Represents an individual file that can be watched, read from, and
 # written to.
-#
-# ## Events
-#
-# ### contents-changed
-#
-# Public: Fired when the contents of the file has changed.
-#
-# ### moved
-#
-# Public: Fired when the file has been renamed. {::getPath} will reflect the new path.
-#
-# ### removed
-#
-# Public: Fired when the file has been deleted.
-#
 module.exports =
 class File
   EmitterMixin.includeInto(this)
