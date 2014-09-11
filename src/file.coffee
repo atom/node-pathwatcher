@@ -143,18 +143,6 @@ class File
   Section: Reading and Writing
   ###
 
-  # Public: Overwrites the file with the given text.
-  #
-  # * `text` The {String} text to write to the underlying file.
-  #
-  # Return undefined.
-  write: (text) ->
-    previouslyExisted = @exists()
-    @writeFileWithPrivilegeEscalationSync(@getPath(), text)
-    @cachedContents = text
-    @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
-    undefined
-
   readSync: (flushCache) ->
     if not @exists()
       @cachedContents = null
@@ -197,6 +185,18 @@ class File
     promise.then (contents) =>
       @setDigest(contents)
       @cachedContents = contents
+
+  # Public: Overwrites the file with the given text.
+  #
+  # * `text` The {String} text to write to the underlying file.
+  #
+  # Return undefined.
+  write: (text) ->
+    previouslyExisted = @exists()
+    @writeFileWithPrivilegeEscalationSync(@getPath(), text)
+    @cachedContents = text
+    @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
+    undefined
 
   setDigest: (contents) ->
     @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
