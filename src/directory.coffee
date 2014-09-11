@@ -93,6 +93,11 @@ class Directory
   # Public: Returns a {Boolean}, always true.
   isDirectory: -> true
 
+  # Public: Return a {Boolean}, true if this {Directory} is the root directory
+  # of the filesystem, or false if it isn't.
+  isRoot: ->
+    @getParent().getRealPathSync() is @getRealPathSync()
+
   # Public: Traverse within this Directory to a child File. This method doesn't
   # actually check to see if the File exists, it just creates the File object.
   #
@@ -117,11 +122,6 @@ class Directory
   # Returns a {Directory}.
   getParent: ->
     new Directory(path.join @path, '..')
-
-  # Public: Return a {Boolean}, true if this {Directory} is the root directory
-  # of the filesystem, or false if it isn't.
-  isRoot: ->
-    @getParent().getRealPathSync() is @getRealPathSync()
 
   # Public: Returns this directory's completely resolved {String} path.
   #
