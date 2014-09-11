@@ -88,6 +88,10 @@ class Directory
   isRoot: ->
     @getParent().getRealPathSync() is @getRealPathSync()
 
+  ###
+  Section: Managing Paths
+  ###
+
   # Public: Returns the directory's {String} path.
   #
   # This may include unfollowed symlinks or relative directory entries. Or it
