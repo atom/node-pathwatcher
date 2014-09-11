@@ -121,11 +121,6 @@ class File
   setPath: (@path) ->
     @realPath = null
 
-  # Public: Return the {Directory} that contains this file.
-  getParent: ->
-    Directory ?= require './directory'
-    new Directory(path.dirname @path)
-
   # Public: Returns this file's completely resolved {String} path.
   getRealPathSync: ->
     unless @realPath?
@@ -138,6 +133,11 @@ class File
   # Public: Return the {String} filename without any directory information.
   getBaseName: ->
     path.basename(@path)
+
+  # Public: Return the {Directory} that contains this file.
+  getParent: ->
+    Directory ?= require './directory'
+    new Directory(path.dirname @path)
 
   ###
   Section: Reading and Writing
