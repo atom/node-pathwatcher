@@ -12,7 +12,7 @@ runas = null # Defer until used
 Directory = null
 PathWatcher = require './main'
 
-# Public: Represents an individual file that can be watched, read from, and
+# Extended: Represents an individual file that can be watched, read from, and
 # written to.
 module.exports =
 class File
