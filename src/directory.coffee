@@ -9,13 +9,17 @@ Grim = require 'grim'
 File = require './file'
 PathWatcher = require './main'
 
-# Public: Represents a directory on disk that can be watched for changes.
+# Extended: Represents a directory on disk that can be watched for changes.
 module.exports =
 class Directory
   EmitterMixin.includeInto(this)
 
   realPath: null
   subscriptionCount: 0
+
+  ###
+  Section: Construction
+  ###
 
   # Public: Configures a new Directory instance, no files are accessed.
   #
@@ -36,6 +40,10 @@ class Directory
     @path = directoryPath
 
     @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
+
+  ###
+  Section: Event Subscription
+  ###
 
   # Public: Invoke the given callback when the directory's contents change.
   #
@@ -65,15 +73,9 @@ class Directory
 
     EmitterMixin::on.apply(this, arguments)
 
-  # Public: Returns the {String} basename of the directory.
-  getBaseName: ->
-    path.basename(@path)
-
-  # Public: Returns the directory's {String} path.
-  #
-  # This may include unfollowed symlinks or relative directory entries. Or it
-  # may be fully resolved, it depends on what you give it.
-  getPath: -> @path
+  ###
+  Section: Directory Metadata
+  ###
 
   # Public: Returns a {Boolean}, always false.
   isFile: -> false
@@ -81,35 +83,20 @@ class Directory
   # Public: Returns a {Boolean}, always true.
   isDirectory: -> true
 
-  # Public: Traverse within this Directory to a child File. This method doesn't
-  # actually check to see if the File exists, it just creates the File object.
-  #
-  # * `filename` The {String} name of a File within this Directory.
-  #
-  # Returns a {File}.
-  getFile: (filename...) ->
-    new File(path.join @getPath(), filename...)
-
-  # Public: Traverse within this a Directory to a child Directory. This method
-  # doesn't actually check to see if the Directory exists, it just creates the
-  # Directory object.
-  #
-  # * `dirname` The {String} name of the child Directory.
-  #
-  # Returns a {Directory}.
-  getSubdirectory: (dirname...) ->
-    new Directory(path.join @path, dirname...)
-
-  # Public: Traverse to the parent directory.
-  #
-  # Returns a {Directory}.
-  getParent: ->
-    new Directory(path.join @path, '..')
-
   # Public: Return a {Boolean}, true if this {Directory} is the root directory
   # of the filesystem, or false if it isn't.
   isRoot: ->
     @getParent().getRealPathSync() is @getRealPathSync()
+
+  ###
+  Section: Managing Paths
+  ###
+
+  # Public: Returns the directory's {String} path.
+  #
+  # This may include unfollowed symlinks or relative directory entries. Or it
+  # may be fully resolved, it depends on what you give it.
+  getPath: -> @path
 
   # Public: Returns this directory's completely resolved {String} path.
   #
@@ -125,31 +112,9 @@ class Directory
         @lowerCaseRealPath = @lowerCasePath if fs.isCaseInsensitive()
     @realPath
 
-  # Public: Returns whether the given path (real or symbolic) is inside this
-  # directory. This method does not actually check if the path exists, it just
-  # checks if the path is under this directory.
-  contains: (pathToCheck) ->
-    return false unless pathToCheck
-
-    # Normalize forward slashes to back slashes on windows
-    pathToCheck = pathToCheck.replace(/\//g, '\\') if process.platform is 'win32'
-
-    if fs.isCaseInsensitive()
-      directoryPath = @lowerCasePath
-      pathToCheck = pathToCheck.toLowerCase()
-    else
-      directoryPath = @path
-
-    return true if @isPathPrefixOf(directoryPath, pathToCheck)
-
-    # Check real path
-    @getRealPathSync()
-    if fs.isCaseInsensitive()
-      directoryPath = @lowerCaseRealPath
-    else
-      directoryPath = @realPath
-
-    @isPathPrefixOf(directoryPath, pathToCheck)
+  # Public: Returns the {String} basename of the directory.
+  getBaseName: ->
+    path.basename(@path)
 
   # Public: Returns the relative {String} path to the given path from this
   # directory.
@@ -184,6 +149,35 @@ class Directory
       fullPath.substring(directoryPath.length + 1)
     else
       fullPath
+
+  ###
+  Section: Traversing
+  ###
+
+  # Public: Traverse to the parent directory.
+  #
+  # Returns a {Directory}.
+  getParent: ->
+    new Directory(path.join @path, '..')
+
+  # Public: Traverse within this Directory to a child File. This method doesn't
+  # actually check to see if the File exists, it just creates the File object.
+  #
+  # * `filename` The {String} name of a File within this Directory.
+  #
+  # Returns a {File}.
+  getFile: (filename...) ->
+    new File(path.join @getPath(), filename...)
+
+  # Public: Traverse within this a Directory to a child Directory. This method
+  # doesn't actually check to see if the Directory exists, it just creates the
+  # Directory object.
+  #
+  # * `dirname` The {String} name of the child Directory.
+  #
+  # Returns a {Directory}.
+  getSubdirectory: (dirname...) ->
+    new Directory(path.join @path, dirname...)
 
   # Public: Reads file entries in this directory from disk synchronously.
   #
@@ -232,6 +226,36 @@ class Directory
 
       async.eachLimit entries, 1, statEntry, ->
         callback(null, directories.concat(files))
+
+  # Public: Returns whether the given path (real or symbolic) is inside this
+  # directory. This method does not actually check if the path exists, it just
+  # checks if the path is under this directory.
+  contains: (pathToCheck) ->
+    return false unless pathToCheck
+
+    # Normalize forward slashes to back slashes on windows
+    pathToCheck = pathToCheck.replace(/\//g, '\\') if process.platform is 'win32'
+
+    if fs.isCaseInsensitive()
+      directoryPath = @lowerCasePath
+      pathToCheck = pathToCheck.toLowerCase()
+    else
+      directoryPath = @path
+
+    return true if @isPathPrefixOf(directoryPath, pathToCheck)
+
+    # Check real path
+    @getRealPathSync()
+    if fs.isCaseInsensitive()
+      directoryPath = @lowerCaseRealPath
+    else
+      directoryPath = @realPath
+
+    @isPathPrefixOf(directoryPath, pathToCheck)
+
+  ###
+  Section: Private
+  ###
 
   subscribeToNativeChangeEvents: ->
     @watchSubscription ?= PathWatcher.watch @path, (eventType) =>

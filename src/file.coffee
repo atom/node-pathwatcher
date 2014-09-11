@@ -12,29 +12,18 @@ runas = null # Defer until used
 Directory = null
 PathWatcher = require './main'
 
-# Public: Represents an individual file that can be watched, read from, and
+# Extended: Represents an individual file that can be watched, read from, and
 # written to.
-#
-# ## Events
-#
-# ### contents-changed
-#
-# Public: Fired when the contents of the file has changed.
-#
-# ### moved
-#
-# Public: Fired when the file has been renamed. {::getPath} will reflect the new path.
-#
-# ### removed
-#
-# Public: Fired when the file has been deleted.
-#
 module.exports =
 class File
   EmitterMixin.includeInto(this)
 
   realPath: null
   subscriptionCount: 0
+
+  ###
+  Section: Construction
+  ###
 
   # Public: Creates a new file.
   #
@@ -66,6 +55,10 @@ class File
         Grim.deprecate("Use File::onDidDelete instead")
 
     EmitterMixin::on.apply(this, arguments)
+
+  ###
+  Section: Event Subscription
+  ###
 
   # Public: Invoke the given callback when the file's contents change.
   #
@@ -107,23 +100,39 @@ class File
       subscription.dispose()
       @didRemoveSubscription()
 
+  ###
+  Section: File Metadata
+  ###
+
   # Public: Returns a {Boolean}, always true.
   isFile: -> true
 
   # Public: Returns a {Boolean}, always false.
   isDirectory: -> false
 
-  # Sets the path for the file.
-  setPath: (@path) ->
-    @realPath = null
+  # Public: Returns a {Boolean}, true if the file exists, false otherwise.
+  exists: ->
+    fs.existsSync(@getPath())
+
+  # Public: Get the SHA-1 digest of this file
+  #
+  # Returns a {String}.
+  getDigest: ->
+    @digest ? @setDigest(@readSync())
+
+  setDigest: (contents) ->
+    @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
+
+  ###
+  Section: Managing Paths
+  ###
 
   # Public: Returns the {String} path for the file.
   getPath: -> @path
 
-  # Public: Return the {Directory} that contains this file.
-  getParent: ->
-    Directory ?= require './directory'
-    new Directory(path.dirname @path)
+  # Sets the path for the file.
+  setPath: (@path) ->
+    @realPath = null
 
   # Public: Returns this file's completely resolved {String} path.
   getRealPathSync: ->
@@ -138,17 +147,18 @@ class File
   getBaseName: ->
     path.basename(@path)
 
-  # Public: Overwrites the file with the given text.
-  #
-  # * `text` The {String} text to write to the underlying file.
-  #
-  # Return undefined.
-  write: (text) ->
-    previouslyExisted = @exists()
-    @writeFileWithPrivilegeEscalationSync(@getPath(), text)
-    @cachedContents = text
-    @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
-    undefined
+  ###
+  Section: Traversing
+  ###
+
+  # Public: Return the {Directory} that contains this file.
+  getParent: ->
+    Directory ?= require './directory'
+    new Directory(path.dirname @path)
+
+  ###
+  Section: Reading and Writing
+  ###
 
   readSync: (flushCache) ->
     if not @exists()
@@ -193,18 +203,17 @@ class File
       @setDigest(contents)
       @cachedContents = contents
 
-  # Public: Returns a {Boolean}, true if the file exists, false otherwise.
-  exists: ->
-    fs.existsSync(@getPath())
-
-  setDigest: (contents) ->
-    @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
-
-  # Public: Get the SHA-1 digest of this file
+  # Public: Overwrites the file with the given text.
   #
-  # Returns a {String}.
-  getDigest: ->
-    @digest ? @setDigest(@readSync())
+  # * `text` The {String} text to write to the underlying file.
+  #
+  # Return undefined.
+  write: (text) ->
+    previouslyExisted = @exists()
+    @writeFileWithPrivilegeEscalationSync(@getPath(), text)
+    @cachedContents = text
+    @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
+    undefined
 
   # Writes the text to specified path.
   #
@@ -222,6 +231,10 @@ class File
           throw error
       else
         throw error
+
+  ###
+  Section: Private
+  ###
 
   handleNativeChangeEvent: (eventType, eventPath) ->
     switch eventType
