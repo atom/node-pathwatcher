@@ -123,6 +123,10 @@ class File
   setDigest: (contents) ->
     @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
 
+  ###
+  Section: Managing Paths
+  ###
+
   # Public: Returns the {String} path for the file.
   getPath: -> @path
 
@@ -142,6 +146,10 @@ class File
   # Public: Return the {String} filename without any directory information.
   getBaseName: ->
     path.basename(@path)
+
+  ###
+  Section: Traversing
+  ###
 
   # Public: Return the {Directory} that contains this file.
   getParent: ->
