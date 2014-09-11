@@ -224,6 +224,10 @@ class File
       else
         throw error
 
+  ###
+  Section: Private
+  ###
+
   handleNativeChangeEvent: (eventType, eventPath) ->
     switch eventType
       when 'delete'
