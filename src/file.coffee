@@ -135,6 +135,10 @@ class File
   getBaseName: ->
     path.basename(@path)
 
+  ###
+  Section: Reading and Writing
+  ###
+
   # Public: Overwrites the file with the given text.
   #
   # * `text` The {String} text to write to the underlying file.
