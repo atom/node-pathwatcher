@@ -9,7 +9,7 @@ Grim = require 'grim'
 File = require './file'
 PathWatcher = require './main'
 
-# Public: Represents a directory on disk that can be watched for changes.
+# Extended: Represents a directory on disk that can be watched for changes.
 module.exports =
 class Directory
   EmitterMixin.includeInto(this)
