@@ -77,16 +77,6 @@ class Directory
   Section: Directory Metadata
   ###
 
-  # Public: Returns the {String} basename of the directory.
-  getBaseName: ->
-    path.basename(@path)
-
-  # Public: Returns the directory's {String} path.
-  #
-  # This may include unfollowed symlinks or relative directory entries. Or it
-  # may be fully resolved, it depends on what you give it.
-  getPath: -> @path
-
   # Public: Returns a {Boolean}, always false.
   isFile: -> false
 
@@ -97,6 +87,16 @@ class Directory
   # of the filesystem, or false if it isn't.
   isRoot: ->
     @getParent().getRealPathSync() is @getRealPathSync()
+
+  # Public: Returns the directory's {String} path.
+  #
+  # This may include unfollowed symlinks or relative directory entries. Or it
+  # may be fully resolved, it depends on what you give it.
+  getPath: -> @path
+
+  # Public: Returns the {String} basename of the directory.
+  getBaseName: ->
+    path.basename(@path)
 
   # Public: Traverse within this Directory to a child File. This method doesn't
   # actually check to see if the File exists, it just creates the File object.
