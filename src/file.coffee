@@ -114,6 +114,15 @@ class File
   exists: ->
     fs.existsSync(@getPath())
 
+  # Public: Get the SHA-1 digest of this file
+  #
+  # Returns a {String}.
+  getDigest: ->
+    @digest ? @setDigest(@readSync())
+
+  setDigest: (contents) ->
+    @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
+
   # Public: Returns the {String} path for the file.
   getPath: -> @path
 
@@ -138,15 +147,6 @@ class File
   getParent: ->
     Directory ?= require './directory'
     new Directory(path.dirname @path)
-
-  # Public: Get the SHA-1 digest of this file
-  #
-  # Returns a {String}.
-  getDigest: ->
-    @digest ? @setDigest(@readSync())
-
-  setDigest: (contents) ->
-    @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
 
   ###
   Section: Reading and Writing
