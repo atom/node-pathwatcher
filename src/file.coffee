@@ -110,6 +110,10 @@ class File
   # Public: Returns a {Boolean}, always false.
   isDirectory: -> false
 
+  # Public: Returns a {Boolean}, true if the file exists, false otherwise.
+  exists: ->
+    fs.existsSync(@getPath())
+
   # Public: Returns the {String} path for the file.
   getPath: -> @path
 
@@ -193,10 +197,6 @@ class File
     promise.then (contents) =>
       @setDigest(contents)
       @cachedContents = contents
-
-  # Public: Returns a {Boolean}, true if the file exists, false otherwise.
-  exists: ->
-    fs.existsSync(@getPath())
 
   setDigest: (contents) ->
     @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
