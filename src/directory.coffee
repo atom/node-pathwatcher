@@ -112,31 +112,6 @@ class Directory
         @lowerCaseRealPath = @lowerCasePath if fs.isCaseInsensitive()
     @realPath
 
-  # Public: Returns whether the given path (real or symbolic) is inside this
-  # directory. This method does not actually check if the path exists, it just
-  # checks if the path is under this directory.
-  contains: (pathToCheck) ->
-    return false unless pathToCheck
-
-    # Normalize forward slashes to back slashes on windows
-    pathToCheck = pathToCheck.replace(/\//g, '\\') if process.platform is 'win32'
-
-    if fs.isCaseInsensitive()
-      directoryPath = @lowerCasePath
-      pathToCheck = pathToCheck.toLowerCase()
-    else
-      directoryPath = @path
-
-    return true if @isPathPrefixOf(directoryPath, pathToCheck)
-
-    # Check real path
-    @getRealPathSync()
-    if fs.isCaseInsensitive()
-      directoryPath = @lowerCaseRealPath
-    else
-      directoryPath = @realPath
-
-    @isPathPrefixOf(directoryPath, pathToCheck)
   # Public: Returns the {String} basename of the directory.
   getBaseName: ->
     path.basename(@path)
@@ -251,6 +226,36 @@ class Directory
 
       async.eachLimit entries, 1, statEntry, ->
         callback(null, directories.concat(files))
+
+  # Public: Returns whether the given path (real or symbolic) is inside this
+  # directory. This method does not actually check if the path exists, it just
+  # checks if the path is under this directory.
+  contains: (pathToCheck) ->
+    return false unless pathToCheck
+
+    # Normalize forward slashes to back slashes on windows
+    pathToCheck = pathToCheck.replace(/\//g, '\\') if process.platform is 'win32'
+
+    if fs.isCaseInsensitive()
+      directoryPath = @lowerCasePath
+      pathToCheck = pathToCheck.toLowerCase()
+    else
+      directoryPath = @path
+
+    return true if @isPathPrefixOf(directoryPath, pathToCheck)
+
+    # Check real path
+    @getRealPathSync()
+    if fs.isCaseInsensitive()
+      directoryPath = @lowerCaseRealPath
+    else
+      directoryPath = @realPath
+
+    @isPathPrefixOf(directoryPath, pathToCheck)
+
+  ###
+  Section: Private
+  ###
 
   subscribeToNativeChangeEvents: ->
     @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
