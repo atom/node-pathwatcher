@@ -21,6 +21,10 @@ class File
   realPath: null
   subscriptionCount: 0
 
+  ###
+  Section: Construction
+  ###
+
   # Public: Creates a new file.
   #
   # * `filePath` A {String} containing the absolute path to the file
@@ -51,6 +55,10 @@ class File
         Grim.deprecate("Use File::onDidDelete instead")
 
     EmitterMixin::on.apply(this, arguments)
+
+  ###
+  Section: Event Subscription
+  ###
 
   # Public: Invoke the given callback when the file's contents change.
   #
@@ -91,6 +99,10 @@ class File
     new Disposable =>
       subscription.dispose()
       @didRemoveSubscription()
+
+  ###
+  Section: File Metadata
+  ###
 
   # Public: Returns a {Boolean}, always true.
   isFile: -> true
