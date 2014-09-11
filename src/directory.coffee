@@ -17,6 +17,10 @@ class Directory
   realPath: null
   subscriptionCount: 0
 
+  ###
+  Section: Construction
+  ###
+
   # Public: Configures a new Directory instance, no files are accessed.
   #
   # * `directoryPath` A {String} containing the absolute path to the directory
@@ -36,6 +40,10 @@ class Directory
     @path = directoryPath
 
     @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
+
+  ###
+  Section: Event Subscription
+  ###
 
   # Public: Invoke the given callback when the directory's contents change.
   #
@@ -64,6 +72,10 @@ class Directory
       Grim.deprecate("Use Directory::onDidChange instead")
 
     EmitterMixin::on.apply(this, arguments)
+
+  ###
+  Section: Directory Metadata
+  ###
 
   # Public: Returns the {String} basename of the directory.
   getBaseName: ->
