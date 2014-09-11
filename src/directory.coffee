@@ -98,32 +98,6 @@ class Directory
   # may be fully resolved, it depends on what you give it.
   getPath: -> @path
 
-
-  # Public: Traverse within this Directory to a child File. This method doesn't
-  # actually check to see if the File exists, it just creates the File object.
-  #
-  # * `filename` The {String} name of a File within this Directory.
-  #
-  # Returns a {File}.
-  getFile: (filename...) ->
-    new File(path.join @getPath(), filename...)
-
-  # Public: Traverse within this a Directory to a child Directory. This method
-  # doesn't actually check to see if the Directory exists, it just creates the
-  # Directory object.
-  #
-  # * `dirname` The {String} name of the child Directory.
-  #
-  # Returns a {Directory}.
-  getSubdirectory: (dirname...) ->
-    new Directory(path.join @path, dirname...)
-
-  # Public: Traverse to the parent directory.
-  #
-  # Returns a {Directory}.
-  getParent: ->
-    new Directory(path.join @path, '..')
-
   # Public: Returns this directory's completely resolved {String} path.
   #
   # All relative directory entries are removed and symlinks are resolved to
@@ -200,6 +174,35 @@ class Directory
       fullPath.substring(directoryPath.length + 1)
     else
       fullPath
+
+  ###
+  Section: Traversing
+  ###
+
+  # Public: Traverse to the parent directory.
+  #
+  # Returns a {Directory}.
+  getParent: ->
+    new Directory(path.join @path, '..')
+
+  # Public: Traverse within this Directory to a child File. This method doesn't
+  # actually check to see if the File exists, it just creates the File object.
+  #
+  # * `filename` The {String} name of a File within this Directory.
+  #
+  # Returns a {File}.
+  getFile: (filename...) ->
+    new File(path.join @getPath(), filename...)
+
+  # Public: Traverse within this a Directory to a child Directory. This method
+  # doesn't actually check to see if the Directory exists, it just creates the
+  # Directory object.
+  #
+  # * `dirname` The {String} name of the child Directory.
+  #
+  # Returns a {Directory}.
+  getSubdirectory: (dirname...) ->
+    new Directory(path.join @path, dirname...)
 
   # Public: Reads file entries in this directory from disk synchronously.
   #
