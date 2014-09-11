@@ -110,12 +110,12 @@ class File
   # Public: Returns a {Boolean}, always false.
   isDirectory: -> false
 
+  # Public: Returns the {String} path for the file.
+  getPath: -> @path
+
   # Sets the path for the file.
   setPath: (@path) ->
     @realPath = null
-
-  # Public: Returns the {String} path for the file.
-  getPath: -> @path
 
   # Public: Return the {Directory} that contains this file.
   getParent: ->
