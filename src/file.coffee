@@ -139,6 +139,15 @@ class File
     Directory ?= require './directory'
     new Directory(path.dirname @path)
 
+  # Public: Get the SHA-1 digest of this file
+  #
+  # Returns a {String}.
+  getDigest: ->
+    @digest ? @setDigest(@readSync())
+
+  setDigest: (contents) ->
+    @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
+
   ###
   Section: Reading and Writing
   ###
@@ -197,15 +206,6 @@ class File
     @cachedContents = text
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
     undefined
-
-  setDigest: (contents) ->
-    @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
-
-  # Public: Get the SHA-1 digest of this file
-  #
-  # Returns a {String}.
-  getDigest: ->
-    @digest ? @setDigest(@readSync())
 
   # Writes the text to specified path.
   #
