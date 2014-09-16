@@ -26,28 +26,28 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
     Handle<String> type;
     switch (g_type) {
       case EVENT_CHANGE:
-        type = NanNew<String>("change");
+        type = NanNew("change");
         break;
       case EVENT_DELETE:
-        type = NanNew<String>("delete");
+        type = NanNew("delete");
         break;
       case EVENT_RENAME:
-        type = NanNew<String>("rename");
+        type = NanNew("rename");
         break;
       case EVENT_CHILD_CREATE:
-        type = NanNew<String>("child-create");
+        type = NanNew("child-create");
         break;
       case EVENT_CHILD_CHANGE:
-        type = NanNew<String>("child-change");
+        type = NanNew("child-change");
         break;
       case EVENT_CHILD_DELETE:
-        type = NanNew<String>("child-delete");
+        type = NanNew("child-delete");
         break;
       case EVENT_CHILD_RENAME:
-        type = NanNew<String>("child-rename");
+        type = NanNew("child-rename");
         break;
       default:
-        type = NanNew<String>("unknown");
+        type = NanNew("unknown");
         return;
     }
 
