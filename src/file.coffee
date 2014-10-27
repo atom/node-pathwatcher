@@ -19,9 +19,9 @@ module.exports =
 class File
   EmitterMixin.includeInto(this)
 
+  encoding: 'utf8'
   realPath: null
   subscriptionCount: 0
-  encoding: 'utf8'
 
   ###
   Section: Construction
@@ -125,6 +125,13 @@ class File
   setDigest: (contents) ->
     @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
 
+  # Public: Sets the file encoding name.
+  # * `encoding` The {String} encoding to use such as 'utf8'
+  setEncoding: (@encoding) ->
+
+  # Public: Returns the file encoding name.
+  getEncoding: -> @encoding
+
   ###
   Section: Managing Paths
   ###
@@ -135,12 +142,6 @@ class File
   # Sets the path for the file.
   setPath: (@path) ->
     @realPath = null
-
-  # Public: Sets the file encoding name.
-  setEncoding: (@encoding) ->
-
-  # Public: Returns the file encoding name.
-  getEncoding: -> @encoding
 
   # Public: Returns this file's completely resolved {String} path.
   getRealPathSync: ->
