@@ -172,3 +172,40 @@ describe 'File', ->
       d = file.getParent()
       expected = path.join __dirname, 'fixtures'
       expect(d.getRealPathSync()).toBe(expected)
+
+  describe 'encoding', ->
+    it "should be 'utf8' by default", ->
+      expect(file.getEncoding()).toBe('utf8')
+
+    it "should be settable", ->
+      file.setEncoding('cp1252')
+      expect(file.getEncoding()).toBe('cp1252')
+
+  describe 'encoding support', ->
+    unicodeText = 'ё'
+    unicodeBytes = new Buffer('\x51\x04') # 'ё'
+
+    it 'should read a file in UTF-16', ->
+      fs.writeFileSync(file.getPath(), unicodeBytes)
+      file.setEncoding('utf16le')
+
+      readHandler = jasmine.createSpy('read handler')
+      file.read().then (contents) ->
+        expect(contents).toBe(unicodeText)
+        readHandler()
+
+      waitsFor 'read handler', ->
+        readHandler.callCount > 0
+
+    it 'should readSync a file in UTF-16', ->
+      fs.writeFileSync(file.getPath(), unicodeBytes)
+      file.setEncoding('utf16le')
+      expect(file.readSync()).toBe(unicodeText)
+
+    it 'should write a file in UTF-16', ->
+      file.setEncoding('utf16le')
+      file.write(unicodeText)
+
+      expect(fs.statSync(file.getPath()).size).toBe(2)
+      content = fs.readFileSync(file.getPath()).toString('ascii')
+      expect(content).toBe(unicodeBytes.toString('ascii'))

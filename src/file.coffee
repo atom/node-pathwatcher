@@ -8,6 +8,7 @@ fs = require 'fs-plus'
 Grim = require 'grim'
 Q = null # Defer until used
 runas = null # Defer until used
+iconv = require 'iconv-lite'
 
 Directory = null
 PathWatcher = require './main'
@@ -20,6 +21,7 @@ class File
 
   realPath: null
   subscriptionCount: 0
+  encoding: 'utf8'
 
   ###
   Section: Construction
@@ -133,6 +135,11 @@ class File
   # Sets the path for the file.
   setPath: (@path) ->
     @realPath = null
+  # Public: Sets the file encoding name.
+  setEncoding: (@encoding) ->
+
+  # Public: Returns the file encoding name.
+  getEncoding: -> @encoding
 
   # Public: Returns this file's completely resolved {String} path.
   getRealPathSync: ->
@@ -164,7 +171,8 @@ class File
     if not @exists()
       @cachedContents = null
     else if not @cachedContents? or flushCache
-      @cachedContents = fs.readFileSync(@getPath(), 'utf8')
+      content = fs.readFileSync @getPath()
+      @cachedContents = iconv.decode content, @getEncoding()
 
     @setDigest(@cachedContents)
     @cachedContents
@@ -185,7 +193,8 @@ class File
       promise = deferred.promise
       content = []
       bytesRead = 0
-      readStream = fs.createReadStream @getPath(), encoding: 'utf8'
+      readStream = fs.createReadStream @getPath()
+      readStream = readStream.pipe(iconv.decodeStream @getEncoding())
       readStream.on 'data', (chunk) ->
         content.push(chunk)
         bytesRead += chunk.length
@@ -221,7 +230,8 @@ class File
   # permission to the path.
   writeFileWithPrivilegeEscalationSync: (filePath, text) ->
     try
-      fs.writeFileSync(filePath, text)
+      content = iconv.encode text, @getEncoding()
+      fs.writeFileSync(filePath, content, encoding: null)
     catch error
       if error.code is 'EACCES' and process.platform is 'darwin'
         runas ?= require 'runas'
