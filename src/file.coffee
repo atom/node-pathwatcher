@@ -135,6 +135,7 @@ class File
   # Sets the path for the file.
   setPath: (@path) ->
     @realPath = null
+
   # Public: Sets the file encoding name.
   setEncoding: (@encoding) ->
 
@@ -171,8 +172,8 @@ class File
     if not @exists()
       @cachedContents = null
     else if not @cachedContents? or flushCache
-      content = fs.readFileSync @getPath()
-      @cachedContents = iconv.decode content, @getEncoding()
+      contents = fs.readFileSync @getPath()
+      @cachedContents = iconv.decode contents, @getEncoding()
 
     @setDigest(@cachedContents)
     @cachedContents
@@ -230,8 +231,8 @@ class File
   # permission to the path.
   writeFileWithPrivilegeEscalationSync: (filePath, text) ->
     try
-      content = iconv.encode text, @getEncoding()
-      fs.writeFileSync(filePath, content, encoding: null)
+      contents = iconv.encode text, @getEncoding()
+      fs.writeFileSync filePath, contents
     catch error
       if error.code is 'EACCES' and process.platform is 'darwin'
         runas ?= require 'runas'
