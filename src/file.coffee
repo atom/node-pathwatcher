@@ -173,8 +173,8 @@ class File
     if not @exists()
       @cachedContents = null
     else if not @cachedContents? or flushCache
-      contents = fs.readFileSync @getPath()
-      @cachedContents = iconv.decode contents, @getEncoding()
+      contents = fs.readFileSync(@getPath())
+      @cachedContents = iconv.decode(contents, @getEncoding())
 
     @setDigest(@cachedContents)
     @cachedContents
@@ -195,8 +195,8 @@ class File
       promise = deferred.promise
       content = []
       bytesRead = 0
-      readStream = fs.createReadStream @getPath()
-      readStream = readStream.pipe(iconv.decodeStream @getEncoding())
+      readStream = fs.createReadStream(@getPath())
+      readStream = readStream.pipe(iconv.decodeStream(@getEncoding()))
       readStream.on 'data', (chunk) ->
         content.push(chunk)
         bytesRead += chunk.length
@@ -232,8 +232,7 @@ class File
   # permission to the path.
   writeFileWithPrivilegeEscalationSync: (filePath, text) ->
     try
-      contents = iconv.encode text, @getEncoding()
-      fs.writeFileSync filePath, contents
+      fs.writeFileSync(filePath, iconv.encode(text, @getEncoding()))
     catch error
       if error.code is 'EACCES' and process.platform is 'darwin'
         runas ?= require 'runas'
