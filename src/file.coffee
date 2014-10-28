@@ -131,7 +131,7 @@ class File
   # * `encoding` The {String} encoding to use such as 'utf8'
   setEncoding: (@encoding) ->
 
-  # Public: Returns the {String} file encoding name.
+  # Public: Returns the {String} file encoding name(default: 'utf8').
   getEncoding: -> @encoding
 
   ###
