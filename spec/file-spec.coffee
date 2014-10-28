@@ -190,12 +190,13 @@ describe 'File', ->
       file.setEncoding('utf16le')
 
       readHandler = jasmine.createSpy('read handler')
-      file.read().then (contents) ->
-        expect(contents).toBe(unicodeText)
-        readHandler()
+      file.read().then(readHandler)
 
       waitsFor 'read handler', ->
         readHandler.callCount > 0
+
+      runs ->
+        expect(readHandler.argsForCall[0][0]).toBe(unicodeText)
 
     it 'should readSync a file in UTF-16', ->
       fs.writeFileSync(file.getPath(), unicodeBytes)
