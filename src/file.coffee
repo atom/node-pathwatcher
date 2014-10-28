@@ -6,9 +6,10 @@ EmitterMixin = require('emissary').Emitter
 {Emitter, Disposable} = require 'event-kit'
 fs = require 'fs-plus'
 Grim = require 'grim'
-Q = null # Defer until used
+
+Q = null     # Defer until used
 runas = null # Defer until used
-iconv = require 'iconv-lite'
+iconv = null # Defer until used
 
 Directory = null
 PathWatcher = require './main'
@@ -173,11 +174,23 @@ class File
     if not @exists()
       @cachedContents = null
     else if not @cachedContents? or flushCache
-      contents = fs.readFileSync(@getPath())
-      @cachedContents = iconv.decode(contents, @getEncoding())
+      encoding = @getEncoding()
+      if encoding is 'utf8'
+        @cachedContents = fs.readFileSync(@getPath(), encoding)
+      else
+        iconv ?= require 'iconv-lite'
+        @cachedContents = iconv.decode(fs.readFileSync(@getPath()), encoding)
 
     @setDigest(@cachedContents)
     @cachedContents
+
+  writeFileSync: (filePath, contents) ->
+    encoding = @getEncoding()
+    if encoding is 'utf8'
+      fs.writeFileSync(filePath, text, {encoding})
+    else
+      iconv ?= require 'iconv-lite'
+      fs.writeFileSync(filePath, iconv.encode(contents, encoding))
 
   # Public: Reads the contents of the file.
   #
@@ -195,8 +208,14 @@ class File
       promise = deferred.promise
       content = []
       bytesRead = 0
-      readStream = fs.createReadStream(@getPath())
-      readStream = readStream.pipe(iconv.decodeStream(@getEncoding()))
+
+      encoding = @getEncoding()
+      if encoding is 'utf8'
+        readStream = fs.createReadStream(@getPath(), {encoding})
+      else
+        iconv ?= require 'iconv-lite'
+        readStream = fs.createReadStream(@getPath()).pipe(iconv.decodeStream(encoding))
+
       readStream.on 'data', (chunk) ->
         content.push(chunk)
         bytesRead += chunk.length
@@ -232,7 +251,7 @@ class File
   # permission to the path.
   writeFileWithPrivilegeEscalationSync: (filePath, text) ->
     try
-      fs.writeFileSync(filePath, iconv.encode(text, @getEncoding()))
+      @writeFileSync(filePath, text)
     catch error
       if error.code is 'EACCES' and process.platform is 'darwin'
         runas ?= require 'runas'
