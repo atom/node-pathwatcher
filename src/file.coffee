@@ -126,12 +126,12 @@ class File
   setDigest: (contents) ->
     @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
 
-  # Public: Sets the file encoding name.
+  # Public: Sets the file's character set encoding name.
   #
-  # * `encoding` The {String} encoding to use such as 'utf8'
-  setEncoding: (@encoding) ->
+  # * `encoding` The {String} encoding to use (default: 'utf8')
+  setEncoding: (@encoding='utf8') ->
 
-  # Public: Returns the {String} file encoding name (default: 'utf8').
+  # Public: Returns the {String} encoding name for this file (default: 'utf8').
   getEncoding: -> @encoding
 
   ###
