@@ -188,7 +188,7 @@ class File
   writeFileSync: (filePath, contents) ->
     encoding = @getEncoding()
     if encoding is 'utf8'
-      fs.writeFileSync(filePath, text, {encoding})
+      fs.writeFileSync(filePath, contents, {encoding})
     else
       iconv ?= require 'iconv-lite'
       fs.writeFileSync(filePath, iconv.encode(contents, encoding))
