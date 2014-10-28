@@ -182,8 +182,11 @@ describe 'File', ->
       expect(file.getEncoding()).toBe('cp1252')
 
   describe 'encoding support', ->
-    unicodeText = 'ё'
-    unicodeBytes = new Buffer('\x51\x04') # 'ё'
+    [unicodeText, unicodeBytes] = []
+
+    beforeEach ->
+      unicodeText = 'ё'
+      unicodeBytes = new Buffer('\x51\x04') # 'ё'
 
     it 'should read a file in UTF-16', ->
       fs.writeFileSync(file.getPath(), unicodeBytes)
