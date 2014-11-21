@@ -1,6 +1,7 @@
 #include "common.h"
 
 static uv_async_t g_async;
+static int g_watch_count;
 static uv_sem_t g_semaphore;
 static uv_thread_t g_thread;
 
@@ -21,6 +22,11 @@ static void MakeCallbackInMainThread(uv_async_t* handle) {
 static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
 #endif
   NanScope();
+
+  if (g_watch_count == 0) {
+    uv_close(reinterpret_cast<uv_handle_t*>(handle), NULL);
+    return;
+  }
 
   if (!g_callback.IsEmpty()) {
     Handle<String> type;
@@ -65,7 +71,7 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
 
 void CommonInit() {
   uv_sem_init(&g_semaphore, 0);
-  uv_async_init(uv_default_loop(), &g_async, MakeCallbackInMainThread);
+  g_watch_count = 0;
   uv_thread_create(&g_thread, &CommonThread, NULL);
 }
 
@@ -112,6 +118,10 @@ NAN_METHOD(Watch) {
   if (!PlatformIsHandleValid(handle))
     return NanThrowTypeError("Unable to watch path");
 
+  if (g_watch_count++ == 0) {
+    uv_async_init(uv_default_loop(), &g_async, MakeCallbackInMainThread);
+  }
+
   NanReturnValue(WatcherHandleToV8Value(handle));
 }
 
@@ -122,5 +132,10 @@ NAN_METHOD(Unwatch) {
     return NanThrowTypeError("Handle type required");
 
   PlatformUnwatch(V8ValueToWatcherHandle(args[0]));
+
+  if (g_watch_count > 0)
+    --g_watch_count;
+  uv_async_send(&g_async);
+
   NanReturnUndefined();
 }
