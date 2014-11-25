@@ -50,7 +50,7 @@ class File
 
   on: (eventName) ->
     switch eventName
-      when 'content-changed'
+      when 'contents-changed'
         Grim.deprecate("Use File::onDidChange instead")
       when 'moved'
         Grim.deprecate("Use File::onDidRename instead")
