@@ -23,11 +23,6 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
 #endif
   NanScope();
 
-  if (g_watch_count == 0) {
-    uv_close(reinterpret_cast<uv_handle_t*>(handle), NULL);
-    return;
-  }
-
   if (!g_callback.IsEmpty()) {
     Handle<String> type;
     switch (g_type) {
@@ -69,8 +64,21 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
   WakeupNewThread();
 }
 
+static void SetRef(bool value) {
+  uv_handle_t* h = reinterpret_cast<uv_handle_t*>(&g_async);
+  if (value) {
+    uv_ref(h);
+  } else {
+    uv_unref(h);
+  }
+}
+
 void CommonInit() {
   uv_sem_init(&g_semaphore, 0);
+  uv_async_init(uv_default_loop(), &g_async, MakeCallbackInMainThread);
+  // As long as any uv_ref'd uv_async_t handle remains active, the node
+  // process will never exit, so we must call uv_unref here (#47).
+  SetRef(false);
   g_watch_count = 0;
   uv_thread_create(&g_thread, &CommonThread, NULL);
 }
@@ -119,7 +127,7 @@ NAN_METHOD(Watch) {
     return NanThrowTypeError("Unable to watch path");
 
   if (g_watch_count++ == 0) {
-    uv_async_init(uv_default_loop(), &g_async, MakeCallbackInMainThread);
+    SetRef(true);
   }
 
   NanReturnValue(WatcherHandleToV8Value(handle));
@@ -133,9 +141,9 @@ NAN_METHOD(Unwatch) {
 
   PlatformUnwatch(V8ValueToWatcherHandle(args[0]));
 
-  if (g_watch_count > 0)
-    --g_watch_count;
-  uv_async_send(&g_async);
+  if (--g_watch_count == 0) {
+    SetRef(false);
+  }
 
   NanReturnUndefined();
 }
