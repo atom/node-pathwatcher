@@ -11,10 +11,12 @@
 #include "common.h"
 
 static int g_inotify;
+static int g_init_errno;
 
 void PlatformInit() {
   g_inotify = inotify_init();
   if (g_inotify == -1) {
+    g_init_errno = errno;
     return;
   }
 
@@ -61,8 +63,15 @@ void PlatformThread() {
 }
 
 WatcherHandle PlatformWatch(const char* path) {
+  if (g_inotify == -1) {
+    return -g_init_errno;
+  }
+
   int fd = inotify_add_watch(g_inotify, path, IN_ATTRIB | IN_CREATE |
       IN_DELETE | IN_MODIFY | IN_MOVE | IN_MOVE_SELF | IN_DELETE_SELF);
+  if (fd == -1) {
+    return -errno;
+  }
   return fd;
 }
 
@@ -72,4 +81,8 @@ void PlatformUnwatch(WatcherHandle fd) {
 
 bool PlatformIsHandleValid(WatcherHandle handle) {
   return handle >= 0;
+}
+
+int PlatformInvalidHandleToErrorNumber(WatcherHandle handle) {
+  return -handle;
 }

@@ -123,8 +123,26 @@ NAN_METHOD(Watch) {
 
   Handle<String> path = args[0]->ToString();
   WatcherHandle handle = PlatformWatch(*String::Utf8Value(path));
-  if (!PlatformIsHandleValid(handle))
-    return NanThrowTypeError("Unable to watch path");
+  if (!PlatformIsHandleValid(handle)) {
+    int error_number = PlatformInvalidHandleToErrorNumber(handle);
+    v8::Local<v8::Value> err =
+      v8::Exception::Error(NanNew<v8::String>("Unable to watch path"));
+    v8::Local<v8::Object> err_obj = err.As<v8::Object>();
+    if (error_number != 0) {
+      err_obj->Set(NanNew<v8::String>("errno"),
+                   NanNew<v8::Integer>(error_number));
+#if NODE_VERSION_AT_LEAST(0, 11, 5)
+      // Node 0.11.5 is the first version to contain libuv v0.11.6, which
+      // contains https://github.com/libuv/libuv/commit/3ee4d3f183 which changes
+      // uv_err_name from taking a struct uv_err_t (whose uv_err_code `code` is
+      // a difficult-to-produce uv-specific errno) to just take an int which is
+      // a negative errno.
+      err_obj->Set(NanNew<v8::String>("code"),
+                   NanNew<v8::String>(uv_err_name(-error_number)));
+#endif
+    }
+    return NanThrowError(err);
+  }
 
   if (g_watch_count++ == 0) {
     SetRef(true);

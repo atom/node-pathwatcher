@@ -10,9 +10,14 @@
 #include "common.h"
 
 static int g_kqueue;
+static int g_init_errno;
 
 void PlatformInit() {
   g_kqueue = kqueue();
+  if (g_kqueue == -1) {
+    g_init_errno = errno;
+    return;
+  }
 
   WakeupNewThread();
 }
@@ -56,9 +61,13 @@ void PlatformThread() {
 }
 
 WatcherHandle PlatformWatch(const char* path) {
+  if (g_kqueue == -1) {
+    return -g_init_errno;
+  }
+
   int fd = open(path, O_EVTONLY, 0);
   if (fd < 0) {
-    return fd;
+    return -errno;
   }
 
   struct timespec timeout = { 0, 0 };
@@ -67,7 +76,10 @@ WatcherHandle PlatformWatch(const char* path) {
   int flags = EV_ADD | EV_ENABLE | EV_CLEAR;
   int fflags = NOTE_WRITE | NOTE_DELETE | NOTE_RENAME | NOTE_ATTRIB;
   EV_SET(&event, fd, filter, flags, fflags, 0, (void*)path);
-  kevent(g_kqueue, &event, 1, NULL, 0, &timeout);
+  int r = kevent(g_kqueue, &event, 1, NULL, 0, &timeout);
+  if (r == -1) {
+    return -errno;
+  }
 
   return fd;
 }
@@ -78,4 +90,8 @@ void PlatformUnwatch(WatcherHandle fd) {
 
 bool PlatformIsHandleValid(WatcherHandle handle) {
   return handle >= 0;
+}
+
+int PlatformInvalidHandleToErrorNumber(WatcherHandle handle) {
+  return -handle;
 }
