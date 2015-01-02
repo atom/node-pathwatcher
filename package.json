@@ -36,7 +36,7 @@
   "dependencies": {
     "async": "~0.2.10",
     "emissary": "^1.1.0",
-    "event-kit": "^0.6.0",
+    "event-kit": "^1.0.0",
     "fs-plus": "^2.1",
     "grim": "^1.0.0",
     "iconv-lite": "~0.4.4",
