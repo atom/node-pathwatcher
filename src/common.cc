@@ -126,9 +126,8 @@ NAN_METHOD(Watch) {
   if (!PlatformIsHandleValid(handle))
     return NanThrowTypeError("Unable to watch path");
 
-  if (g_watch_count++ == 0) {
+  if (g_watch_count++ == 0)
     SetRef(true);
-  }
 
   NanReturnValue(WatcherHandleToV8Value(handle));
 }
@@ -141,9 +140,8 @@ NAN_METHOD(Unwatch) {
 
   PlatformUnwatch(V8ValueToWatcherHandle(args[0]));
 
-  if (--g_watch_count == 0) {
+  if (--g_watch_count == 0)
     SetRef(false);
-  }
 
   NanReturnUndefined();
 }
