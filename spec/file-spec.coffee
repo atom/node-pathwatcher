@@ -147,6 +147,54 @@ describe 'File', ->
         waitsFor "post-resurrection change event", ->
           changeHandler.callCount > 0
 
+    describe "when a file cannot be opened after the watch has been applied", ->
+      errorSpy = null
+      beforeEach ->
+        errorSpy = jasmine.createSpy()
+        errorSpy.andCallFake ({error, handle})->
+          handle()
+        file.onWillThrowWatchError errorSpy
+
+      describe "when the error happens in the promise callback chain", ->
+        beforeEach ->
+          spyOn(file, 'setDigest').andCallFake ->
+            error = new Error('ENOENT open "FUUU"')
+            error.code = 'ENOENT'
+            throw error
+
+        it "emits an event with the error when the error happens in the promise callback chain", ->
+          changeHandler = jasmine.createSpy('changeHandler')
+          file.onDidChange changeHandler
+          fs.writeFileSync(file.getPath(), "this is new!!")
+
+          waitsFor "change event", ->
+            errorSpy.callCount > 0
+
+          runs ->
+            args = errorSpy.mostRecentCall.args[0]
+            expect(args.error.code).toBe 'ENOENT'
+            expect(args.handle).toBeTruthy()
+
+      describe "when the error happens in the read method", ->
+        beforeEach ->
+          spyOn(file, 'read').andCallFake ->
+            error = new Error('ENOENT open "FUUU"')
+            error.code = 'ENOENT'
+            throw error
+
+        it "emits an event with the error when the error happens in the promise callback chain", ->
+          changeHandler = jasmine.createSpy('changeHandler')
+          file.onDidChange changeHandler
+          fs.writeFileSync(file.getPath(), "this is new!!")
+
+          waitsFor "change event", ->
+            errorSpy.callCount > 0
+
+          runs ->
+            args = errorSpy.mostRecentCall.args[0]
+            expect(args.error.code).toBe 'ENOENT'
+            expect(args.handle).toBeTruthy()
+
   describe "getRealPathSync()", ->
     tempDir = null
 

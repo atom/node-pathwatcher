@@ -90,6 +90,18 @@ class File
     @willAddSubscription()
     @trackUnsubscription(@emitter.on('did-delete', callback))
 
+  # Public: Invoke the given callback when there is an error with the watch.
+  # When your callback has been invoked, the file will have unsubscribed from
+  # the file watches.
+  #
+  # * `callback` {Function} callback
+  #   * `errorObject` {Object}
+  #     * `error` {Object} the error object
+  #     * `handle` {Function} call this to indicate you have handled the error.
+  #       The error will not be thrown if this function is called.
+  onWillThrowWatchError: (callback) ->
+    @emitter.on('will-throw-watch-error', callback)
+
   willAddSubscription: =>
     @subscribeToNativeChangeEvents() if @exists() and @subscriptionCount is 0
     @subscriptionCount++
@@ -278,10 +290,30 @@ class File
         @emitter.emit 'did-rename'
       when 'change'
         oldContents = @cachedContents
-        @read(true).done (newContents) =>
-          unless oldContents is newContents
-            @emit 'contents-changed'
-            @emitter.emit 'did-change'
+        handleReadError = (error) =>
+          # We cant read the file, so we GTFO on the watch
+          @unsubscribeFromNativeChangeEvents()
+
+          handled = false
+          handle = -> handled = true
+          @emitter.emit('will-throw-watch-error', {error, handle})
+          unless handled
+            newError = new Error("Cannot read file after file change event: #{@path}")
+            newError.originalError = error
+            newError.code = "ENOENT"
+            newError.path
+            # I want to throw the error here, but it stops the event loop or
+            # something. No longer do interval or timeout methods get run!
+            # throw newError
+            console.error newError
+
+        try
+          @read(true).catch(handleReadError).done (newContents) =>
+            unless oldContents is newContents
+              @emit 'contents-changed'
+              @emitter.emit 'did-change'
+        catch error
+          handleReadError(error)
 
   detectResurrectionAfterDelay: ->
     _.delay (=> @detectResurrection()), 50
