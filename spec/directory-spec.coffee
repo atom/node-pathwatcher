@@ -163,6 +163,19 @@ describe "Directory", ->
       it "returns the full path if the directory's path is not a prefix of the path", ->
         expect(directory.relativize('/not/relative')).toBe "\\not\\relative"
 
+  describe ".resolve(uri)", ->
+    describe "when passed an absolute or relative path", ->
+      it "returns an absolute path based on the directory's path", ->
+        absolutePath = require.resolve('./fixtures/dir/a')
+        expect(directory.resolve('dir/a')).toBe absolutePath
+        expect(directory.resolve(absolutePath + '/../a')).toBe absolutePath
+        expect(directory.resolve('dir/a/../a')).toBe absolutePath
+        expect(directory.resolve()).toBeUndefined()
+
+    describe "when passed a uri with a scheme", ->
+      it "does not modify uris that begin with a scheme", ->
+        expect(directory.resolve('http://zombo.com')).toBe 'http://zombo.com'
+
   describe ".contains(path)", ->
     it "returns true if the path is a child of the directory's path", ->
       absolutePath = directory.getPath()

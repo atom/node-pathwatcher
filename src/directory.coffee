@@ -150,6 +150,24 @@ class Directory
     else
       fullPath
 
+  # Given a relative path, this resolves it to an absolute path relative to this
+  # directory. If the path is already absolute or prefixed with a URI scheme, it
+  # is returned unchanged.
+  #
+  # * `uri` A {String} containing the path to resolve.
+  #
+  # Returns a {String} containing an absolute path or `undefined` if the given
+  # URI is falsy.
+  resolve: (relativePath) ->
+    return unless relativePath
+
+    if relativePath?.match(/[A-Za-z0-9+-.]+:\/\//) # leave path alone if it has a scheme
+      relativePath
+    else if fs.isAbsolute(relativePath)
+      path.normalize(fs.absolute(relativePath))
+    else
+      path.normalize(fs.absolute(path.join(@getPath(), relativePath)))
+
   ###
   Section: Traversing
   ###
