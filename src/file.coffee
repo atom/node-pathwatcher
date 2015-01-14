@@ -288,7 +288,7 @@ class File
         @setPath(eventPath)
         @emit 'moved'
         @emitter.emit 'did-rename'
-      when 'change'
+      when 'change', 'resurrect'
         oldContents = @cachedContents
         handleReadError = (error) =>
           # We cant read the file, so we GTFO on the watch
@@ -296,9 +296,10 @@ class File
 
           handled = false
           handle = -> handled = true
+          error.eventType = eventType
           @emitter.emit('will-throw-watch-error', {error, handle})
           unless handled
-            newError = new Error("Cannot read file after file change event: #{@path}")
+            newError = new Error("Cannot read file after file `#{eventType}` event: #{@path}")
             newError.originalError = error
             newError.code = "ENOENT"
             newError.path
@@ -321,7 +322,7 @@ class File
   detectResurrection: ->
     if @exists()
       @subscribeToNativeChangeEvents()
-      @handleNativeChangeEvent('change', @getPath())
+      @handleNativeChangeEvent('resurrect', @getPath())
     else
       @cachedContents = null
       @emit 'removed'
