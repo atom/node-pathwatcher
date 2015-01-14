@@ -173,6 +173,7 @@ describe 'File', ->
           runs ->
             args = errorSpy.mostRecentCall.args[0]
             expect(args.error.code).toBe 'ENOENT'
+            expect(args.error.eventType).toBe 'change'
             expect(args.handle).toBeTruthy()
 
       describe "when the error happens in the read method", ->
@@ -193,6 +194,7 @@ describe 'File', ->
           runs ->
             args = errorSpy.mostRecentCall.args[0]
             expect(args.error.code).toBe 'ENOENT'
+            expect(args.error.eventType).toBe 'change'
             expect(args.handle).toBeTruthy()
 
   describe "getRealPathSync()", ->
