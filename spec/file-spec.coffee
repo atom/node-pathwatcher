@@ -162,7 +162,7 @@ describe 'File', ->
             error.code = 'ENOENT'
             throw error
 
-        it "emits an event with the error when the error happens in the promise callback chain", ->
+        it "emits an event with the error", ->
           changeHandler = jasmine.createSpy('changeHandler')
           file.onDidChange changeHandler
           fs.writeFileSync(file.getPath(), "this is new!!")
@@ -183,7 +183,7 @@ describe 'File', ->
             error.code = 'ENOENT'
             throw error
 
-        it "emits an event with the error when the error happens in the promise callback chain", ->
+        it "emits an event with the error", ->
           changeHandler = jasmine.createSpy('changeHandler')
           file.onDidChange changeHandler
           fs.writeFileSync(file.getPath(), "this is new!!")
