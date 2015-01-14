@@ -296,6 +296,7 @@ class File
 
           handled = false
           handle = -> handled = true
+          error.eventType = eventType
           @emitter.emit('will-throw-watch-error', {error, handle})
           unless handled
             newError = new Error("Cannot read file after file `#{eventType}` event: #{@path}")
