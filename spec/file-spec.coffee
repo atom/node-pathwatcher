@@ -28,6 +28,15 @@ describe 'File', ->
   it 'returns false from isDirectory()', ->
     expect(file.isDirectory()).toBe false
 
+  it "throws an error when created with path that is a directory", ->
+    caughtError = null
+    try
+      new File(__dirname)
+    catch error
+      caughtError = error
+
+    expect(caughtError.code).toBe 'EISDIR'
+
   describe "when the file has not been read", ->
     describe "when the contents of the file change", ->
       it "notifies ::onDidChange observers", ->

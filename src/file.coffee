@@ -33,7 +33,10 @@ class File
   # * `filePath` A {String} containing the absolute path to the file
   # * `symlink` A {Boolean} indicating if the path is a symlink (default: false).
   constructor: (filePath, @symlink=false) ->
-    throw new Error("#{filePath} is a directory") if fs.isDirectorySync(filePath)
+    if fs.isDirectorySync(filePath)
+      error = new Error("#{filePath} is a directory")
+      error.code = 'EISDIR'
+      throw error
 
     filePath = path.normalize(filePath) if filePath
     @path = filePath
