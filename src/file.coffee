@@ -130,9 +130,8 @@ class File
 
   # Public: Returns a {Boolean}, true if the file exists, false otherwise.
   exists: ->
-    deferred = Q.defer()
-    fs.exists('/tmp', deferred.resolve); 
-    deferred.promise
+    Q.Promise (resolve, reject) =>
+      fs.exists @getPath(), resolve
 
   # Public: Returns a {Boolean}, true if the file exists, false otherwise.
   existsSync: ->
@@ -352,7 +351,7 @@ class File
 
   detectResurrection: ->
     @exists().then (exists) =>
-      if (exists)
+      if exists
         @subscribeToNativeChangeEvents()
         @handleNativeChangeEvent('resurrect', @getPath())
       else
