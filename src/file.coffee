@@ -7,7 +7,7 @@ EmitterMixin = require('emissary').Emitter
 fs = require 'fs-plus'
 Grim = require 'grim'
 
-Q = null     # Defer until used
+Q = require 'q'
 runas = null # Defer until used
 iconv = null # Defer until used
 
@@ -33,11 +33,6 @@ class File
   # * `filePath` A {String} containing the absolute path to the file
   # * `symlink` A {Boolean} indicating if the path is a symlink (default: false).
   constructor: (filePath, @symlink=false) ->
-    if fs.isDirectorySync(filePath)
-      error = new Error("#{filePath} is a directory")
-      error.code = 'EISDIR'
-      throw error
-
     filePath = path.normalize(filePath) if filePath
     @path = filePath
     @emitter = new Emitter
@@ -106,7 +101,12 @@ class File
     @emitter.on('will-throw-watch-error', callback)
 
   willAddSubscription: =>
-    @subscribeToNativeChangeEvents() if @exists() and @subscriptionCount is 0
+    if @subscriptionCount > 0
+      return
+    @exists().then (exists) =>
+      @subscribeToNativeChangeEvents() if @subscriptionCount is 0 and exists
+    .catch =>
+      @subscriptionCount--
     @subscriptionCount++
 
   didRemoveSubscription: =>
@@ -130,13 +130,30 @@ class File
 
   # Public: Returns a {Boolean}, true if the file exists, false otherwise.
   exists: ->
+    deferred = Q.defer()
+    fs.exists('/tmp', deferred.resolve); 
+    deferred.promise
+
+  # Public: Returns a {Boolean}, true if the file exists, false otherwise.
+  existsSync: ->
     fs.existsSync(@getPath())
 
   # Public: Get the SHA-1 digest of this file
   #
-  # Returns a {String}.
+  # Returns a promise that resolves to a {String}.
   getDigest: ->
-    @digest ? @setDigest(@readSync())
+    return Q(@digest) if @digest
+    @read().then (contents) =>
+      # read sets digest
+      @digest
+
+  # Public: Get the SHA-1 digest of this file
+  #
+  # Returns a {String}.
+  getDigestSync: ->
+    contents = @readSync()
+    # read sets digest
+    @digest
 
   setDigest: (contents) ->
     @digest = crypto.createHash('sha1').update(contents ? '').digest('hex')
@@ -162,12 +179,20 @@ class File
 
   # Public: Returns this file's completely resolved {String} path.
   getRealPathSync: ->
+    Grim.deprecate("Use File::getRealPath instead")
     unless @realPath?
       try
         @realPath = fs.realpathSync(@path)
       catch error
         @realPath = @path
     @realPath
+
+  # Public: Returns this file's completely resolved {String} path.
+  getRealPath: ->
+    if @realPath?
+      Q.resolve @realPath
+    else
+      Q.nfcall(fs.realpath, @path).then (@realPath) ->
 
   # Public: Return the {String} filename without any directory information.
   getBaseName: ->
@@ -187,7 +212,8 @@ class File
   ###
 
   readSync: (flushCache) ->
-    if not @exists()
+    Grim.deprecate("Use File::read instead")
+    if not @existsSync()
       @cachedContents = null
     else if not @cachedContents? or flushCache
       encoding = @getEncoding()
@@ -201,6 +227,7 @@ class File
     @cachedContents
 
   writeFileSync: (filePath, contents) ->
+    Grim.deprecate("Use File::write instead")
     encoding = @getEncoding()
     if encoding is 'utf8'
       fs.writeFileSync(filePath, contents, {encoding})
@@ -215,39 +242,37 @@ class File
   #
   # Returns a promise that resovles to a String.
   read: (flushCache) ->
-    Q ?= require 'q'
-
-    if not @exists()
-      promise = Q(null)
-    else if not @cachedContents? or flushCache
-      deferred = Q.defer()
-      promise = deferred.promise
-      content = []
-      bytesRead = 0
-
-      encoding = @getEncoding()
-      if encoding is 'utf8'
-        readStream = fs.createReadStream(@getPath(), {encoding})
+    @exists().then (exists) =>
+      return Q(null) unless exists
+      if @cachedContents? and not flushCache
+        promise = Q(@cachedContents)
       else
-        iconv ?= require 'iconv-lite'
-        readStream = fs.createReadStream(@getPath()).pipe(iconv.decodeStream(encoding))
+        deferred = Q.defer()
+        promise = deferred.promise
+        content = []
+        bytesRead = 0
 
-      readStream.on 'data', (chunk) ->
-        content.push(chunk)
-        bytesRead += chunk.length
-        deferred.notify(bytesRead)
+        encoding = @getEncoding()
+        if encoding is 'utf8'
+          readStream = fs.createReadStream(@getPath(), {encoding})
+        else
+          iconv ?= require 'iconv-lite'
+          readStream = fs.createReadStream(@getPath()).pipe(iconv.decodeStream(encoding))
 
-      readStream.on 'end', ->
-        deferred.resolve(content.join(''))
+        readStream.on 'data', (chunk) ->
+          content.push(chunk)
+          bytesRead += chunk.length
+          deferred.notify(bytesRead)
 
-      readStream.on 'error', (error) ->
-        deferred.reject(error)
-    else
-      promise = Q(@cachedContents)
+        readStream.on 'end', ->
+          deferred.resolve(content.join(''))
 
-    promise.then (contents) =>
-      @setDigest(contents)
-      @cachedContents = contents
+        readStream.on 'error', (error) ->
+          deferred.reject(error)
+
+      promise.then (contents) =>
+        @setDigest(contents)
+        @cachedContents = contents
 
   # Public: Overwrites the file with the given text.
   #
@@ -255,11 +280,14 @@ class File
   #
   # Return undefined.
   write: (text) ->
-    previouslyExisted = @exists()
-    @writeFileWithPrivilegeEscalationSync(@getPath(), text)
-    @cachedContents = text
-    @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
-    undefined
+    @exists().then (previouslyExisted) =>
+      @writeFile(@getPath(), text).then =>
+        @cachedContents = text
+        @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
+        undefined
+
+  writeFile: (filePath, text) ->
+    Q.nfcall(fs.writeFile, filePath, text, @getEncoding())
 
   # Writes the text to specified path.
   #
@@ -323,13 +351,14 @@ class File
     _.delay (=> @detectResurrection()), 50
 
   detectResurrection: ->
-    if @exists()
-      @subscribeToNativeChangeEvents()
-      @handleNativeChangeEvent('resurrect', @getPath())
-    else
-      @cachedContents = null
-      @emit 'removed'
-      @emitter.emit 'did-delete'
+    @exists().then (exists) =>
+      if (exists)
+        @subscribeToNativeChangeEvents()
+        @handleNativeChangeEvent('resurrect', @getPath())
+      else
+        @cachedContents = null
+        @emit 'removed'
+        @emitter.emit 'did-delete'
 
   subscribeToNativeChangeEvents: ->
     @watchSubscription ?= PathWatcher.watch @path, (args...) =>
