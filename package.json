@@ -40,7 +40,7 @@
     "fs-plus": "^2.1",
     "grim": "^1.0.0",
     "iconv-lite": "~0.4.4",
-    "nan": "1.2.0",
+    "nan": "https://atom.io/download/atom-shell/nan-1.6.1.tgz",
     "q": "~1.0.1",
     "runas": "^1.0.1",
     "underscore-plus": "~1.x"
