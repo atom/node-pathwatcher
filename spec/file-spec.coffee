@@ -321,7 +321,13 @@ describe 'File', ->
 
     it 'should write a file in UTF-16', ->
       file.setEncoding('utf16le')
-      file.write(unicodeText).then ->
+      writeHandler = jasmine.createSpy('write handler')
+      file.write(unicodeText).then(writeHandler)
+
+      waitsFor 'write handler', ->
+        writeHandler.callCount > 0
+
+      runs ->
         expect(fs.statSync(file.getPath()).size).toBe(2)
         content = fs.readFileSync(file.getPath()).toString('ascii')
         expect(content).toBe(unicodeBytes.toString('ascii'))

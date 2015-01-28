@@ -101,8 +101,7 @@ class File
     @emitter.on('will-throw-watch-error', callback)
 
   willAddSubscription: =>
-    if @subscriptionCount++ > 0
-      return
+    return if @subscriptionCount++ > 0
     try
       @subscribeToNativeChangeEvents()
     catch
@@ -287,7 +286,7 @@ class File
         @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
         undefined
 
-  writeFile: (filePath, text) ->
+  writeFile: (filePath, contents) ->
     encoding = @getEncoding()
     if encoding is 'utf8'
       Q.nfcall(fs.writeFile(filePath, contents, {encoding}))
