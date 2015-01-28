@@ -28,15 +28,6 @@ describe 'File', ->
   it 'returns false from isDirectory()', ->
     expect(file.isDirectory()).toBe false
 
-  it "throws an error when created with path that is a directory", ->
-    caughtError = null
-    try
-      new File(__dirname)
-    catch error
-      caughtError = error
-
-    expect(caughtError.code).toBe 'EISDIR'
-
   describe "when the file has not been read", ->
     describe "when the contents of the file change", ->
       it "notifies ::onDidChange observers", ->
@@ -226,6 +217,69 @@ describe 'File', ->
         tempFile = new File(path.join(tempDir, 'file3'))
         expect(tempFile.getRealPathSync()).toBe fs.realpathSync(path.join(tempDir, 'file2'))
 
+  describe "exists()", ->
+    tempDir = null
+
+    beforeEach ->
+      tempDir = temp.mkdirSync('node-pathwatcher-directory')
+      fs.writeFileSync(path.join(tempDir, 'file'), '')
+
+    it "does actually exist", ->
+      existingFile = new File(path.join(tempDir, 'file'))
+      existsHandler = jasmine.createSpy('exists handler')
+      existingFile.exists().then(existsHandler)
+      waitsFor 'exists handler', ->
+        existsHandler.callCount > 0
+      runs ->
+        expect(existsHandler.argsForCall[0][0]).toBe(true)
+
+    it "doesn't exist", ->
+      nonExistingFile = new File(path.join(tempDir, 'not_file'))
+      existsHandler = jasmine.createSpy('exists handler')
+      nonExistingFile.exists().then(existsHandler)
+      waitsFor 'exists handler', ->
+        existsHandler.callCount > 0
+      runs ->
+        expect(existsHandler.argsForCall[0][0]).toBe(false)
+
+  describe "getRealPath()", ->
+    tempDir = null
+
+    beforeEach ->
+      tempDir = temp.mkdirSync('node-pathwatcher-directory')
+      fs.writeFileSync(path.join(tempDir, 'file'), '')
+      fs.writeFileSync(path.join(tempDir, 'file2'), '')
+
+    it "returns the resolved path to the file", ->
+      tempFile = new File(path.join(tempDir, 'file'))
+      realpathHandler = jasmine.createSpy('realpath handler')
+      tempFile.getRealPath().then(realpathHandler)
+      waitsFor 'realpath handler', ->
+        realpathHandler.callCount > 0
+      runs ->
+        expect(realpathHandler.argsForCall[0][0]).toBe fs.realpathSync(path.join(tempDir, 'file'))
+
+    it "returns the resolved path to the file after setPath", ->
+      tempFile = new File(path.join(tempDir, 'file'))
+      tempFile.setPath(path.join(tempDir, 'file2'))
+      realpathHandler = jasmine.createSpy('realpath handler')
+      tempFile.getRealPath().then(realpathHandler)
+      waitsFor 'realpath handler', ->
+        realpathHandler.callCount > 0
+      runs ->
+        expect(realpathHandler.argsForCall[0][0]).toBe fs.realpathSync(path.join(tempDir, 'file2'))
+
+    describe "on #darwin and #linux", ->
+      it "returns the target path for symlinks", ->
+        fs.symlinkSync(path.join(tempDir, 'file2'), path.join(tempDir, 'file3'))
+        tempFile = new File(path.join(tempDir, 'file3'))
+        realpathHandler = jasmine.createSpy('realpath handler')
+        tempFile.getRealPath().then(realpathHandler)
+        waitsFor 'realpath handler', ->
+          realpathHandler.callCount > 0
+        runs ->
+          expect(realpathHandler.argsForCall[0][0]).toBe fs.realpathSync(path.join(tempDir, 'file2'))
+
   describe "getParent()", ->
     it "gets the parent Directory", ->
       d = file.getParent()
@@ -267,8 +321,7 @@ describe 'File', ->
 
     it 'should write a file in UTF-16', ->
       file.setEncoding('utf16le')
-      file.write(unicodeText)
-
-      expect(fs.statSync(file.getPath()).size).toBe(2)
-      content = fs.readFileSync(file.getPath()).toString('ascii')
-      expect(content).toBe(unicodeBytes.toString('ascii'))
+      file.write(unicodeText).then ->
+        expect(fs.statSync(file.getPath()).size).toBe(2)
+        content = fs.readFileSync(file.getPath()).toString('ascii')
+        expect(content).toBe(unicodeBytes.toString('ascii'))

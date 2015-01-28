@@ -101,13 +101,12 @@ class File
     @emitter.on('will-throw-watch-error', callback)
 
   willAddSubscription: =>
-    if @subscriptionCount > 0
+    if @subscriptionCount++ > 0
       return
-    @exists().then (exists) =>
-      @subscribeToNativeChangeEvents() if @subscriptionCount is 0 and exists
-    .catch =>
+    try
+      @subscribeToNativeChangeEvents()
+    catch
       @subscriptionCount--
-    @subscriptionCount++
 
   didRemoveSubscription: =>
     @subscriptionCount--
@@ -191,7 +190,8 @@ class File
     if @realPath?
       Q.resolve @realPath
     else
-      Q.nfcall(fs.realpath, @path).then (@realPath) ->
+      Q.nfcall(fs.realpath, @path).then (realPath) =>
+        @realPath = realPath
 
   # Public: Return the {String} filename without any directory information.
   getBaseName: ->
@@ -241,16 +241,15 @@ class File
   #
   # Returns a promise that resovles to a String.
   read: (flushCache) ->
-    @exists().then (exists) =>
-      return Q(null) unless exists
-      if @cachedContents? and not flushCache
-        promise = Q(@cachedContents)
-      else
-        deferred = Q.defer()
-        promise = deferred.promise
-        content = []
-        bytesRead = 0
+    if @cachedContents? and not flushCache
+      promise = Q(@cachedContents)
+    else
+      deferred = Q.defer()
+      promise = deferred.promise
+      content = []
+      bytesRead = 0
 
+      try
         encoding = @getEncoding()
         if encoding is 'utf8'
           readStream = fs.createReadStream(@getPath(), {encoding})
@@ -268,10 +267,13 @@ class File
 
         readStream.on 'error', (error) ->
           deferred.reject(error)
+      # when the file doesn't exist, fs.createReadStream will error
+      catch
+        promise = Q(null)
 
-      promise.then (contents) =>
-        @setDigest(contents)
-        @cachedContents = contents
+    promise.then (contents) =>
+      @setDigest(contents)
+      @cachedContents = contents
 
   # Public: Overwrites the file with the given text.
   #
@@ -286,7 +288,12 @@ class File
         undefined
 
   writeFile: (filePath, text) ->
-    Q.nfcall(fs.writeFile, filePath, text, @getEncoding())
+    encoding = @getEncoding()
+    if encoding is 'utf8'
+      Q.nfcall(fs.writeFile(filePath, contents, {encoding}))
+    else
+      iconv ?= require 'iconv-lite'
+      Q.nfcall(fs.writeFile, filePath, iconv.encode(contents, encoding))
 
   # Writes the text to specified path.
   #
