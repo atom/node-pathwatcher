@@ -247,28 +247,26 @@ class File
       promise = deferred.promise
       content = []
       bytesRead = 0
+      encoding = @getEncoding()
+      if encoding is 'utf8'
+        readStream = fs.createReadStream(@getPath(), {encoding})
+      else
+        iconv ?= require 'iconv-lite'
+        readStream = fs.createReadStream(@getPath()).pipe(iconv.decodeStream(encoding))
 
-      try
-        encoding = @getEncoding()
-        if encoding is 'utf8'
-          readStream = fs.createReadStream(@getPath(), {encoding})
+      readStream.on 'data', (chunk) ->
+        content.push(chunk)
+        bytesRead += chunk.length
+        deferred.notify(bytesRead)
+
+      readStream.on 'end', ->
+        deferred.resolve(content.join(''))
+
+      readStream.on 'error', (error) ->
+        if error.code == 'ENOENT'
+          deferred.resolve(null)
         else
-          iconv ?= require 'iconv-lite'
-          readStream = fs.createReadStream(@getPath()).pipe(iconv.decodeStream(encoding))
-
-        readStream.on 'data', (chunk) ->
-          content.push(chunk)
-          bytesRead += chunk.length
-          deferred.notify(bytesRead)
-
-        readStream.on 'end', ->
-          deferred.resolve(content.join(''))
-
-        readStream.on 'error', (error) ->
           deferred.reject(error)
-      # when the file doesn't exist, fs.createReadStream will error
-      catch
-        promise = Q(null)
 
     promise.then (contents) =>
       @setDigest(contents)

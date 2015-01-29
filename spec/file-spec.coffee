@@ -323,11 +323,19 @@ describe 'File', ->
       file.setEncoding('utf16le')
       writeHandler = jasmine.createSpy('write handler')
       file.write(unicodeText).then(writeHandler)
-
       waitsFor 'write handler', ->
         writeHandler.callCount > 0
-
       runs ->
         expect(fs.statSync(file.getPath()).size).toBe(2)
         content = fs.readFileSync(file.getPath()).toString('ascii')
         expect(content).toBe(unicodeBytes.toString('ascii'))
+
+  describe 'reading a non-existing file', ->
+    it 'should return null', ->
+      file = new File('not_existing.txt')
+      readHandler = jasmine.createSpy('read handler')
+      file.read().then(readHandler)
+      waitsFor 'read handler', ->
+        readHandler.callCount > 0
+      runs ->
+        expect(readHandler.argsForCall[0][0]).toBe(null)
