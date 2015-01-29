@@ -148,7 +148,7 @@ class File
   #
   # Returns a {String}.
   getDigestSync: ->
-    contents = @readSync()
+    @readSync()
     # read sets digest
     @digest
 
@@ -184,7 +184,7 @@ class File
         @realPath = @path
     @realPath
 
-  # Public: Returns this file's completely resolved {String} path.
+  # Public: Returns a promise that resolves to the file's completely resolved {String} path.
   getRealPath: ->
     if @realPath?
       Q.resolve @realPath
