@@ -126,7 +126,7 @@ class File
   # Public: Returns a {Boolean}, always false.
   isDirectory: -> false
 
-  # Public: Returns a {Boolean}, true if the file exists, false otherwise.
+  # Returns a promise that resolves to a {Boolean}, true if the file exists, false otherwise.
   exists: ->
     Q.Promise (resolve, reject) =>
       fs.exists @getPath(), resolve
@@ -187,7 +187,7 @@ class File
   # Public: Returns a promise that resolves to the file's completely resolved {String} path.
   getRealPath: ->
     if @realPath?
-      Q.resolve @realPath
+      Q(@realPath)
     else
       Q.nfcall(fs.realpath, @path).then (realPath) =>
         @realPath = realPath
