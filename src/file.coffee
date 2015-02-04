@@ -101,11 +101,9 @@ class File
     @emitter.on('will-throw-watch-error', callback)
 
   willAddSubscription: =>
-    return if @subscriptionCount++ > 0
+    @subscriptionCount++
     try
       @subscribeToNativeChangeEvents()
-    catch
-      @subscriptionCount--
 
   didRemoveSubscription: =>
     @subscriptionCount--
