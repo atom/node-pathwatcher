@@ -238,11 +238,7 @@ describe "Directory", ->
         it "doesn't have to actually exist", ->
           f = directory.getFile("the-silver-bullet")
           expect(f.isFile()).toBe(true)
-          expect(f.exists()).toBe(false)
-
-        it "does fail if you give it a directory though", ->
-          tryit = -> directory.getFile("subdir")
-          expect(tryit).toThrow()
+          expect(f.existsSync()).toBe(false)
 
       describe "getSubdir(dirname)", ->
         it "returns a subdirectory within this directory", ->
