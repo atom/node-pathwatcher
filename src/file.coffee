@@ -285,7 +285,7 @@ class File
   writeFile: (filePath, contents) ->
     encoding = @getEncoding()
     if encoding is 'utf8'
-      Q.nfcall(fs.writeFile(filePath, contents, {encoding}))
+      Q.nfcall(fs.writeFile, filePath, contents, {encoding})
     else
       iconv ?= require 'iconv-lite'
       Q.nfcall(fs.writeFile, filePath, iconv.encode(contents, encoding))
