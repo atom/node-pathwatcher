@@ -83,7 +83,7 @@ class Directory
   # Public: Returns a {Boolean}, always true.
   isDirectory: -> true
 
-  # Public: Returns a {Boolean}, true if the file exists, false otherwise.
+  # Public: Returns a {Boolean}, true if the directory exists, false otherwise.
   existsSync: ->
     fs.existsSync(@getPath())
 
