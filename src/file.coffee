@@ -130,6 +130,11 @@ class File
 
   # Public: Returns a {Boolean}, true if the file exists, false otherwise.
   exists: ->
+    Grim.deprecate("Use File::existsSync instead")
+    fs.existsSync(@getPath())
+
+  # Public: Returns a {Boolean}, true if the file exists, false otherwise.
+  existsSync: ->
     fs.existsSync(@getPath())
 
   # Public: Get the SHA-1 digest of this file
