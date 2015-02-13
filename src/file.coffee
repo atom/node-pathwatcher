@@ -106,7 +106,7 @@ class File
     @emitter.on('will-throw-watch-error', callback)
 
   willAddSubscription: =>
-    @subscribeToNativeChangeEvents() if @exists() and @subscriptionCount is 0
+    @subscribeToNativeChangeEvents() if @existsSync() and @subscriptionCount is 0
     @subscriptionCount++
 
   didRemoveSubscription: =>
@@ -131,7 +131,7 @@ class File
   # Public: Returns a {Boolean}, true if the file exists, false otherwise.
   exists: ->
     Grim.deprecate("Use File::existsSync instead")
-    fs.existsSync(@getPath())
+    @existsSync()
 
   # Public: Returns a {Boolean}, true if the file exists, false otherwise.
   existsSync: ->
@@ -192,7 +192,7 @@ class File
   ###
 
   readSync: (flushCache) ->
-    if not @exists()
+    if not @existsSync()
       @cachedContents = null
     else if not @cachedContents? or flushCache
       encoding = @getEncoding()
@@ -222,7 +222,7 @@ class File
   read: (flushCache) ->
     Q ?= require 'q'
 
-    if not @exists()
+    if not @existsSync()
       promise = Q(null)
     else if not @cachedContents? or flushCache
       deferred = Q.defer()
@@ -260,7 +260,7 @@ class File
   #
   # Return undefined.
   write: (text) ->
-    previouslyExisted = @exists()
+    previouslyExisted = @existsSync()
     @writeFileWithPrivilegeEscalationSync(@getPath(), text)
     @cachedContents = text
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
@@ -328,7 +328,7 @@ class File
     _.delay (=> @detectResurrection()), 50
 
   detectResurrection: ->
-    if @exists()
+    if @existsSync()
       @subscribeToNativeChangeEvents()
       @handleNativeChangeEvent('resurrect', @getPath())
     else
