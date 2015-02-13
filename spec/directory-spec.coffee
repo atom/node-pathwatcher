@@ -33,6 +33,10 @@ describe "Directory", ->
   it 'returns true from isDirectory()', ->
     expect(directory.isDirectory()).toBe true
 
+  describe "existsSync()", ->
+    it "returns true if the directory exists", ->
+      expect(directory.existsSync()).toBe true
+
   describe "when the contents of the directory change on disk", ->
     temporaryFilePath = null
 
