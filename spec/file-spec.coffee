@@ -28,6 +28,9 @@ describe 'File', ->
   it 'returns false from isDirectory()', ->
     expect(file.isDirectory()).toBe false
 
+  it "returns true if the file exists", ->
+    expect(file.existsSync()).toBe true
+
   it "throws an error when created with path that is a directory", ->
     caughtError = null
     try
