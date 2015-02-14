@@ -115,18 +115,17 @@ describe 'PathWatcher', ->
       fs.writeFileSync(tempFile, 'changed')
 
   describe 'when watching a file that does not exist', ->
-    it 'throws an error with a code', ->
+    it 'throws an error with a code #darwin #linux', ->
       doesNotExist = path.join(tempDir, 'does-not-exist')
       watcher = null
       try
         watcher = pathWatcher.watch doesNotExist, -> null
-      catch e
-        expect(e.message).toBe 'Unable to watch path'
-        expect(e.errno).toBe require('constants').ENOENT
-        if process.version.match /^v0\.1[12]/
-          expect(e.code).toBe 'ENOENT'
+      catch error
+        expect(error.message).toBe 'Unable to watch path'
+        expect(error.errno).toBe require('constants').ENOENT
+        if error.code?
+          expect(error.code).toBe 'ENOENT'
       expect(watcher).toBe null  # ensure it threw
-
 
   describe 'when watching multiple files under the same directory', ->
     it 'fires the callbacks when both of the files are modifiled', ->
