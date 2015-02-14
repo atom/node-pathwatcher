@@ -47,7 +47,7 @@ module.exports = (grunt) ->
           failOnError: true
 
       test:
-        command: 'node --harmony-collections node_modules/jasmine-tagged/bin/jasmine-tagged --captureExceptions --coffee spec/'
+        command: 'node node_modules/jasmine-tagged/bin/jasmine-tagged --captureExceptions --coffee spec/'
         options:
           stdout: true
           stderr: true
