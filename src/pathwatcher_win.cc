@@ -300,3 +300,8 @@ void PlatformUnwatch(WatcherHandle key) {
 bool PlatformIsHandleValid(WatcherHandle handle) {
   return handle != INVALID_HANDLE_VALUE;
 }
+
+// We have no errno on Windows.
+int PlatformInvalidHandleToErrorNumber(WatcherHandle handle) {
+  return 0;
+}
