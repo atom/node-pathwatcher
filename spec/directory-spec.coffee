@@ -3,6 +3,7 @@ fs = require 'fs-plus'
 temp = require 'temp'
 Directory = require '../lib/directory'
 PathWatcher = require '../lib/main'
+Grim = require 'grim'
 
 describe "Directory", ->
   directory = null
@@ -13,6 +14,8 @@ describe "Directory", ->
   afterEach ->
     directory.off()
     PathWatcher.closeAllWatchers()
+    expect(Grim.getDeprecationsLength()).toBe 0
+    Grim.clearDeprecations()
 
   it "normalizes the specified path", ->
     expect(new Directory(directory.path + path.sep + 'abc' + path.sep + '..').getBaseName()).toBe 'fixtures'
@@ -242,7 +245,7 @@ describe "Directory", ->
         it "doesn't have to actually exist", ->
           f = directory.getFile("the-silver-bullet")
           expect(f.isFile()).toBe(true)
-          expect(f.exists()).toBe(false)
+          expect(f.existsSync()).toBe(false)
 
         it "does fail if you give it a directory though", ->
           tryit = -> directory.getFile("subdir")

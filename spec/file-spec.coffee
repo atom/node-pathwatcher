@@ -3,6 +3,7 @@ fs = require 'fs-plus'
 temp = require 'temp'
 File = require '../lib/file'
 PathWatcher = require '../lib/main'
+Grim = require 'grim'
 
 describe 'File', ->
   [filePath, file] = []
@@ -17,6 +18,8 @@ describe 'File', ->
     file.unsubscribeFromNativeChangeEvents()
     fs.removeSync(filePath)
     PathWatcher.closeAllWatchers()
+    expect(Grim.getDeprecationsLength()).toBe 0
+    Grim.clearDeprecations()
 
   it "normalizes the specified path", ->
     expect(new File(__dirname + path.sep + 'fixtures' + path.sep + 'abc' + path.sep + '..' + path.sep + 'file-test.txt').getBaseName()).toBe 'file-test.txt'
@@ -101,7 +104,7 @@ describe 'File', ->
 
       it "it updates its path", ->
         moveHandler = jasmine.createSpy('moveHandler')
-        file.on 'moved', moveHandler
+        file.onDidRename moveHandler
 
         fs.moveSync(filePath, newPath)
 
@@ -114,7 +117,7 @@ describe 'File', ->
       it "maintains ::onDidChange observers that were subscribed on the previous path", ->
         moveHandler = null
         moveHandler = jasmine.createSpy('moveHandler')
-        file.on 'moved', moveHandler
+        file.onDidRename moveHandler
         changeHandler = null
         changeHandler = jasmine.createSpy('changeHandler')
         file.onDidChange changeHandler
