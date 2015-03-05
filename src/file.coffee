@@ -45,6 +45,7 @@ class File
     @on 'removed-subscription-removed', @didRemoveSubscription
 
     @cachedContents = null
+    @reportOnDeprecations = true
 
   on: (eventName) ->
     switch eventName
@@ -55,7 +56,8 @@ class File
       when 'removed'
         Grim.deprecate("Use File::onDidDelete instead")
       else
-        Grim.deprecate("Subscribing via ::on is deprecated. Use documented event subscription methods instead.")
+        if @reportOnDeprecations
+          Grim.deprecate("Subscribing via ::on is deprecated. Use documented event subscription methods instead.")
 
     EmitterMixin::on.apply(this, arguments)
 
