@@ -28,7 +28,7 @@ class File
   Section: Construction
   ###
 
-  # Public: Creates a new file.
+  # Public: Configures a new File instance, no files are accessed.
   #
   # * `filePath` A {String} containing the absolute path to the file
   # * `symlink` A {Boolean} indicating if the path is a symlink (default: false).
@@ -45,6 +45,21 @@ class File
     @on 'removed-subscription-removed', @didRemoveSubscription
 
     @cachedContents = null
+
+  # Public: Creates the file on disk that corresponds to `::getPath()` if no
+  # such file already exists.
+  #
+  # Returns a {Promise} that resolves once the file is created on disk. It
+  # resolves to a boolean value that is true if the file was created or false if
+  # it already existed.
+  create: ->
+    @exists().then (isExistingFile) =>
+      unless isExistingFile
+        parent = @getParent()
+        parent.create().then =>
+          @write('').then -> true
+      else
+        false
 
   on: (eventName) ->
     switch eventName
