@@ -273,7 +273,7 @@ describe 'File', ->
 
     it 'should write a file in UTF-16', ->
       file.setEncoding('utf16le')
-      file.write(unicodeText)
+      file.writeSync(unicodeText)
 
       expect(fs.statSync(file.getPath()).size).toBe(2)
       content = fs.readFileSync(file.getPath()).toString('ascii')

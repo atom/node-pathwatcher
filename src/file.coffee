@@ -264,6 +264,15 @@ class File
   #
   # Return undefined.
   write: (text) ->
+    Grim.deprecate("Use File::writeSync instead")
+    @writeSync(text)
+
+  # Public: Overwrites the file with the given text.
+  #
+  # * `text` The {String} text to write to the underlying file.
+  #
+  # Return undefined.
+  writeSync: (text) ->
     previouslyExisted = @existsSync()
     @writeFileWithPrivilegeEscalationSync(@getPath(), text)
     @cachedContents = text
