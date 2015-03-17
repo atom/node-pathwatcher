@@ -193,7 +193,6 @@ class File
 
   # Public: Returns this file's completely resolved {String} path.
   getRealPathSync: ->
-    Grim.deprecate("Use File::getRealPath instead")
     unless @realPath?
       try
         @realPath = fs.realpathSync(@path)
@@ -227,7 +226,6 @@ class File
   ###
 
   readSync: (flushCache) ->
-    Grim.deprecate("Use File::read instead")
     if not @existsSync()
       @cachedContents = null
     else if not @cachedContents? or flushCache
@@ -242,7 +240,6 @@ class File
     @cachedContents
 
   writeFileSync: (filePath, contents) ->
-    Grim.deprecate("Use File::write instead")
     encoding = @getEncoding()
     if encoding is 'utf8'
       fs.writeFileSync(filePath, contents, {encoding})
