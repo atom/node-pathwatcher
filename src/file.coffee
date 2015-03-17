@@ -307,7 +307,7 @@ class File
   #
   # Return undefined.
   writeSync: (text) ->
-    previouslyExisted = @exists()
+    previouslyExisted = @existsSync()
     @writeFileWithPrivilegeEscalationSync(@getPath(), text)
     @cachedContents = text
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
