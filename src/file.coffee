@@ -143,7 +143,8 @@ class File
   # Public: Returns a {Boolean}, always false.
   isDirectory: -> false
 
-  # Returns a promise that resolves to a {Boolean}, true if the file exists, false otherwise.
+  # Public: Returns a promise that resolves to a {Boolean}, true if the file
+  # exists, false otherwise.
   exists: ->
     Q.Promise (resolve, reject) =>
       fs.exists @getPath(), resolve

@@ -107,9 +107,15 @@ class Directory
   # Public: Returns a {Boolean}, always true.
   isDirectory: -> true
 
+  # Public: Returns a promise that resolves to a {Boolean}, true if the
+  # directory exists, false otherwise.
   exists: ->
     Q.Promise (resolve, reject) =>
       fs.exists(@getPath(), resolve)
+
+  # Public: Returns a {Boolean}, true if the directory exists, false otherwise.
+  existsSync: ->
+    fs.existsSync(@getPath())
 
   # Public: Return a {Boolean}, true if this {Directory} is the root directory
   # of the filesystem, or false if it isn't.

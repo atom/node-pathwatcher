@@ -49,7 +49,7 @@ describe "Directory", ->
       runs ->
         expect(callback.argsForCall[0][0]).toBe true
 
-    it 'returns a Promise that resolves to false for non-existent directory', ->
+    it 'returns a Promise that resolves to false for a non-existent directory', ->
       directory = new Directory(path.join(tempDir, 'foo'))
 
       waitsForPromise ->
@@ -57,6 +57,20 @@ describe "Directory", ->
 
       runs ->
         expect(callback.argsForCall[0][0]).toBe false
+
+  describe '::existsSync()', ->
+    [tempDir] = []
+
+    beforeEach ->
+      tempDir = temp.mkdirSync('node-pathwatcher-directory')
+
+    it 'returns true for an existing directory', ->
+      directory = new Directory(tempDir)
+      expect(directory.existsSync()).toBe true
+
+    it 'returns false for a non-existent directory', ->
+      directory = new Directory(path.join(tempDir, 'foo'))
+      expect(directory.existsSync()).toBe false
 
   describe '::create()', ->
     [callback, tempDir] = []
