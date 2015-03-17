@@ -305,7 +305,7 @@ class File
   #
   # * `text` The {String} text to write to the underlying file.
   #
-  # Return undefined.
+  # Returns undefined.
   writeSync: (text) ->
     previouslyExisted = @existsSync()
     @writeFileWithPrivilegeEscalationSync(@getPath(), text)
