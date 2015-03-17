@@ -386,6 +386,13 @@ describe 'File', ->
         content = fs.readFileSync(file.getPath()).toString('ascii')
         expect(content).toBe(unicodeBytes.toString('ascii'))
 
+    it 'should write a file in UTF-16 synchronously', ->
+      file.setEncoding('utf16le')
+      file.writeSync(unicodeText)
+      expect(fs.statSync(file.getPath()).size).toBe(2)
+      content = fs.readFileSync(file.getPath()).toString('ascii')
+      expect(content).toBe(unicodeBytes.toString('ascii'))
+
   describe 'reading a non-existing file', ->
     it 'should return null', ->
       file = new File('not_existing.txt')

@@ -293,13 +293,25 @@ class File
   #
   # * `text` The {String} text to write to the underlying file.
   #
-  # Return undefined.
+  # Returns a {Promise} that resolves when the file has been written.
   write: (text) ->
     @exists().then (previouslyExisted) =>
       @writeFile(@getPath(), text).then =>
         @cachedContents = text
         @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
         undefined
+
+  # Public: Overwrites the file with the given text.
+  #
+  # * `text` The {String} text to write to the underlying file.
+  #
+  # Return undefined.
+  writeSync: (text) ->
+    previouslyExisted = @exists()
+    @writeFileWithPrivilegeEscalationSync(@getPath(), text)
+    @cachedContents = text
+    @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
+    undefined
 
   writeFile: (filePath, contents) ->
     encoding = @getEncoding()
