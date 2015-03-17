@@ -3,6 +3,7 @@ fs = require 'fs-plus'
 temp = require 'temp'
 Directory = require '../lib/directory'
 PathWatcher = require '../lib/main'
+require './spec-helper'
 
 describe "Directory", ->
   directory = null
@@ -32,6 +33,67 @@ describe "Directory", ->
 
   it 'returns true from isDirectory()', ->
     expect(directory.isDirectory()).toBe true
+
+
+  describe '::exists()', ->
+    tempDir = null
+
+    beforeEach ->
+      tempDir = temp.mkdirSync('node-pathwatcher-directory')
+
+    it 'returns a Promise that resolves to true for an existing directory', ->
+      waitsForPromise ->
+        (new Directory(tempDir)).exists().then (result) ->
+          expect(result).toBe true
+
+    it 'returns a Promise that resolves to false for non-existent directory', ->
+      waitsForPromise ->
+        (new Directory(path.join(tempDir, 'foo'))).exists().then (result) ->
+          expect(result).toBe false
+
+  describe '::create()', ->
+    tempDir = null
+
+    beforeEach ->
+      tempDir = temp.mkdirSync('node-pathwatcher-directory')
+
+    it 'creates directory if directory does not exist', ->
+      directoryName = path.join(tempDir, 'subdir')
+      expect(fs.existsSync(directoryName)).toBe false
+      nonExistentDirectory = new Directory(directoryName)
+      waitsForPromise ->
+        nonExistentDirectory.create(0o0700).then (result) ->
+          expect(result).toBe true,
+          expect(fs.existsSync(directoryName)).toBe true
+          expect(fs.isDirectorySync(directoryName)).toBe true
+          rawMode = fs.statSync(directoryName).mode
+          mode = rawMode & 0o07777
+          expect(mode.toString(8)).toBe (0o0700).toString(8)
+
+    it 'leaves existing directory alone if it exists', ->
+      directoryName = path.join(tempDir, 'subdir')
+      fs.mkdirSync(directoryName)
+      existingDirectory = new Directory(directoryName)
+      waitsForPromise ->
+        existingDirectory.create().then (result) ->
+          expect(result).toBe false
+          expect(fs.existsSync(directoryName)).toBe true
+          expect(fs.isDirectorySync(directoryName)).toBe true
+
+    it 'creates parent directories if they do not exist', ->
+      directoryName = path.join(tempDir, 'foo/bar/baz')
+      expect(fs.existsSync(directoryName)).toBe false
+      nonExistentDirectory = new Directory(directoryName)
+      waitsForPromise ->
+        nonExistentDirectory.create().then (result) ->
+          expect(result).toBe true
+
+          expect(fs.existsSync(directoryName)).toBe true
+          expect(fs.isDirectorySync(directoryName)).toBe true
+
+          parentName = path.join(tempDir, 'foo/bar')
+          expect(fs.existsSync(parentName)).toBe true
+          expect(fs.isDirectorySync(parentName)).toBe true
 
   describe "when the contents of the directory change on disk", ->
     temporaryFilePath = null

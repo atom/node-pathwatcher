@@ -5,6 +5,7 @@ EmitterMixin = require('emissary').Emitter
 {Emitter, Disposable} = require 'event-kit'
 fs = require 'fs-plus'
 Grim = require 'grim'
+Q = require 'q'
 
 File = require './file'
 PathWatcher = require './main'
@@ -41,6 +42,32 @@ class Directory
 
     @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
     @reportOnDeprecations = true
+
+  # Public: Creates the directory on disk that corresponds to `::getPath()` if
+  # no such directory already exists.
+  #
+  # * `mode` Optional {Number} that defaults to `0777`.
+  # Returns a {Promise} that resolves once the directory is created on disk. It
+  # resolves to a boolean value that is true if the directory was created or
+  # false if it already existed.
+  create: (mode = 0o0777) ->
+    @exists().then (isExistingDirectory) =>
+      unless isExistingDirectory
+        unless @isRoot()
+          @getParent().create().then =>
+            Q.Promise (resolve, reject) =>
+              fs.mkdir(@getPath(), mode, (err) ->
+                if err
+                  reject err
+                else
+                  resolve true
+              )
+        else
+          # We could create the root directory for the user, but it seems more
+          # likely that an error has occurred.
+          throw Error("Root directory does not exist: #{@getPath()}")
+      else
+        false
 
   ###
   Section: Event Subscription
@@ -85,6 +112,10 @@ class Directory
 
   # Public: Returns a {Boolean}, always true.
   isDirectory: -> true
+
+  exists: ->
+    Q.Promise (resolve, reject) =>
+      fs.exists(@getPath(), resolve)
 
   # Public: Return a {Boolean}, true if this {Directory} is the root directory
   # of the filesystem, or false if it isn't.
