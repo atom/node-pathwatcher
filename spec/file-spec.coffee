@@ -3,7 +3,6 @@ fs = require 'fs-plus'
 temp = require 'temp'
 File = require '../lib/file'
 PathWatcher = require '../lib/main'
-require './spec-helper'
 
 describe 'File', ->
   [filePath, file] = []
@@ -30,11 +29,11 @@ describe 'File', ->
     expect(file.isDirectory()).toBe false
 
   describe '::create()', ->
-    tempDir = null
-    nonExistentFile = null
+    [callback, nonExistentFile, tempDir] = []
 
     beforeEach ->
       tempDir = temp.mkdirSync('node-pathwatcher-directory')
+      callback = jasmine.createSpy('promiseCallback')
 
     afterEach ->
       nonExistentFile.unsubscribeFromNativeChangeEvents()
@@ -44,38 +43,46 @@ describe 'File', ->
       fileName = path.join(tempDir, 'file.txt')
       expect(fs.existsSync(fileName)).toBe false
       nonExistentFile = new File(fileName)
+
       waitsForPromise ->
-        nonExistentFile.create().then (result) ->
-          expect(result).toBe true,
-          expect(fs.existsSync(fileName)).toBe true
-          expect(fs.isFileSync(fileName)).toBe true
-          expect(fs.readFileSync(fileName).toString()).toBe ''
+        nonExistentFile.create().then(callback)
+
+      runs ->
+        expect(callback.argsForCall[0][0]).toBe true
+        expect(fs.existsSync(fileName)).toBe true
+        expect(fs.isFileSync(fileName)).toBe true
+        expect(fs.readFileSync(fileName).toString()).toBe ''
 
     it 'leaves existing file alone if it exists', ->
       fileName = path.join(tempDir, 'file.txt')
       fs.writeFileSync(fileName, 'foo')
       existingFile = new File(fileName)
+
       waitsForPromise ->
-        existingFile.create().then (result) ->
-          expect(result).toBe false
-          expect(fs.existsSync(fileName)).toBe true
-          expect(fs.isFileSync(fileName)).toBe true
-          expect(fs.readFileSync(fileName).toString()).toBe 'foo'
+        existingFile.create().then(callback)
+
+      runs ->
+        expect(callback.argsForCall[0][0]).toBe false
+        expect(fs.existsSync(fileName)).toBe true
+        expect(fs.isFileSync(fileName)).toBe true
+        expect(fs.readFileSync(fileName).toString()).toBe 'foo'
 
     it 'creates parent directories and file if they do not exist', ->
-      fileName = path.join(tempDir, 'foo/bar/file.txt')
+      fileName = path.join(tempDir, 'foo', 'bar', 'file.txt')
       expect(fs.existsSync(fileName)).toBe false
       nonExistentFile = new File(fileName)
+
       waitsForPromise ->
-        nonExistentFile.create().then (result) ->
-          expect(result).toBe true
+        nonExistentFile.create().then(callback)
 
-          expect(fs.existsSync(fileName)).toBe true
-          expect(fs.isFileSync(fileName)).toBe true
+      runs ->
+        expect(callback.argsForCall[0][0]).toBe true
+        expect(fs.existsSync(fileName)).toBe true
+        expect(fs.isFileSync(fileName)).toBe true
 
-          parentName = path.join(tempDir, 'foo/bar')
-          expect(fs.existsSync(parentName)).toBe true
-          expect(fs.isDirectorySync(parentName)).toBe true
+        parentName = path.join(tempDir, 'foo' ,'bar')
+        expect(fs.existsSync(parentName)).toBe true
+        expect(fs.isDirectorySync(parentName)).toBe true
 
   describe "when the file has not been read", ->
     describe "when the contents of the file change", ->

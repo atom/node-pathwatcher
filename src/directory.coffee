@@ -52,23 +52,17 @@ class Directory
   # false if it already existed.
   create: (mode = 0o0777) ->
     @exists().then (isExistingDirectory) =>
-      unless isExistingDirectory
-        unless @isRoot()
-          @getParent().create().then =>
-            Q.Promise (resolve, reject) =>
-              fs.mkdir(@getPath(), mode, (err) ->
-                if err
-                  reject err
-                else
-                  resolve true
-              )
-        else
-          # We could create the root directory for the user, but it seems more
-          # likely that an error has occurred.
-          throw Error("Root directory does not exist: #{@getPath()}")
-      else
-        false
+      return false if isExistingDirectory
 
+      throw Error("Root directory does not exist: #{@getPath()}") if @isRoot()
+
+      @getParent().create().then =>
+        Q.Promise (resolve, reject) =>
+          fs.mkdir @getPath(), mode, (error) ->
+            if error
+              reject err
+            else
+              resolve true
   ###
   Section: Event Subscription
   ###
