@@ -166,8 +166,7 @@ class File
   #
   # Returns a {String}.
   getDigestSync: ->
-    @readSync()
-    # read sets digest
+    @readSync() unless @digest
     @digest
 
   setDigest: (contents) ->

@@ -28,6 +28,19 @@ describe 'File', ->
   it 'returns false from isDirectory()', ->
     expect(file.isDirectory()).toBe false
 
+  describe "::getDigestSync", ->
+    it "computes and returns the SHA-1 digest and caches it", ->
+      filePath = path.join(temp.mkdirSync('node-pathwatcher-directory'), 'file.txt')
+      fs.writeFileSync(filePath, '')
+
+      file = new File(filePath)
+      spyOn(file, 'readSync').andCallThrough()
+
+      expect(file.getDigestSync()).toBe 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      expect(file.readSync.callCount).toBe 1
+      expect(file.getDigestSync()).toBe 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      expect(file.readSync.callCount).toBe 1
+
   describe '::create()', ->
     [callback, nonExistentFile, tempDir] = []
 
