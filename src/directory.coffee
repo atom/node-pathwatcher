@@ -63,6 +63,23 @@ class Directory
               reject err
             else
               resolve true
+
+  # Public: Deletes the directory on disk that corresponds to `::getPath()`.
+  #
+  # Returns a {Promise} that resolves once the directory is deleted on disk. It
+  # resolves to a boolean value that is true if the file was deleted or false if
+  # it never existed.
+  delete: ->
+    @exists().then (isExistingDirectory) =>
+      return false unless isExistingDirectory
+
+      Q.Promise (resolve, reject) =>
+        fs.remove @getPath(), (error) ->
+          if error
+            reject error
+          else
+            resolve true
+
   ###
   Section: Event Subscription
   ###

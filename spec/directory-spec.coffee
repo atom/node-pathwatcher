@@ -136,6 +136,38 @@ describe "Directory", ->
       runs ->
         expect(fs.existsSync(path.join(tempDir, 'subdir'))).toBe false
 
+  describe '::delete()', ->
+    tempDir = null
+
+    beforeEach ->
+      tempDir = temp.mkdirSync('node-pathwatcher-directory')
+
+    it 'deletes empty directory', ->
+      directoryName = path.join(tempDir, 'subdir')
+      fs.mkdirSync(directoryName)
+      existingDirectory = new Directory(directoryName)
+      waitsForPromise ->
+        existingDirectory.delete().then (result) ->
+          expect(result).toBe true
+          expect(fs.existsSync(directoryName)).toBe false
+
+    it 'deletes non-empty directory', ->
+      directoryName = path.join(tempDir, 'subdir')
+      fs.makeTreeSync(path.join(directoryName, 'subdir'))
+      existingDirectory = new Directory(directoryName)
+      waitsForPromise ->
+        existingDirectory.delete().then (result) ->
+          expect(result).toBe true
+          expect(fs.existsSync(directoryName)).toBe false
+
+    it 'does nothing if directory does not exist', ->
+      directoryName = path.join(tempDir, 'subdir')
+      nonExistingDirectory = new Directory(directoryName)
+      waitsForPromise ->
+        nonExistingDirectory.delete().then (result) ->
+          expect(result).toBe false
+          expect(fs.existsSync(directoryName)).toBe false
+
   describe "when the contents of the directory change on disk", ->
     temporaryFilePath = null
 
