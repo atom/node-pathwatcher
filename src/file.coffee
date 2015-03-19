@@ -62,6 +62,22 @@ class File
       else
         false
 
+  # Public: Deletes the file on disk that corresponds to `::getPath()`.
+  #
+  # Returns a {Promise} that resolves once the file is deleted on disk. It
+  # resolves to a boolean value that is true if the file was deleted or false if
+  # it never existed.
+  delete: ->
+    @exists().then (isExistingFile) =>
+      return false unless isExistingFile
+
+      Q.Promise (resolve, reject) =>
+        fs.unlink @getPath(), (error) ->
+          if error && error.code != 'ENOENT'
+            reject error
+          else
+            resolve true
+
   on: (eventName) ->
     switch eventName
       when 'contents-changed'

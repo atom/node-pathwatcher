@@ -97,6 +97,29 @@ describe 'File', ->
         expect(fs.existsSync(parentName)).toBe true
         expect(fs.isDirectorySync(parentName)).toBe true
 
+  describe "::delete()", ->
+    tempDir = null
+
+    beforeEach ->
+      tempDir = temp.mkdirSync('node-pathwatcher-directory')
+
+    it 'deletes file if it exists', ->
+      fileName = path.join(tempDir, 'file.txt')
+      fs.writeFileSync(fileName, 'foo')
+      existingFile = new File(fileName)
+      waitsForPromise ->
+        existingFile.delete().then (result) ->
+          expect(result).toBe true
+          expect(fs.existsSync(fileName)).toBe false
+
+    it 'does nothing if file does not exist', ->
+      fileName = path.join(tempDir, 'file.txt')
+      nonExistingFile = new File(fileName)
+      waitsForPromise ->
+        nonExistingFile.delete().then (result) ->
+          expect(result).toBe false
+          expect(fs.existsSync(fileName)).toBe false
+
   describe "when the file has not been read", ->
     describe "when the contents of the file change", ->
       it "notifies ::onDidChange observers", ->
