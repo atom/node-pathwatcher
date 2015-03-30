@@ -2,7 +2,6 @@ crypto = require 'crypto'
 path = require 'path'
 
 _ = require 'underscore-plus'
-EmitterMixin = require('emissary').Emitter
 {Emitter, Disposable} = require 'event-kit'
 fs = require 'fs-plus'
 Grim = require 'grim'
@@ -18,8 +17,6 @@ PathWatcher = require './main'
 # written to.
 module.exports =
 class File
-  EmitterMixin.includeInto(this)
-
   encoding: 'utf8'
   realPath: null
   subscriptionCount: 0
@@ -37,12 +34,13 @@ class File
     @path = filePath
     @emitter = new Emitter
 
-    @on 'contents-changed-subscription-will-be-added', @willAddSubscription
-    @on 'moved-subscription-will-be-added', @willAddSubscription
-    @on 'removed-subscription-will-be-added', @willAddSubscription
-    @on 'contents-changed-subscription-removed', @didRemoveSubscription
-    @on 'moved-subscription-removed', @didRemoveSubscription
-    @on 'removed-subscription-removed', @didRemoveSubscription
+    if Grim.includeDeprecatedAPIs
+      @on 'contents-changed-subscription-will-be-added', @willAddSubscription
+      @on 'moved-subscription-will-be-added', @willAddSubscription
+      @on 'removed-subscription-will-be-added', @willAddSubscription
+      @on 'contents-changed-subscription-removed', @didRemoveSubscription
+      @on 'moved-subscription-removed', @didRemoveSubscription
+      @on 'removed-subscription-removed', @didRemoveSubscription
 
     @cachedContents = null
     @reportOnDeprecations = true
@@ -77,20 +75,6 @@ class File
             reject error
           else
             resolve true
-
-  on: (eventName) ->
-    switch eventName
-      when 'contents-changed'
-        Grim.deprecate("Use File::onDidChange instead")
-      when 'moved'
-        Grim.deprecate("Use File::onDidRename instead")
-      when 'removed'
-        Grim.deprecate("Use File::onDidDelete instead")
-      else
-        if @reportOnDeprecations
-          Grim.deprecate("Subscribing via ::on is deprecated. Use documented event subscription methods instead.")
-
-    EmitterMixin::on.apply(this, arguments)
 
   ###
   Section: Event Subscription
@@ -148,6 +132,9 @@ class File
     new Disposable =>
       subscription.dispose()
       @didRemoveSubscription()
+
+  hasSubscriptions: ->
+    @subscriptionCount > 0
 
   ###
   Section: File Metadata
@@ -362,7 +349,7 @@ class File
         @detectResurrectionAfterDelay()
       when 'rename'
         @setPath(eventPath)
-        @emit 'moved'
+        @emit 'moved' if Grim.includeDeprecatedAPIs
         @emitter.emit 'did-rename'
       when 'change', 'resurrect'
         oldContents = @cachedContents
@@ -387,7 +374,7 @@ class File
         try
           @read(true).catch(handleReadError).done (newContents) =>
             unless oldContents is newContents
-              @emit 'contents-changed'
+              @emit 'contents-changed' if Grim.includeDeprecatedAPIs
               @emitter.emit 'did-change'
         catch error
           handleReadError(error)
@@ -402,7 +389,7 @@ class File
         @handleNativeChangeEvent('resurrect', @getPath())
       else
         @cachedContents = null
-        @emit 'removed'
+        @emit 'removed' if Grim.includeDeprecatedAPIs
         @emitter.emit 'did-delete'
 
   subscribeToNativeChangeEvents: ->
@@ -413,3 +400,20 @@ class File
     if @watchSubscription?
       @watchSubscription.close()
       @watchSubscription = null
+
+if Grim.includeDeprecatedAPIs
+  EmitterMixin = require('emissary').Emitter
+  EmitterMixin.includeInto(File)
+  File::on = (eventName) ->
+    switch eventName
+      when 'contents-changed'
+        Grim.deprecate("Use File::onDidChange instead")
+      when 'moved'
+        Grim.deprecate("Use File::onDidRename instead")
+      when 'removed'
+        Grim.deprecate("Use File::onDidDelete instead")
+      else
+        if @reportOnDeprecations
+          Grim.deprecate("Subscribing via ::on is deprecated. Use documented event subscription methods instead.")
+
+    EmitterMixin::on.apply(this, arguments)
