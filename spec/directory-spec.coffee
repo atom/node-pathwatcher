@@ -11,7 +11,6 @@ describe "Directory", ->
     directory = new Directory(path.join(__dirname, 'fixtures'))
 
   afterEach ->
-    directory.off()
     PathWatcher.closeAllWatchers()
 
   it "normalizes the specified path", ->
