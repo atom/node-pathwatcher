@@ -1,7 +1,6 @@
 path = require 'path'
 
 async = require 'async'
-EmitterMixin = require('emissary').Emitter
 {Emitter, Disposable} = require 'event-kit'
 fs = require 'fs-plus'
 Grim = require 'grim'
@@ -13,8 +12,6 @@ PathWatcher = require './main'
 # Extended: Represents a directory on disk that can be watched for changes.
 module.exports =
 class Directory
-  EmitterMixin.includeInto(this)
-
   realPath: null
   subscriptionCount: 0
 
@@ -30,8 +27,9 @@ class Directory
   constructor: (directoryPath, @symlink=false) ->
     @emitter = new Emitter
 
-    @on 'contents-changed-subscription-will-be-added', @willAddSubscription
-    @on 'contents-changed-subscription-removed', @didRemoveSubscription
+    if Grim.includeDeprecatedAPIs
+      @on 'contents-changed-subscription-will-be-added', @willAddSubscription
+      @on 'contents-changed-subscription-removed', @didRemoveSubscription
 
     if directoryPath
       directoryPath = path.normalize(directoryPath)
@@ -41,7 +39,7 @@ class Directory
     @path = directoryPath
 
     @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
-    @reportOnDeprecations = true
+    @reportOnDeprecations = true if Grim.includeDeprecatedAPIs
 
   # Public: Creates the directory on disk that corresponds to `::getPath()` if
   # no such directory already exists.
@@ -105,14 +103,6 @@ class Directory
     new Disposable =>
       subscription.dispose()
       @didRemoveSubscription()
-
-  on: (eventName) ->
-    if eventName is 'contents-changed'
-      Grim.deprecate("Use Directory::onDidChange instead")
-    else if @reportOnDeprecations
-      Grim.deprecate("Subscribing via ::on is deprecated. Use documented event subscription methods instead.")
-
-    EmitterMixin::on.apply(this, arguments)
 
   ###
   Section: Directory Metadata
@@ -329,7 +319,7 @@ class Directory
   subscribeToNativeChangeEvents: ->
     @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
       if eventType is 'change'
-        @emit 'contents-changed'
+        @emit 'contents-changed' if Grim.includeDeprecatedAPIs
         @emitter.emit 'did-change'
 
   unsubscribeFromNativeChangeEvents: ->
@@ -340,3 +330,15 @@ class Directory
   # Does given full path start with the given prefix?
   isPathPrefixOf: (prefix, fullPath) ->
     fullPath.indexOf(prefix) is 0 and fullPath[prefix.length] is path.sep
+
+if Grim.includeDeprecatedAPIs
+  EmitterMixin = require('emissary').Emitter
+  EmitterMixin.includeInto(Directory)
+
+  Directory::on = (eventName) ->
+    if eventName is 'contents-changed'
+      Grim.deprecate("Use Directory::onDidChange instead")
+    else if @reportOnDeprecations
+      Grim.deprecate("Subscribing via ::on is deprecated. Use documented event subscription methods instead.")
+
+    EmitterMixin::on.apply(this, arguments)
