@@ -24,3 +24,5 @@ global.waitsForPromise = (args...) ->
         promiseFinished = true
 
   global.waitsFor "promise to complete", -> promiseFinished
+
+require('grim').includeDeprecatedAPIs = false
