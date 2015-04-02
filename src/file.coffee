@@ -404,6 +404,7 @@ class File
 if Grim.includeDeprecatedAPIs
   EmitterMixin = require('emissary').Emitter
   EmitterMixin.includeInto(File)
+
   File::on = (eventName) ->
     switch eventName
       when 'contents-changed'
