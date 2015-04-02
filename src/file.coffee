@@ -133,9 +133,6 @@ class File
       subscription.dispose()
       @didRemoveSubscription()
 
-  hasSubscriptions: ->
-    @subscriptionCount > 0
-
   ###
   Section: File Metadata
   ###
@@ -418,3 +415,6 @@ if Grim.includeDeprecatedAPIs
           Grim.deprecate("Subscribing via ::on is deprecated. Use documented event subscription methods instead.")
 
     EmitterMixin::on.apply(this, arguments)
+else
+  File::hasSubscriptions = ->
+    @subscriptionCount > 0
