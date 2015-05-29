@@ -269,9 +269,13 @@ class Directory
       async.eachLimit entries, 1, statEntry, ->
         callback(null, directories.concat(files))
 
-  # Public: Returns whether the given path (real or symbolic) is inside this
+  # Public: Determines if the given path (real or symbolic) is inside this
   # directory. This method does not actually check if the path exists, it just
   # checks if the path is under this directory.
+  #
+  # * `pathToCheck` The {String} path to check.
+  #
+  # Returns a {Boolean} whether the given path is inside this directory.
   contains: (pathToCheck) ->
     return false unless pathToCheck
 
