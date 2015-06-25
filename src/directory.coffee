@@ -58,7 +58,7 @@ class Directory
         Q.Promise (resolve, reject) =>
           fs.mkdir @getPath(), mode, (error) ->
             if error
-              reject err
+              reject error
             else
               resolve true
   ###
