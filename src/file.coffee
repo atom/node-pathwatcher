@@ -162,7 +162,11 @@ class File
   setEncoding: (encoding='utf8') ->
     # Throws if encoding doesn't exist. Better to throw an exception early
     # instead of waiting until the file is saved.
-    iconv.getCodec(encoding)
+
+    if encoding isnt 'utf8'
+      iconv ?= require 'iconv-lite'
+      iconv.getCodec(encoding)
+
     @encoding = encoding
 
   # Public: Returns the {String} encoding name for this file (default: 'utf8').
