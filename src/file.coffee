@@ -159,7 +159,11 @@ class File
   # Public: Sets the file's character set encoding name.
   #
   # * `encoding` The {String} encoding to use (default: 'utf8')
-  setEncoding: (@encoding='utf8') ->
+  setEncoding: (encoding='utf8') ->
+    # Throws if encoding doesn't exist. Better to throw an exception early
+    # instead of waiting until the file is saved.
+    iconv.getCodec(encoding)
+    @encoding = encoding
 
   # Public: Returns the {String} encoding name for this file (default: 'utf8').
   getEncoding: -> @encoding

@@ -363,6 +363,11 @@ describe 'File', ->
       file.setEncoding('cp1252')
       expect(file.getEncoding()).toBe('cp1252')
 
+    it "throws an exception when assigning an invalid encoding", ->
+      expect(->
+        file.setEncoding('utf-8-bom')
+      ).toThrow()
+
   describe 'encoding support', ->
     [unicodeText, unicodeBytes] = []
 
