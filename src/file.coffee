@@ -244,7 +244,7 @@ class File
   # * `flushCache` A {Boolean} indicating whether to require a direct read or if
   #   a cached copy is acceptable.
   #
-  # Returns a promise that resovles to a String.
+  # Returns a promise that resolves to a String.
   read: (flushCache) ->
     if @cachedContents? and not flushCache
       promise = Q(@cachedContents)
