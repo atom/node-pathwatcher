@@ -22,6 +22,13 @@ class File
   subscriptionCount: 0
 
   ###
+  Section: Properties
+  ###
+
+  # Public: A {boolean} indicating whether or not this is a symlink
+  symlink: null
+
+  ###
   Section: Construction
   ###
 
