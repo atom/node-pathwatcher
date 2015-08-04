@@ -28,6 +28,15 @@ describe 'File', ->
   it 'returns false from isDirectory()', ->
     expect(file.isDirectory()).toBe false
 
+  describe '::isSymbolicLink', ->
+
+    it 'returns false for regular files', ->
+      expect(file.isSymbolicLink()).toBe false
+
+    it 'returns true for symlinked files', ->
+      symFile = new File(filePath, true)
+      expect(symFile.isSymbolicLink()).toBe true
+
   describe "::getDigestSync", ->
     it "computes and returns the SHA-1 digest and caches it", ->
       filePath = path.join(temp.mkdirSync('node-pathwatcher-directory'), 'file.txt')

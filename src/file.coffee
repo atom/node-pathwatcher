@@ -22,13 +22,6 @@ class File
   subscriptionCount: 0
 
   ###
-  Section: Properties
-  ###
-
-  # Public: A {boolean} indicating whether or not this is a symlink
-  symlink: null
-
-  ###
   Section: Construction
   ###
 
@@ -133,6 +126,10 @@ class File
 
   # Public: Returns a {Boolean}, always false.
   isDirectory: -> false
+
+  # Public: Returns a {Boolean} indicating whether or not this is a symbolic link
+  isSymbolicLink: ->
+    @symlink
 
   # Public: Returns a promise that resolves to a {Boolean}, true if the file
   # exists, false otherwise.

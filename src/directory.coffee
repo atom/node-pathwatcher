@@ -16,13 +16,6 @@ class Directory
   subscriptionCount: 0
 
   ###
-  Section: Properties
-  ###
-
-  # Public: A {boolean} indicating whether or not this is a symlink
-  symlink: null
-
-  ###
   Section: Construction
   ###
 
@@ -103,6 +96,10 @@ class Directory
 
   # Public: Returns a {Boolean}, always true.
   isDirectory: -> true
+
+  # Public: Returns a {Boolean} indicating whether or not this is a symbolic link
+  isSymbolicLink: ->
+    @symlink
 
   # Public: Returns a promise that resolves to a {Boolean}, true if the
   # directory exists, false otherwise.

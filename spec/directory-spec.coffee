@@ -32,6 +32,15 @@ describe "Directory", ->
   it 'returns true from isDirectory()', ->
     expect(directory.isDirectory()).toBe true
 
+  describe '::isSymbolicLink()', ->
+
+    it 'returns false for regular directories', ->
+      expect(directory.isSymbolicLink()).toBe false
+
+    it 'returns true for symlinked directories', ->
+      directorySym = new Directory(path.join(__dirname, 'fixtures'), true)
+      expect(directorySym.isSymbolicLink()).toBe true
+
   describe '::exists()', ->
     [callback, tempDir] = []
 
@@ -208,9 +217,9 @@ describe "Directory", ->
         for entry in entries
           name = entry.getBaseName()
           if name is 'symlink-to-dir' or name is 'symlink-to-file'
-            expect(entry.symlink).toBeTruthy()
+            expect(entry.isSymbolicLink()).toBe true
           else
-            expect(entry.symlink).toBeFalsy()
+            expect(entry.isSymbolicLink()).toBe false
 
   describe ".relativize(path)", ->
     describe "on #darwin or #linux", ->
