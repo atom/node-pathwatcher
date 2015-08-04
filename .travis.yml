@@ -9,3 +9,7 @@ script: ./script/cibuild
 
 git:
   depth: 10
+
+branches:
+  only:
+    - master
