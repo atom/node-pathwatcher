@@ -33,13 +33,12 @@ describe "Directory", ->
     expect(directory.isDirectory()).toBe true
 
   describe '::isSymbolicLink()', ->
-
     it 'returns false for regular directories', ->
       expect(directory.isSymbolicLink()).toBe false
 
     it 'returns true for symlinked directories', ->
-      directorySym = new Directory(path.join(__dirname, 'fixtures'), true)
-      expect(directorySym.isSymbolicLink()).toBe true
+      symbolicDirectory = new Directory(path.join(__dirname, 'fixtures'), true)
+      expect(symbolicDirectory.isSymbolicLink()).toBe true
 
   describe '::exists()', ->
     [callback, tempDir] = []
