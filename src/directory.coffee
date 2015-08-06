@@ -4,7 +4,6 @@ async = require 'async'
 {Emitter, Disposable} = require 'event-kit'
 fs = require 'fs-plus'
 Grim = require 'grim'
-Q = require 'q'
 
 File = require './file'
 PathWatcher = require './main'
@@ -55,7 +54,7 @@ class Directory
       throw Error("Root directory does not exist: #{@getPath()}") if @isRoot()
 
       @getParent().create().then =>
-        Q.Promise (resolve, reject) =>
+        new Promise (resolve, reject) =>
           fs.mkdir @getPath(), mode, (error) ->
             if error
               reject error
@@ -104,8 +103,7 @@ class Directory
   # Public: Returns a promise that resolves to a {Boolean}, true if the
   # directory exists, false otherwise.
   exists: ->
-    Q.Promise (resolve, reject) =>
-      fs.exists(@getPath(), resolve)
+    new Promise (resolve) => fs.exists(@getPath(), resolve)
 
   # Public: Returns a {Boolean}, true if the directory exists, false otherwise.
   existsSync: ->

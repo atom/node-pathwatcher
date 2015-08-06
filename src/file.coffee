@@ -6,7 +6,6 @@ _ = require 'underscore-plus'
 fs = require 'fs-plus'
 Grim = require 'grim'
 
-Q = require 'q'
 runas = null # Defer until used
 iconv = null # Defer until used
 
@@ -134,7 +133,7 @@ class File
   # Public: Returns a promise that resolves to a {Boolean}, true if the file
   # exists, false otherwise.
   exists: ->
-    Q.Promise (resolve, reject) =>
+    new Promise (resolve) =>
       fs.exists @getPath(), resolve
 
   # Public: Returns a {Boolean}, true if the file exists, false otherwise.
@@ -145,10 +144,10 @@ class File
   #
   # Returns a promise that resolves to a {String}.
   getDigest: ->
-    return Q(@digest) if @digest
-    @read().then (contents) =>
-      # read sets digest
-      @digest
+    if @digest?
+      Promise.resolve(@digest)
+    else
+      @read().then => @digest # read assigns digest as a side-effect
 
   # Public: Get the SHA-1 digest of this file
   #
@@ -199,10 +198,14 @@ class File
   # Public: Returns a promise that resolves to the file's completely resolved {String} path.
   getRealPath: ->
     if @realPath?
-      Q(@realPath)
+      Promise.resolve(@realPath)
     else
-      Q.nfcall(fs.realpath, @path).then (realPath) =>
-        @realPath = realPath
+      new Promise (resolve, reject) =>
+        fs.realpath @path, (err, result) =>
+          if err?
+            reject(err)
+          else
+            resolve(@realPath = result)
 
   # Public: Return the {String} filename without any directory information.
   getBaseName: ->
@@ -251,32 +254,28 @@ class File
   # Returns a promise that resolves to a String.
   read: (flushCache) ->
     if @cachedContents? and not flushCache
-      promise = Q(@cachedContents)
+      promise = Promise.resolve(@cachedContents)
     else
-      deferred = Q.defer()
-      promise = deferred.promise
-      content = []
-      bytesRead = 0
-      encoding = @getEncoding()
-      if encoding is 'utf8'
-        readStream = fs.createReadStream(@getPath(), {encoding})
-      else
-        iconv ?= require 'iconv-lite'
-        readStream = fs.createReadStream(@getPath()).pipe(iconv.decodeStream(encoding))
-
-      readStream.on 'data', (chunk) ->
-        content.push(chunk)
-        bytesRead += chunk.length
-        deferred.notify(bytesRead)
-
-      readStream.on 'end', ->
-        deferred.resolve(content.join(''))
-
-      readStream.on 'error', (error) ->
-        if error.code == 'ENOENT'
-          deferred.resolve(null)
+      promise = new Promise (resolve, reject) =>
+        content = []
+        encoding = @getEncoding()
+        if encoding is 'utf8'
+          readStream = fs.createReadStream(@getPath(), {encoding})
         else
-          deferred.reject(error)
+          iconv ?= require 'iconv-lite'
+          readStream = fs.createReadStream(@getPath()).pipe(iconv.decodeStream(encoding))
+
+        readStream.on 'data', (chunk) ->
+          content.push(chunk)
+
+        readStream.on 'end', ->
+          resolve(content.join(''))
+
+        readStream.on 'error', (error) ->
+          if error.code == 'ENOENT'
+            resolve(null)
+          else
+            reject(error)
 
     promise.then (contents) =>
       @setDigest(contents)
@@ -309,10 +308,20 @@ class File
   writeFile: (filePath, contents) ->
     encoding = @getEncoding()
     if encoding is 'utf8'
-      Q.nfcall(fs.writeFile, filePath, contents, {encoding})
+      new Promise (resolve, reject) ->
+        fs.writeFile filePath, contents, {encoding}, (err, result) ->
+          if err?
+            reject(err)
+          else
+            resolve(result)
     else
       iconv ?= require 'iconv-lite'
-      Q.nfcall(fs.writeFile, filePath, iconv.encode(contents, encoding))
+      new Promise (resolve, reject) ->
+        fs.writeFile filePath, iconv.encode(contents, encoding), (err, result) ->
+          if err?
+            reject(err)
+          else
+            resolve(result)
 
   # Writes the text to specified path.
   #
@@ -365,10 +374,12 @@ class File
             console.error newError
 
         try
-          @read(true).catch(handleReadError).done (newContents) =>
+          handleResolve = (newContents) =>
             unless oldContents is newContents
               @emit 'contents-changed' if Grim.includeDeprecatedAPIs
               @emitter.emit 'did-change'
+
+          @read(true).then(handleResolve, handleReadError)
         catch error
           handleReadError(error)
 
