@@ -21,44 +21,44 @@ static void MakeCallbackInMainThread(uv_async_t* handle) {
 #else
 static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
 #endif
-  NanScope();
+  Nan::HandleScope scope;
 
   if (!g_callback.IsEmpty()) {
     Handle<String> type;
     switch (g_type) {
       case EVENT_CHANGE:
-        type = NanNew("change");
+        type = Nan::New("change").ToLocalChecked();
         break;
       case EVENT_DELETE:
-        type = NanNew("delete");
+        type = Nan::New("delete").ToLocalChecked();
         break;
       case EVENT_RENAME:
-        type = NanNew("rename");
+        type = Nan::New("rename").ToLocalChecked();
         break;
       case EVENT_CHILD_CREATE:
-        type = NanNew("child-create");
+        type = Nan::New("child-create").ToLocalChecked();
         break;
       case EVENT_CHILD_CHANGE:
-        type = NanNew("child-change");
+        type = Nan::New("child-change").ToLocalChecked();
         break;
       case EVENT_CHILD_DELETE:
-        type = NanNew("child-delete");
+        type = Nan::New("child-delete").ToLocalChecked();
         break;
       case EVENT_CHILD_RENAME:
-        type = NanNew("child-rename");
+        type = Nan::New("child-rename").ToLocalChecked();
         break;
       default:
-        type = NanNew("unknown");
+        type = Nan::New("unknown").ToLocalChecked();
         return;
     }
 
     Handle<Value> argv[] = {
         type,
         WatcherHandleToV8Value(g_handle),
-        NanNew(g_new_path.data(), g_new_path.size()),
-        NanNew(g_old_path.data(), g_old_path.size()),
+        Nan::New(g_new_path.data(), g_new_path.size()),
+        Nan::New(g_old_path.data(), g_old_path.size()),
     };
-    NanNew(g_callback)->Call(NanGetCurrentContext()->Global(), 4, argv);
+    Nan::New(g_callback)->Call(Nan::GetCurrentContext()->Global(), 4, argv);
   }
 
   WakeupNewThread();
@@ -106,60 +106,60 @@ void PostEventAndWait(EVENT_TYPE type,
 }
 
 NAN_METHOD(SetCallback) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  if (!args[0]->IsFunction())
-    return NanThrowTypeError("Function required");
+  if (!info[0]->IsFunction())
+    return Nan::ThrowTypeError("Function required");
 
-  NanAssignPersistent(g_callback, Local<Function>::Cast(args[0]));
-  NanReturnUndefined();
+  g_callback.Reset( Local<Function>::Cast(info[0]));
+  return;
 }
 
 NAN_METHOD(Watch) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  if (!args[0]->IsString())
-    return NanThrowTypeError("String required");
+  if (!info[0]->IsString())
+    return Nan::ThrowTypeError("String required");
 
-  Handle<String> path = args[0]->ToString();
+  Handle<String> path = info[0]->ToString();
   WatcherHandle handle = PlatformWatch(*String::Utf8Value(path));
   if (!PlatformIsHandleValid(handle)) {
     int error_number = PlatformInvalidHandleToErrorNumber(handle);
     v8::Local<v8::Value> err =
-      v8::Exception::Error(NanNew<v8::String>("Unable to watch path"));
+      v8::Exception::Error(Nan::New<v8::String>("Unable to watch path").ToLocalChecked());
     v8::Local<v8::Object> err_obj = err.As<v8::Object>();
     if (error_number != 0) {
-      err_obj->Set(NanNew<v8::String>("errno"),
-                   NanNew<v8::Integer>(error_number));
+      err_obj->Set(Nan::New<v8::String>("errno").ToLocalChecked(),
+                   Nan::New<v8::Integer>(error_number));
 #if NODE_VERSION_AT_LEAST(0, 11, 5)
       // Node 0.11.5 is the first version to contain libuv v0.11.6, which
       // contains https://github.com/libuv/libuv/commit/3ee4d3f183 which changes
       // uv_err_name from taking a struct uv_err_t (whose uv_err_code `code` is
       // a difficult-to-produce uv-specific errno) to just take an int which is
       // a negative errno.
-      err_obj->Set(NanNew<v8::String>("code"),
-                   NanNew<v8::String>(uv_err_name(-error_number)));
+      err_obj->Set(Nan::New<v8::String>("code").ToLocalChecked(),
+                   Nan::New<v8::String>(uv_err_name(-error_number))).ToLocalChecked();
 #endif
     }
-    return NanThrowError(err);
+    return Nan::ThrowError(err);
   }
 
   if (g_watch_count++ == 0)
     SetRef(true);
 
-  NanReturnValue(WatcherHandleToV8Value(handle));
+  info.GetReturnValue().Set(WatcherHandleToV8Value(handle));
 }
 
 NAN_METHOD(Unwatch) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  if (!IsV8ValueWatcherHandle(args[0]))
-    return NanThrowTypeError("Handle type required");
+  if (!IsV8ValueWatcherHandle(info[0]))
+    return Nan::ThrowTypeError("Handle type required");
 
-  PlatformUnwatch(V8ValueToWatcherHandle(args[0]));
+  PlatformUnwatch(V8ValueToWatcherHandle(info[0]));
 
   if (--g_watch_count == 0)
     SetRef(false);
 
-  NanReturnUndefined();
+  return;
 }

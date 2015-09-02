@@ -39,7 +39,7 @@ NAN_INLINE v8::Local<T> NanUnsafePersistentToLocal(const NanUnsafePersistent<T> 
 #else
 #define NanUnsafePersistent v8::Persistent
 #define NanAssignUnsafePersistent NanAssignPersistent
-#define NanUnsafePersistentToLocal NanNew
+#define NanUnsafePersistentToLocal Nan::New
 #define NanDisposeUnsafePersistent NanDisposePersistent
 #endif
 

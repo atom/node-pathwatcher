@@ -97,13 +97,13 @@ static bool QueueReaddirchanges(HandleWrapper* handle) {
 }
 
 Handle<Value> WatcherHandleToV8Value(WatcherHandle handle) {
-  Handle<Value> value = NanNew(g_object_template)->NewInstance();
-  NanSetInternalFieldPointer(value->ToObject(), 0, handle);
+  Handle<Value> value = Nan::New(g_object_template)->NewInstance();
+  Nan::SetInternalFieldPointer(value->ToObject(), 0, handle);
   return value;
 }
 
 WatcherHandle V8ValueToWatcherHandle(Handle<Value> value) {
-  return reinterpret_cast<WatcherHandle>(NanGetInternalFieldPointer(
+  return reinterpret_cast<WatcherHandle>(Nan::GetInternalFieldPointer(
       value->ToObject(), 0));
 }
 
@@ -117,8 +117,8 @@ void PlatformInit() {
   g_wake_up_event = CreateEvent(NULL, FALSE, FALSE, NULL);
   g_events.push_back(g_wake_up_event);
 
-  NanAssignPersistent(g_object_template, ObjectTemplate::New());
-  NanNew(g_object_template)->SetInternalFieldCount(1);
+  g_object_template.Reset( ObjectTemplate::New());
+  Nan::New(g_object_template)->SetInternalFieldCount(1);
 
   WakeupNewThread();
 }
