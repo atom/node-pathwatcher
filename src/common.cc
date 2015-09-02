@@ -55,8 +55,8 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
     Handle<Value> argv[] = {
         type,
         WatcherHandleToV8Value(g_handle),
-        Nan::New(g_new_path.data(), g_new_path.size()),
-        Nan::New(g_old_path.data(), g_old_path.size()),
+        Nan::New(g_new_path.data(), g_new_path.size()).ToLocalChecked(),
+        Nan::New(g_old_path.data(), g_old_path.size()).ToLocalChecked(),
     };
     Nan::New(g_callback)->Call(Nan::GetCurrentContext()->Global(), 4, argv);
   }
@@ -138,7 +138,7 @@ NAN_METHOD(Watch) {
       // a difficult-to-produce uv-specific errno) to just take an int which is
       // a negative errno.
       err_obj->Set(Nan::New<v8::String>("code").ToLocalChecked(),
-                   Nan::New<v8::String>(uv_err_name(-error_number))).ToLocalChecked();
+                   Nan::New<v8::String>(uv_err_name(-error_number)).ToLocalChecked());
 #endif
     }
     return Nan::ThrowError(err);
