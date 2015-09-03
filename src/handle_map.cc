@@ -31,108 +31,109 @@ void HandleMap::Clear() {
 
 // static
 NAN_METHOD(HandleMap::New) {
-  NanScope();
+  Nan::HandleScope scope;
   HandleMap* obj = new HandleMap();
-  obj->Wrap(args.This());
-  NanReturnUndefined();
+  obj->Wrap(info.This());
+  return;
 }
 
 // static
 NAN_METHOD(HandleMap::Add) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  if (!IsV8ValueWatcherHandle(args[0]))
-    return NanThrowTypeError("Bad argument");
+  if (!IsV8ValueWatcherHandle(info[0]))
+    return Nan::ThrowTypeError("Bad argument");
 
-  HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
-  WatcherHandle key = V8ValueToWatcherHandle(args[0]);
+  HandleMap* obj = Nan::ObjectWrap::Unwrap<HandleMap>(info.This());
+  WatcherHandle key = V8ValueToWatcherHandle(info[0]);
   if (obj->Has(key))
-    return NanThrowError("Duplicate key");
+    return Nan::ThrowError("Duplicate key");
 
-  NanAssignUnsafePersistent(obj->map_[key], args[1]);
-  NanReturnUndefined();
+  NanAssignUnsafePersistent(obj->map_[key], info[1]);
+  return;
 }
 
 // static
 NAN_METHOD(HandleMap::Get) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  if (!IsV8ValueWatcherHandle(args[0]))
-    return NanThrowTypeError("Bad argument");
+  if (!IsV8ValueWatcherHandle(info[0]))
+    return Nan::ThrowTypeError("Bad argument");
 
-  HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
-  WatcherHandle key = V8ValueToWatcherHandle(args[0]);
+  HandleMap* obj = Nan::ObjectWrap::Unwrap<HandleMap>(info.This());
+  WatcherHandle key = V8ValueToWatcherHandle(info[0]);
   if (!obj->Has(key))
-    return NanThrowError("Invalid key");
+    return Nan::ThrowError("Invalid key");
 
-  NanReturnValue(NanUnsafePersistentToLocal(obj->map_[key]));
+  info.GetReturnValue().Set(NanUnsafePersistentToLocal(obj->map_[key]));
 }
 
 // static
 NAN_METHOD(HandleMap::Has) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  if (!IsV8ValueWatcherHandle(args[0]))
-    return NanThrowTypeError("Bad argument");
+  if (!IsV8ValueWatcherHandle(info[0]))
+    return Nan::ThrowTypeError("Bad argument");
 
-  HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
-  NanReturnValue(NanNew<Boolean>(obj->Has(V8ValueToWatcherHandle(args[0]))));
+  HandleMap* obj = Nan::ObjectWrap::Unwrap<HandleMap>(info.This());
+  info.GetReturnValue().Set(Nan::New<Boolean>(obj->Has(V8ValueToWatcherHandle(info[0]))));
 }
 
 // static
 NAN_METHOD(HandleMap::Values) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
+  HandleMap* obj = Nan::ObjectWrap::Unwrap<HandleMap>(info.This());
 
   int i = 0;
-  Handle<Array> keys = NanNew<Array>(obj->map_.size());
+  v8::Local<Array> keys = Nan::New<Array>(obj->map_.size());
   for (Map::const_iterator iter = obj->map_.begin();
        iter != obj->map_.end();
-       ++iter, ++i)
+       ++iter, ++i) {
     keys->Set(i, NanUnsafePersistentToLocal(iter->second));
+  }
 
-  NanReturnValue(keys);
+  info.GetReturnValue().Set(keys);
 }
 
 // static
 NAN_METHOD(HandleMap::Remove) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  if (!IsV8ValueWatcherHandle(args[0]))
-    return NanThrowTypeError("Bad argument");
+  if (!IsV8ValueWatcherHandle(info[0]))
+    return Nan::ThrowTypeError("Bad argument");
 
-  HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
-  if (!obj->Erase(V8ValueToWatcherHandle(args[0])))
-    return NanThrowError("Invalid key");
+  HandleMap* obj = Nan::ObjectWrap::Unwrap<HandleMap>(info.This());
+  if (!obj->Erase(V8ValueToWatcherHandle(info[0])))
+    return Nan::ThrowError("Invalid key");
 
-  NanReturnUndefined();
+  return;
 }
 
 // static
 NAN_METHOD(HandleMap::Clear) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  HandleMap* obj = ObjectWrap::Unwrap<HandleMap>(args.This());
+  HandleMap* obj = Nan::ObjectWrap::Unwrap<HandleMap>(info.This());
   obj->Clear();
 
-  NanReturnUndefined();
+  return;
 }
 
 // static
 void HandleMap::Initialize(Handle<Object> target) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  Local<FunctionTemplate> t = NanNew<FunctionTemplate>(HandleMap::New);
+  Local<FunctionTemplate> t = Nan::New<FunctionTemplate>(HandleMap::New);
   t->InstanceTemplate()->SetInternalFieldCount(1);
-  t->SetClassName(NanNew<String>("HandleMap"));
+  t->SetClassName(Nan::New<String>("HandleMap").ToLocalChecked());
 
-  NODE_SET_PROTOTYPE_METHOD(t, "add", Add);
-  NODE_SET_PROTOTYPE_METHOD(t, "get", Get);
-  NODE_SET_PROTOTYPE_METHOD(t, "has", Has);
-  NODE_SET_PROTOTYPE_METHOD(t, "values", Values);
-  NODE_SET_PROTOTYPE_METHOD(t, "remove", Remove);
-  NODE_SET_PROTOTYPE_METHOD(t, "clear", Clear);
+  Nan::SetPrototypeMethod(t, "add", Add);
+  Nan::SetPrototypeMethod(t, "get", Get);
+  Nan::SetPrototypeMethod(t, "has", Has);
+  Nan::SetPrototypeMethod(t, "values", Values);
+  Nan::SetPrototypeMethod(t, "remove", Remove);
+  Nan::SetPrototypeMethod(t, "clear", Clear);
 
-  target->Set(NanNew<String>("HandleMap"), t->GetFunction());
+  target->Set(Nan::New<String>("HandleMap").ToLocalChecked(), t->GetFunction());
 }

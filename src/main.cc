@@ -7,9 +7,9 @@ void Init(Handle<Object> exports) {
   CommonInit();
   PlatformInit();
 
-  NODE_SET_METHOD(exports, "setCallback", SetCallback);
-  NODE_SET_METHOD(exports, "watch", Watch);
-  NODE_SET_METHOD(exports, "unwatch", Unwatch);
+  Nan::SetMethod(exports, "setCallback", SetCallback);
+  Nan::SetMethod(exports, "watch", Watch);
+  Nan::SetMethod(exports, "unwatch", Unwatch);
 
   HandleMap::Initialize(exports);
 }

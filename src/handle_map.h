@@ -6,7 +6,7 @@
 #include "common.h"
 #include "unsafe_persistent.h"
 
-class HandleMap : public node::ObjectWrap {
+class HandleMap : public Nan::ObjectWrap {
  public:
   static void Initialize(Handle<Object> target);
 
