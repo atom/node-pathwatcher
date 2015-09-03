@@ -43,7 +43,8 @@ class Directory
   # Public: Creates the directory on disk that corresponds to `::getPath()` if
   # no such directory already exists.
   #
-  # * `mode` Optional {Number} that defaults to `0777`.
+  # * `mode` (optional) {Number} that defaults to `0777`.
+  #
   # Returns a {Promise} that resolves once the directory is created on disk. It
   # resolves to a boolean value that is true if the directory was created or
   # false if it already existed.
