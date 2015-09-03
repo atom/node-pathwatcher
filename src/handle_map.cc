@@ -86,11 +86,12 @@ NAN_METHOD(HandleMap::Values) {
   HandleMap* obj = Nan::ObjectWrap::Unwrap<HandleMap>(info.This());
 
   int i = 0;
-  Handle<Array> keys = Nan::New<Array>(obj->map_.size());
+  v8::Local<Array> keys = Nan::New<Array>(obj->map_.size());
   for (Map::const_iterator iter = obj->map_.begin();
        iter != obj->map_.end();
-       ++iter, ++i)
+       ++iter, ++i) {
     keys->Set(i, NanUnsafePersistentToLocal(iter->second));
+  }
 
   info.GetReturnValue().Set(keys);
 }

@@ -111,7 +111,7 @@ NAN_METHOD(SetCallback) {
   if (!info[0]->IsFunction())
     return Nan::ThrowTypeError("Function required");
 
-  g_callback.Reset( Local<Function>::Cast(info[0]));
+  g_callback.Reset(v8::Isolate::GetCurrent(), Local<Function>::Cast(info[0]));
   return;
 }
 
