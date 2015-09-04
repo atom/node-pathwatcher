@@ -291,6 +291,7 @@ class File
     @exists().then (previouslyExisted) =>
       @writeFile(@getPath(), text).then =>
         @cachedContents = text
+        @setDigest(text)
         @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
         undefined
 
@@ -303,6 +304,7 @@ class File
     previouslyExisted = @existsSync()
     @writeFileWithPrivilegeEscalationSync(@getPath(), text)
     @cachedContents = text
+    @setDigest(text)
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
     undefined
 
@@ -346,6 +348,8 @@ class File
         @emitter.emit 'did-rename'
       when 'change', 'resurrect'
         oldContents = @cachedContents
+        @cachedContents = null
+        @digest = null
         handleReadError = (error) =>
           # We cant read the file, so we GTFO on the watch
           @unsubscribeFromNativeChangeEvents()
