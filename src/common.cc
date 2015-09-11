@@ -9,7 +9,7 @@ static EVENT_TYPE g_type;
 static WatcherHandle g_handle;
 static std::vector<char> g_new_path;
 static std::vector<char> g_old_path;
-static Persistent<Function> g_callback;
+static Nan::Persistent<Function> g_callback;
 
 static void CommonThread(void* handle) {
   WaitForMainThread();
@@ -111,7 +111,7 @@ NAN_METHOD(SetCallback) {
   if (!info[0]->IsFunction())
     return Nan::ThrowTypeError("Function required");
 
-  g_callback.Reset(v8::Isolate::GetCurrent(), Local<Function>::Cast(info[0]));
+  g_callback.Reset(Local<Function>::Cast(info[0]));
   return;
 }
 
