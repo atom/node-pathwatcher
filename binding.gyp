@@ -31,6 +31,7 @@
             4267,  # conversion from 'size_t' to 'type', possible loss of data
             4530,  # C++ exception handler used, but unwind semantics are not enabled
             4506,  # no definition for inline function
+            4577,  # 'noexcept' used with no exception handling mode specified; termination on exception is not guaranteed
             4996,  # function was declared deprecated
           ],
           'defines': [
