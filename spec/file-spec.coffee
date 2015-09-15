@@ -3,6 +3,7 @@ fs = require 'fs-plus'
 temp = require 'temp'
 File = require '../lib/file'
 PathWatcher = require '../lib/main'
+Q = require 'q'
 
 describe 'File', ->
   [filePath, file] = []
@@ -48,6 +49,26 @@ describe 'File', ->
       expect(file.readSync.callCount).toBe 1
       expect(file.getDigestSync()).toBe 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
       expect(file.readSync.callCount).toBe 1
+
+      file.writeSync('x')
+
+      expect(file.getDigestSync()).toBe '11f6ad8ec52a2984abaafd7c3b516503785c2072'
+      expect(file.readSync.callCount).toBe 1
+      expect(file.getDigestSync()).toBe '11f6ad8ec52a2984abaafd7c3b516503785c2072'
+      expect(file.readSync.callCount).toBe 1
+
+      readDeferred = Q.defer()
+      spyOn(file, 'read').andReturn(readDeferred.promise)
+
+      changed = false
+      file.onDidChange -> changed = true
+      fs.writeFileSync(filePath, 'y')
+
+      waitsFor -> file.getDigestSync() is '95cb0bfd2977c761298d9624e4b4d4c72a39974a'
+
+      runs ->
+        readDeferred.resolve("y")
+        expect(file.getDigestSync()).toBe '95cb0bfd2977c761298d9624e4b4d4c72a39974a'
 
   describe '::create()', ->
     [callback, nonExistentFile, tempDir] = []
