@@ -14,6 +14,9 @@ node_js:
   - "0.12"
   - "node"
 
+env:
+  - CC=clang CXX=clang++ npm_config_clang=1
+
 branches:
   only:
     - master
