@@ -15,7 +15,7 @@ node_js:
   - "node"
 
 env:
-  - CC=clang CXX=clang++ npm_config_clang=1
+  - CC=gcc CXX=g++
 
 branches:
   only:
