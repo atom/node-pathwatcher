@@ -1,14 +1,18 @@
-language: objective-c
+language: node_js
 
 notifications:
   email:
     on_success: never
     on_failure: change
 
-script: ./script/cibuild
+sudo: false
 
 git:
   depth: 10
+
+node_js:
+  - "0.12"
+  - "node"
 
 branches:
   only:
