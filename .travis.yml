@@ -1,11 +1,13 @@
 language: node_js
 
-notifications:
-  email:
-    on_success: never
-    on_failure: change
-
 sudo: false
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-4.8
 
 git:
   depth: 10
@@ -20,3 +22,8 @@ env:
 branches:
   only:
     - master
+
+notifications:
+  email:
+    on_success: never
+    on_failure: change
