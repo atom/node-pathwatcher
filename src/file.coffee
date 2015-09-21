@@ -290,6 +290,7 @@ class File
     @exists().then (previouslyExisted) =>
       @writeFile(@getPath(), text).then =>
         @cachedContents = text
+        @setDigest(text)
         @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
         undefined
 
@@ -302,6 +303,7 @@ class File
     previouslyExisted = @existsSync()
     @writeFileWithPrivilegeEscalationSync(@getPath(), text)
     @cachedContents = text
+    @setDigest(text)
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
     undefined
 

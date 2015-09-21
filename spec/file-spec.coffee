@@ -49,6 +49,13 @@ describe 'File', ->
       expect(file.getDigestSync()).toBe 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
       expect(file.readSync.callCount).toBe 1
 
+      file.writeSync('x')
+
+      expect(file.getDigestSync()).toBe '11f6ad8ec52a2984abaafd7c3b516503785c2072'
+      expect(file.readSync.callCount).toBe 1
+      expect(file.getDigestSync()).toBe '11f6ad8ec52a2984abaafd7c3b516503785c2072'
+      expect(file.readSync.callCount).toBe 1
+
   describe '::create()', ->
     [callback, nonExistentFile, tempDir] = []
 
