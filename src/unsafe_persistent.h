@@ -38,9 +38,15 @@ NAN_INLINE v8::Local<T> NanUnsafePersistentToLocal(const NanUnsafePersistent<T> 
 #define NanDisposeUnsafePersistent(handle) handle.Reset()
 #else
 #define NanUnsafePersistent v8::Persistent
-#define NanAssignUnsafePersistent NanAssignPersistent
 #define NanUnsafePersistentToLocal Nan::New
-#define NanDisposeUnsafePersistent NanDisposePersistent
+#define NanDisposeUnsafePersistent(handle) handle.Dispose()
+template<typename T>
+NAN_INLINE void NanAssignUnsafePersistent(
+    v8::Persistent<T>& handle
+  , v8::Handle<T> obj) {
+    handle.Dispose();
+    handle = v8::Persistent<T>::New(obj);
+}
 #endif
 
 #endif  // UNSAFE_PERSISTENT_H_
