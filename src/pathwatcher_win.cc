@@ -8,7 +8,7 @@
 static const unsigned int kDirectoryWatcherBufferSize = 4096;
 
 // Object template to create representation of WatcherHandle.
-static Persistent<ObjectTemplate> g_object_template;
+static Nan::Persistent<ObjectTemplate> g_object_template;
 
 // Mutex for the HandleWrapper map.
 static uv_mutex_t g_handle_wrap_map_mutex;
