@@ -38,16 +38,16 @@
             '_WIN32_WINNT=0x0600',
           ],
         }],  # OS=="win"
-        ['OS=="mac"', {
-          "sources": [
-            "src/pathwatcher_mac.mm",
-          ],
-        }],  # OS=="mac"
         ['OS=="linux"', {
           "sources": [
             "src/pathwatcher_linux.cc",
           ],
         }],  # OS=="linux"
+        ['OS!="win" and OS!="linux"', {
+          "sources": [
+            "src/pathwatcher_unix.cc",
+          ],
+        }],  # OS~="unix"
       ],
     }
   ]
