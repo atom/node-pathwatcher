@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include <errno.h>
 #include <unistd.h>
 #include <sys/event.h>
@@ -7,7 +5,21 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
+#include <algorithm>
+
 #include "common.h"
+
+// test for descriptor event notification, if not available set to O_RDONLY
+#ifndef O_EVTONLY
+#define O_EVTONLY O_RDONLY
+#endif
+
+// test for flag to return full path of the fd
+// if not then set value as defined by mac
+// see: http://fxr.watson.org/fxr/source/bsd/sys/fcntl.h?v=xnu-792.6.70
+#ifndef F_GETPATH
+#define F_GETPATH 50
+#endif
 
 static int g_kqueue;
 static int g_init_errno;
@@ -75,7 +87,7 @@ WatcherHandle PlatformWatch(const char* path) {
   int filter = EVFILT_VNODE;
   int flags = EV_ADD | EV_ENABLE | EV_CLEAR;
   int fflags = NOTE_WRITE | NOTE_DELETE | NOTE_RENAME | NOTE_ATTRIB;
-  EV_SET(&event, fd, filter, flags, fflags, 0, (void*)path);
+  EV_SET(&event, fd, filter, flags, fflags, 0, reinterpret_cast<void*>(const_cast<char*>(path)));
   int r = kevent(g_kqueue, &event, 1, NULL, 0, &timeout);
   if (r == -1) {
     return -errno;
