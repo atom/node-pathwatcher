@@ -11,9 +11,9 @@ using namespace v8;
 typedef HANDLE WatcherHandle;
 
 // Conversion between V8 value and WatcherHandle.
-Handle<Value> WatcherHandleToV8Value(WatcherHandle handle);
-WatcherHandle V8ValueToWatcherHandle(Handle<Value> value);
-bool IsV8ValueWatcherHandle(Handle<Value> value);
+Local<Value> WatcherHandleToV8Value(WatcherHandle handle);
+WatcherHandle V8ValueToWatcherHandle(Local<Value> value);
+bool IsV8ValueWatcherHandle(Local<Value> value);
 #else
 // Correspoding definetions on OS X and Linux.
 typedef int32_t WatcherHandle;
