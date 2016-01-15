@@ -258,12 +258,7 @@ class File
     else
       promise = new Promise (resolve, reject) =>
         content = []
-        encoding = @getEncoding()
-        if encoding is 'utf8'
-          readStream = fs.createReadStream(@getPath(), {encoding})
-        else
-          iconv ?= require 'iconv-lite'
-          readStream = fs.createReadStream(@getPath()).pipe(iconv.decodeStream(encoding))
+        readStream = @createReadStream()
 
         readStream.on 'data', (chunk) ->
           content.push(chunk)
