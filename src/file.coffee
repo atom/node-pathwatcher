@@ -281,6 +281,17 @@ class File
       @setDigest(contents)
       @cachedContents = contents
 
+  # Public: Returns a stream to read the content of the file.
+  #
+  # Returns a {ReadStream} object.
+  createReadStream: ->
+    encoding = @getEncoding()
+    if encoding is 'utf8'
+      fs.createReadStream(@getPath(), {encoding})
+    else
+      iconv ?= require 'iconv-lite'
+      fs.createReadStream(@getPath()).pipe(iconv.decodeStream(encoding))
+
   # Public: Overwrites the file with the given text.
   #
   # * `text` The {String} text to write to the underlying file.
