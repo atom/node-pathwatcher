@@ -417,6 +417,26 @@ describe 'File', ->
       runs ->
         expect(content.join('')).toEqual(unicodeText)
 
+  describe 'createWriteStream()', ->
+    it 'returns a stream to read the file', ->
+      unicodeText = 'ё'
+      unicodeBytes = new Buffer('\x51\x04') # 'ё'
+
+      file.setEncoding('utf16le')
+      stream = file.createWriteStream()
+      ended = false
+
+      stream.on 'finish', -> ended = true
+
+      stream.end(unicodeText)
+
+      waitsFor 'stream finished', -> ended
+
+      runs ->
+        expect(fs.statSync(file.getPath()).size).toBe(2)
+        content = fs.readFileSync(file.getPath()).toString('ascii')
+        expect(content).toBe(unicodeBytes.toString('ascii'))
+
   describe 'encoding support', ->
     [unicodeText, unicodeBytes] = []
 

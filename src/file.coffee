@@ -300,6 +300,19 @@ class File
         @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
         undefined
 
+  # Public: Returns a stream to write content to the file.
+  #
+  # Returns a {WriteStream} object.
+  createWriteStream: ->
+    encoding = @getEncoding()
+    if encoding is 'utf8'
+      fs.createWriteStream(@getPath(), {encoding})
+    else
+      iconv ?= require 'iconv-lite'
+      stream = iconv.encodeStream(encoding)
+      stream.pipe(fs.createWriteStream(@getPath()))
+      stream
+
   # Public: Overwrites the file with the given text.
   #
   # * `text` The {String} text to write to the underlying file.
