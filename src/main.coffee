@@ -15,6 +15,9 @@ class HandleWatcher extends EventEmitter
     @start()
 
   onEvent: (event, filePath, oldFilePath) ->
+    filePath = path.normalize(filePath) if filePath
+    oldFilePath = path.normalize(oldFilePath) if oldFilePath
+
     switch event
       when 'rename'
         # Detect atomic write.
