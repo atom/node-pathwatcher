@@ -26,8 +26,13 @@ class HandleWatcher extends EventEmitter
           fs.stat @path, (err) =>
             if err # original file is gone it's a rename.
               @path = filePath
-              @start()
-              @emit('change', 'rename', filePath)
+              # On OS X files moved to ~/.Trash should be handled as deleted.
+              if process.platform is 'darwin' and (/\/\.Trash\//).test(filePath)
+                @emit('change', 'delete', null)
+                @close()
+              else
+                @start()
+                @emit('change', 'rename', filePath)
             else # atomic write.
               @start()
               @emit('change', 'change', null)

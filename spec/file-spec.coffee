@@ -231,6 +231,23 @@ describe 'File', ->
         waitsFor "post-resurrection change event", ->
           changeHandler.callCount > 0
 
+    describe "when a file is moved to the trash", ->
+      osxTrashDir = process.env.HOME + "/.Trash"
+      osxTrashPath = path.join(osxTrashDir, "file-was-moved-to-trash.txt")
+      it "triggers a delete event", ->
+        deleteHandler = null
+        deleteHandler = jasmine.createSpy("deleteHandler")
+        file.onDidDelete(deleteHandler)
+
+        fs.moveSync(filePath, osxTrashPath)
+
+        waitsFor "remove event", ->
+          deleteHandler.callCount > 0
+
+        # Clean up
+        if fs.existsSync(osxTrashPath)
+          fs.removeSync(osxTrashPath)
+
     describe "when a file cannot be opened after the watch has been applied", ->
       errorSpy = null
       beforeEach ->
