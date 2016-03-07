@@ -2,7 +2,7 @@
   "main": "./lib/main.js",
   "name": "pathwatcher",
   "description": "Watch files and directories for changes",
-  "version": "6.4.0",
+  "version": "6.5.0",
   "licenses": [
     {
       "type": "MIT",
