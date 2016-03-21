@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "nan.h"
+#include <nan.h>
 using namespace v8;
 
 #ifdef _WIN32

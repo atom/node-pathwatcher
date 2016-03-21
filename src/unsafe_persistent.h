@@ -1,7 +1,7 @@
 #ifndef UNSAFE_PERSISTENT_H_
 #define UNSAFE_PERSISTENT_H_
 
-#include "nan.h"
+#include <nan.h>
 
 #if NODE_VERSION_AT_LEAST(0, 11, 0)
 template<class T>
