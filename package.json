@@ -41,7 +41,7 @@
     "grim": "^1.2.1",
     "iconv-lite": "~0.4.4",
     "nan": "^2.0.0",
-    "runas": "^3.1.0",
+    "runas": "atom/node-runas#system-header",
     "underscore-plus": "~1.x"
   }
 }
