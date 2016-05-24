@@ -391,6 +391,25 @@ class File
       else
         throw error
 
+  safeRemoveSync: ->
+    try
+      # Ensure new file contents are really on disk before proceeding
+      fd = fs.openSync(@getPath(), 'a')
+      fs.fdatasyncSync(fd)
+      fs.closeSync(fd)
+
+      fs.removeSync(@getPath())
+      return
+    catch err
+      if err.code is 'EACCES' and process.platform is 'darwin'
+        # Use sync to force completion of pending disk writes.
+        if runas('/bin/sync', [], admin: true) isnt 0
+          throw error
+        if runas('/bin/rm', ['-f', @getPath()], admin: true) isnt 0
+          throw error
+      else
+        throw error
+
   ###
   Section: Private
   ###
