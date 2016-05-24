@@ -326,6 +326,36 @@ class File
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
     undefined
 
+  safeWriteSync: (text) ->
+    @writeSync(text)
+
+    try
+      # Ensure file contents are really on disk before proceeding
+      fd = fs.openSync(@getPath(), 'r+')
+      fs.fdatasyncSync(fd)
+      fs.closeSync(fd)
+
+      # Ensure file directory entry is really on disk before proceeding
+      #
+      # Windows doesn't support syncing on directories so we'll just have to live
+      # with less safety on that platform.
+      unless process.platform is 'win32'
+        try
+          directoryFD = fs.openSync(path.dirname(@getPath()), 'r')
+          fs.fdatasyncSync(directoryFD)
+          fs.closeSync(directoryFD)
+        catch error
+          console.warn("Non-fatal error syncing parent directory of #{@getPath()}")
+      return
+    catch error
+      if error.code is 'EACCES' and process.platform is 'darwin'
+        runas ?= require 'runas'
+        # Use sync to force completion of pending disk writes.
+        if runas('/bin/sync', [], admin: true) isnt 0
+          throw error
+      else
+        throw error
+
   writeFile: (filePath, contents) ->
     encoding = @getEncoding()
     if encoding is 'utf8'
