@@ -28,12 +28,12 @@ class File
   #
   # * `filePath` A {String} containing the absolute path to the file
   # * `symlink` A {Boolean} indicating if the path is a symlink (default: false).
-  constructor: (filePath, @symlink=false) ->
+  constructor: (filePath, @symlink=false, includeDeprecatedAPIs=Grim.includeDeprecatedAPIs) ->
     filePath = path.normalize(filePath) if filePath
     @path = filePath
     @emitter = new Emitter
 
-    if Grim.includeDeprecatedAPIs
+    if includeDeprecatedAPIs
       @on 'contents-changed-subscription-will-be-added', @willAddSubscription
       @on 'moved-subscription-will-be-added', @willAddSubscription
       @on 'removed-subscription-will-be-added', @willAddSubscription

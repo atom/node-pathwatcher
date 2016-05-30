@@ -23,10 +23,10 @@ class Directory
   # * `directoryPath` A {String} containing the absolute path to the directory
   # * `symlink` (optional) A {Boolean} indicating if the path is a symlink.
   #   (default: false)
-  constructor: (directoryPath, @symlink=false) ->
+  constructor: (directoryPath, @symlink=false, includeDeprecatedAPIs=Grim.includeDeprecatedAPIs) ->
     @emitter = new Emitter
 
-    if Grim.includeDeprecatedAPIs
+    if includeDeprecatedAPIs
       @on 'contents-changed-subscription-will-be-added', @willAddSubscription
       @on 'contents-changed-subscription-removed', @didRemoveSubscription
 
