@@ -326,6 +326,36 @@ class File
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
     undefined
 
+  safeWriteSync: (text) ->
+    @writeSync(text)
+
+    try
+      # Ensure file contents are really on disk before proceeding
+      fd = fs.openSync(@getPath(), 'r+')
+      fs.fdatasyncSync(fd)
+      fs.closeSync(fd)
+
+      # Ensure file directory entry is really on disk before proceeding
+      #
+      # Windows doesn't support syncing on directories so we'll just have to live
+      # with less safety on that platform.
+      unless process.platform is 'win32'
+        try
+          directoryFD = fs.openSync(path.dirname(@getPath()), 'r')
+          fs.fdatasyncSync(directoryFD)
+          fs.closeSync(directoryFD)
+        catch error
+          console.warn("Non-fatal error syncing parent directory of #{@getPath()}")
+      return
+    catch error
+      if error.code is 'EACCES' and process.platform is 'darwin'
+        runas ?= require 'runas'
+        # Use sync to force completion of pending disk writes.
+        if runas('/bin/sync', [], admin: true) isnt 0
+          throw error
+      else
+        throw error
+
   writeFile: (filePath, contents) ->
     encoding = @getEncoding()
     if encoding is 'utf8'
@@ -357,6 +387,25 @@ class File
         # Use dd to read from stdin and write to filePath, same thing could be
         # done with tee but it would also copy the file to stdout.
         unless runas('/bin/dd', ["of=#{filePath}"], stdin: text, admin: true) is 0
+          throw error
+      else
+        throw error
+
+  safeRemoveSync: ->
+    try
+      # Ensure new file contents are really on disk before proceeding
+      fd = fs.openSync(@getPath(), 'a')
+      fs.fdatasyncSync(fd)
+      fs.closeSync(fd)
+
+      fs.removeSync(@getPath())
+      return
+    catch err
+      if err.code is 'EACCES' and process.platform is 'darwin'
+        # Use sync to force completion of pending disk writes.
+        if runas('/bin/sync', [], admin: true) isnt 0
+          throw error
+        if runas('/bin/rm', ['-f', @getPath()], admin: true) isnt 0
           throw error
       else
         throw error

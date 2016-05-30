@@ -506,3 +506,14 @@ describe 'File', ->
         readHandler.callCount > 0
       runs ->
         expect(readHandler.argsForCall[0][0]).toBe(null)
+
+  describe 'safeWriteSync(contents)', ->
+    it 'persists the contents of the file to the specified file path', ->
+      file.safeWriteSync("contents")
+      expect(fs.readFileSync(file.getPath(), 'utf8')).toBe("contents")
+
+  describe 'safeRemoveSync()', ->
+    it 'persists the contents of the file to the specified file path', ->
+      expect(fs.existsSync(file.getPath())).toBe(true)
+      file.safeRemoveSync()
+      expect(fs.existsSync(file.getPath())).toBe(false)
