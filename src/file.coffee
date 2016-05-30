@@ -327,11 +327,11 @@ class File
     undefined
 
   safeWriteSync: (text) ->
-    @writeSync(text)
-
     try
+      fd = fs.openSync(@getPath(), 'w')
+      fs.writeSync(fd, text)
+
       # Ensure file contents are really on disk before proceeding
-      fd = fs.openSync(@getPath(), 'r+')
       fs.fdatasyncSync(fd)
       fs.closeSync(fd)
 
@@ -350,6 +350,9 @@ class File
     catch error
       if error.code is 'EACCES' and process.platform is 'darwin'
         runas ?= require 'runas'
+        # Use dd to read from stdin and write to the file path.
+        unless runas('/bin/dd', ["of=#{@getPath()}"], stdin: text, admin: true) is 0
+          throw error
         # Use sync to force completion of pending disk writes.
         if runas('/bin/sync', [], admin: true) isnt 0
           throw error
@@ -384,8 +387,8 @@ class File
     catch error
       if error.code is 'EACCES' and process.platform is 'darwin'
         runas ?= require 'runas'
-        # Use dd to read from stdin and write to filePath, same thing could be
-        # done with tee but it would also copy the file to stdout.
+        # Use dd to read from stdin and write to the file path, same thing could
+        # be done with tee but it would also copy the file to stdout.
         unless runas('/bin/dd', ["of=#{filePath}"], stdin: text, admin: true) is 0
           throw error
       else
