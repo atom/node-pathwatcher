@@ -40,7 +40,7 @@
     "fs-plus": "^2.1",
     "grim": "^1.2.1",
     "iconv-lite": "~0.4.4",
-    "nan": "^2.0.0",
+    "nan": "2.x",
     "runas": "^3.1.0",
     "underscore-plus": "~1.x"
   }
