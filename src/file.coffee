@@ -403,8 +403,9 @@ class File
 
       fs.removeSync(@getPath())
       return
-    catch err
-      if err.code is 'EACCES' and process.platform is 'darwin'
+    catch error
+      if error.code is 'EACCES' and process.platform is 'darwin'
+        runas ?= require 'runas'
         # Use sync to force completion of pending disk writes.
         if runas('/bin/sync', [], admin: true) isnt 0
           throw error
