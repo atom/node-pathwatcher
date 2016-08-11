@@ -122,9 +122,7 @@ describe 'PathWatcher', ->
         watcher = pathWatcher.watch doesNotExist, -> null
       catch error
         expect(error.message).toBe 'Unable to watch path'
-        expect(error.errno).toBe require('constants').ENOENT
-        if error.code?
-          expect(error.code).toBe 'ENOENT'
+        expect(error.code).toBe 'ENOENT'
       expect(watcher).toBe null  # ensure it threw
 
   describe 'when watching multiple files under the same directory', ->
