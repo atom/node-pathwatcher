@@ -517,3 +517,10 @@ describe 'File', ->
       expect(fs.existsSync(file.getPath())).toBe(true)
       file.safeRemoveSync()
       expect(fs.existsSync(file.getPath())).toBe(false)
+
+  describe 'writeSync()', ->
+    it 'emits did-change event', ->
+      file.onDidChange writeHandler = jasmine.createSpy('write handler')
+      file.writeSync('ok')
+      waitsFor 'write handler', ->
+        writeHandler.callCount > 0
