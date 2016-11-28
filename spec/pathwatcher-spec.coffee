@@ -62,9 +62,7 @@ describe 'PathWatcher', ->
       waitsFor -> eventType?
       runs ->
         expect(eventType).toBe 'rename'
-        realPath = fs.realpathSync(tempRenamed)
-        realPath = realPath.toLowerCase() if process.platform is 'win32'
-        expect(eventPath).toBe realPath
+        expect(fs.realpathSync(eventPath)).toBe fs.realpathSync(tempRenamed)
         expect(pathWatcher.getWatchedPaths()).toEqual [watcher.handleWatcher.path]
 
   describe 'when a watched path is deleted #win32 #darwin', ->
