@@ -92,15 +92,18 @@ describe "Directory", ->
       nonExistentDirectory = new Directory(directoryName)
 
       waitsForPromise ->
-        nonExistentDirectory.create(0o0700).then(callback)
+        nonExistentDirectory.create(0o0600).then(callback)
 
       runs ->
         expect(callback.argsForCall[0][0]).toBe true
         expect(fs.existsSync(directoryName)).toBe true
         expect(fs.isDirectorySync(directoryName)).toBe true
+
+        return if process.platform is 'win32' # No mode on Windows
+
         rawMode = fs.statSync(directoryName).mode
         mode = rawMode & 0o07777
-        expect(mode.toString(8)).toBe (0o0700).toString(8)
+        expect(mode.toString(8)).toBe (0o0600).toString(8)
 
     it 'leaves existing directory alone if it exists', ->
       directoryName = path.join(tempDir, 'subdir')
