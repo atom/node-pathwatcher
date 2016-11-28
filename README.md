@@ -1,4 +1,6 @@
-# Path Watcher Node Module [![Build Status](https://travis-ci.org/atom/node-pathwatcher.svg?branch=master)](https://travis-ci.org/atom/node-pathwatcher)
+# Path Watcher Node module
+[![mac OS Build Status](https://travis-ci.org/atom/node-pathwatcher.svg?branch=master)](https://travis-ci.org/atom/node-pathwatcher) [![Windows Build Status](https://ci.appveyor.com/api/projects/status/li8dkoucdrc2ryts/branch/master?svg=true
+)](https://ci.appveyor.com/project/Atom/node-pathwatcher) [![Depenency Status](https://david-dm.org/atom/node-pathwatcher/status.svg)](https://david-dm.org/atom/node-pathwatcher)
 
 ## Installing
 
