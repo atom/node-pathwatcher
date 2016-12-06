@@ -1,4 +1,5 @@
 {
+  "browser": "./lib/browser.js",
   "main": "./lib/main.js",
   "name": "pathwatcher",
   "description": "Watch files and directories for changes",
