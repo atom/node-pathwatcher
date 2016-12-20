@@ -471,8 +471,9 @@ class File
         @emitter.emit 'did-delete'
 
   subscribeToNativeChangeEvents: ->
-    @watchSubscription ?= PathWatcher.watch @path, (args...) =>
-      @handleNativeChangeEvent(args...)
+    if not PathWatcher.isWatchedByParent @path
+      @watchSubscription ?= PathWatcher.watch @path, (args...) =>
+        @handleNativeChangeEvent(args...)
 
   unsubscribeFromNativeChangeEvents: ->
     if @watchSubscription?

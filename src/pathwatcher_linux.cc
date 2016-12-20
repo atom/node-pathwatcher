@@ -62,7 +62,7 @@ void PlatformThread() {
   }
 }
 
-WatcherHandle PlatformWatch(const char* path) {
+WatcherHandle PlatformWatch(const char* path, unsigned int flags_uint) {
   if (g_inotify == -1) {
     return -g_init_errno;
   }

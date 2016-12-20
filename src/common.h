@@ -24,7 +24,7 @@ typedef int32_t WatcherHandle;
 
 void PlatformInit();
 void PlatformThread();
-WatcherHandle PlatformWatch(const char* path);
+WatcherHandle PlatformWatch(const char* path, unsigned int flags_uint);
 void PlatformUnwatch(WatcherHandle handle);
 bool PlatformIsHandleValid(WatcherHandle handle);
 int PlatformInvalidHandleToErrorNumber(WatcherHandle handle);
@@ -38,6 +38,10 @@ enum EVENT_TYPE {
   EVENT_CHILD_RENAME,
   EVENT_CHILD_DELETE,
   EVENT_CHILD_CREATE,
+};
+
+enum WATCH_FLAGS {
+  FLAG_RECURSIVE = 1
 };
 
 void WaitForMainThread();

@@ -122,7 +122,11 @@ NAN_METHOD(Watch) {
     return Nan::ThrowTypeError("String required");
 
   Handle<String> path = info[0]->ToString();
-  WatcherHandle handle = PlatformWatch(*String::Utf8Value(path));
+  unsigned int flags = 0;
+
+  if (info[1]->IsTrue())
+    flags |= FLAG_RECURSIVE;
+  WatcherHandle handle = PlatformWatch(*String::Utf8Value(path), flags);
   if (!PlatformIsHandleValid(handle)) {
     int error_number = PlatformInvalidHandleToErrorNumber(handle);
     v8::Local<v8::Value> err =

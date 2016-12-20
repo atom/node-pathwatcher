@@ -72,7 +72,7 @@ void PlatformThread() {
   }
 }
 
-WatcherHandle PlatformWatch(const char* path) {
+WatcherHandle PlatformWatch(const char* path, unsigned int flags_uint) {
   if (g_kqueue == -1) {
     return -g_init_errno;
   }

@@ -29,10 +29,11 @@ struct ScopedLocker {
 };
 
 struct HandleWrapper {
-  HandleWrapper(WatcherHandle handle, const char* path_str)
+  HandleWrapper(WatcherHandle handle, const char* path_str, unsigned int flags_uint)
       : dir_handle(handle),
         path(strlen(path_str)),
-        canceled(false) {
+        canceled(false),
+        flags(flags_uint) {
     memset(&overlapped, 0, sizeof(overlapped));
     overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     g_events.push_back(overlapped.hEvent);
@@ -61,6 +62,7 @@ struct HandleWrapper {
   WatcherHandle dir_handle;
   std::vector<char> path;
   bool canceled;
+  unsigned int flags;
   OVERLAPPED overlapped;
   char buffer[kDirectoryWatcherBufferSize];
 
@@ -82,7 +84,7 @@ static bool QueueReaddirchanges(HandleWrapper* handle) {
   return ReadDirectoryChangesW(handle->dir_handle,
                                handle->buffer,
                                kDirectoryWatcherBufferSize,
-                               FALSE,
+                               (handle->flags & FLAG_RECURSIVE) ? TRUE : FALSE,
                                FILE_NOTIFY_CHANGE_FILE_NAME      |
                                  FILE_NOTIFY_CHANGE_DIR_NAME     |
                                  FILE_NOTIFY_CHANGE_ATTRIBUTES   |
@@ -246,7 +248,7 @@ void PlatformThread() {
   }
 }
 
-WatcherHandle PlatformWatch(const char* path) {
+WatcherHandle PlatformWatch(const char* path, unsigned int flags_uint) {
   wchar_t wpath[MAX_PATH] = { 0 };
   MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, MAX_PATH);
 
@@ -272,7 +274,7 @@ WatcherHandle PlatformWatch(const char* path) {
   std::unique_ptr<HandleWrapper> handle;
   {
     ScopedLocker locker(g_handle_wrap_map_mutex);
-    handle.reset(new HandleWrapper(dir_handle, path));
+    handle.reset(new HandleWrapper(dir_handle, path, flags_uint));
   }
 
   if (!QueueReaddirchanges(handle.get())) {

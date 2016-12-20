@@ -10,7 +10,7 @@ binding.setCallback (event, handle, filePath, oldFilePath) ->
   handleWatchers.get(handle).onEvent(event, filePath, oldFilePath) if handleWatchers.has(handle)
 
 class HandleWatcher extends EventEmitter
-  constructor: (@path) ->
+  constructor: (@path, @options) ->
     @setMaxListeners(Infinity)
     @start()
 
@@ -46,7 +46,7 @@ class HandleWatcher extends EventEmitter
         @emit('change', event, filePath, oldFilePath)
 
   start: ->
-    @handle = binding.watch(@path)
+    @handle = binding.watch(@path, @options.recursive)
     if handleWatchers.has(@handle)
       troubleWatcher = handleWatchers.get(@handle)
       troubleWatcher.close()
@@ -66,13 +66,17 @@ class PathWatcher extends EventEmitter
   path: null
   handleWatcher: null
 
-  constructor: (filePath, callback) ->
+  constructor: (filePath, options, callback) ->
     @path = filePath
+    @isRecursive = false
 
     # On Windows watching a file is emulated by watching its parent folder.
     if process.platform is 'win32'
       stats = fs.statSync(filePath)
       @isWatchingParent = not stats.isDirectory()
+      @isRecursive = not @isWatchingParent and options.recursive or false
+    else
+      options.recursive = false
 
     filePath = path.dirname(filePath) if @isWatchingParent
     for watcher in handleWatchers.values()
@@ -80,7 +84,7 @@ class PathWatcher extends EventEmitter
         @handleWatcher = watcher
         break
 
-    @handleWatcher ?= new HandleWatcher(filePath)
+    @handleWatcher ?= new HandleWatcher(filePath, options)
 
     @onChange = (event, newFilePath, oldFilePath) =>
       switch event
@@ -91,17 +95,24 @@ class PathWatcher extends EventEmitter
         when 'child-rename'
           if @isWatchingParent
             @onChange('rename', newFilePath) if @path is oldFilePath
+          else if @isRecursive
+            @onChange('change', newFilePath)
           else
             @onChange('change', '')
         when 'child-delete'
           if @isWatchingParent
             @onChange('delete', null) if @path is newFilePath
+          else if @isRecursive
+            @onChange('change', newFilePath)
           else
             @onChange('change', '')
         when 'child-change'
           @onChange('change', '') if @isWatchingParent and @path is newFilePath
         when 'child-create'
-          @onChange('change', '') unless @isWatchingParent
+          if @isRecursive
+            @onChange('change', newFilePath)
+          else
+            @onChange('change', '') unless @isWatchingParent
 
     @handleWatcher.on('change', @onChange)
 
@@ -109,9 +120,13 @@ class PathWatcher extends EventEmitter
     @handleWatcher.removeListener('change', @onChange)
     @handleWatcher.closeIfNoListener()
 
-exports.watch = (path, callback) ->
+exports.watch = (path, options, callback) ->
   path = require('path').resolve(path)
-  new PathWatcher(path, callback)
+  options = options or {}
+  if (typeof options is 'function')
+    callback = options
+    options = {}
+  new PathWatcher(path, options, callback)
 
 exports.closeAllWatchers = ->
   watcher.close() for watcher in handleWatchers.values()
@@ -121,6 +136,13 @@ exports.getWatchedPaths = ->
   paths = []
   paths.push(watcher.path) for watcher in handleWatchers.values()
   paths
+
+exports.isWatchedByParent = (path) ->
+  for watcher in handleWatchers.values()
+    watcherPath = watcher.path
+    if path.startsWith(watcherPath) and watcherPath.options.recursive
+      return true
+  false
 
 exports.File = require './file'
 exports.Directory = require './directory'
