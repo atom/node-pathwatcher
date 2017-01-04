@@ -191,9 +191,9 @@ class Directory
     if relativePath?.match(/[A-Za-z0-9+-.]+:\/\//) # leave path alone if it has a scheme
       relativePath
     else if fs.isAbsolute(relativePath)
-      path.normalize(fs.absolute(relativePath))
+      path.normalize(fs.resolveHome(relativePath))
     else
-      path.normalize(fs.absolute(path.join(@getPath(), relativePath)))
+      path.normalize(fs.resolveHome(path.join(@getPath(), relativePath)))
 
   ###
   Section: Traversing
