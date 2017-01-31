@@ -19,6 +19,8 @@ static std::vector<HANDLE> g_events;
 // The dummy event to wakeup the thread.
 static HANDLE g_wake_up_event;
 
+static HANDLE g_destroyed_event;
+
 struct ScopedLocker {
   explicit ScopedLocker(uv_mutex_t& mutex) : mutex_(&mutex) { uv_mutex_lock(mutex_); }
   ~ScopedLocker() { Unlock(); }
@@ -42,20 +44,9 @@ struct HandleWrapper {
   }
 
   ~HandleWrapper() {
-    CloseFile();
-
+    CloseHandle(dir_handle);
     map_.erase(overlapped.hEvent);
     CloseHandle(overlapped.hEvent);
-    g_events.erase(
-        std::remove(g_events.begin(), g_events.end(), overlapped.hEvent),
-        g_events.end());
-  }
-
-  void CloseFile() {
-    if (dir_handle != INVALID_HANDLE_VALUE) {
-      CloseHandle(dir_handle);
-      dir_handle = INVALID_HANDLE_VALUE;
-    }
   }
 
   WatcherHandle dir_handle;
@@ -114,6 +105,7 @@ bool IsV8ValueWatcherHandle(Local<Value> value) {
 void PlatformInit() {
   uv_mutex_init(&g_handle_wrap_map_mutex);
 
+  g_destroyed_event = CreateEvent(NULL, FALSE, FALSE, NULL);
   g_wake_up_event = CreateEvent(NULL, FALSE, FALSE, NULL);
   g_events.push_back(g_wake_up_event);
 
@@ -136,6 +128,12 @@ void PlatformThread() {
                                      copied_events.data(),
                                      FALSE,
                                      INFINITE);
+
+    {
+      ScopedLocker locker(g_handle_wrap_map_mutex);
+      SetEvent(g_destroyed_event);
+    }
+
     int i = r - WAIT_OBJECT_0;
     if (i >= 0 && i < copied_events.size()) {
       // It's a wake up event, there is no fs events.
@@ -145,11 +143,7 @@ void PlatformThread() {
       ScopedLocker locker(g_handle_wrap_map_mutex);
 
       HandleWrapper* handle = HandleWrapper::Get(copied_events[i]);
-      if (!handle)
-        continue;
-
-      if (handle->canceled) {
-        delete handle;
+      if (!handle || handle->canceled) {
         continue;
       }
 
@@ -288,12 +282,17 @@ WatcherHandle PlatformWatch(const char* path) {
 
 void PlatformUnwatch(WatcherHandle key) {
   if (PlatformIsHandleValid(key)) {
-    ScopedLocker locker(g_handle_wrap_map_mutex);
-
+    {
+      ScopedLocker locker(g_handle_wrap_map_mutex);
+      HandleWrapper* handle = HandleWrapper::Get(key);
+      handle->canceled = true;
+      g_events.erase(std::remove(g_events.begin(), g_events.end(), handle->overlapped.hEvent), g_events.end());
+      CancelIoEx(handle->dir_handle, &handle->overlapped);
+      SetEvent(g_wake_up_event);
+    }
+    WaitForSingleObject(g_destroyed_event, INFINITE);
     HandleWrapper* handle = HandleWrapper::Get(key);
-    handle->canceled = true;
-    CancelIoEx(handle->dir_handle, &handle->overlapped);
-    handle->CloseFile();
+    delete handle;
   }
 }
 
