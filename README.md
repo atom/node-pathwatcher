@@ -20,19 +20,25 @@ npm install pathwatcher
 PathWatcher = require 'pathwatcher'
 ```
 
-### PathWatcher.watch(filename, [listener])
+### PathWatcher.watch(filename, [options], [listener])
 
 Watch for changes on `filename`, where `filename` is either a file or a
 directory. The returned object is a `PathWatcher`.
+
+The options argument is a javascript object:
+`{ recursive: true }` will allow pathWatcher to watch a Windows directory
+recursively for any changes to files or directories under it.  This option has
+no effect on non-Windows operating systems.
 
 The listener callback gets two arguments `(event, path)`. `event` can be `rename`,
 `delete` or `change`, and `path` is the path of the file which triggered the
 event.
 
 For directories, the `change` event is emitted when a file or directory under
-the watched directory got created or deleted. And the `PathWatcher.watch` is
-not recursive, so changes of subdirectories under the watched directory would
-not be detected.
+the watched directory got created or deleted. And if the `PathWatcher.watch` is
+not recursive i.e. non-Windows operating systems or if the option has not
+been enabled on Windows, changes of subdirectories under the watched directory
+would not be detected.
 
 ### PathWatcher.close()
 

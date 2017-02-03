@@ -307,10 +307,11 @@ class Directory
   ###
 
   subscribeToNativeChangeEvents: ->
-    @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
-      if eventType is 'change'
-        @emit 'contents-changed' if Grim.includeDeprecatedAPIs
-        @emitter.emit 'did-change'
+    if not PathWatcher.isWatchedByParent @path
+      @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
+        if eventType is 'change'
+          @emit 'contents-changed' if Grim.includeDeprecatedAPIs
+          @emitter.emit 'did-change'
 
   unsubscribeFromNativeChangeEvents: ->
     if @watchSubscription?

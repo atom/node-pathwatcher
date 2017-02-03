@@ -7,6 +7,7 @@ temp.track()
 
 describe 'PathWatcher', ->
   tempDir = temp.mkdirSync('node-pathwatcher-directory')
+  baseDir = path.dirname(tempDir)
   tempFile = path.join(tempDir, 'file')
 
   beforeEach ->
@@ -165,3 +166,55 @@ describe 'PathWatcher', ->
       fs.unlinkSync(nested3)
       fs.rmdirSync(nested2)
       fs.rmdirSync(nested1)
+
+  describe 'when a file is added under a recursively watched directory #win32', ->
+    it 'fires the callback with the event type and file path', ->
+      eventType = null
+      eventPath = null
+      newFile = path.join(tempDir, 'newfile')
+
+      watcher = pathWatcher.watch baseDir,  { recursive: true }, (type, path) ->
+        eventType = type
+        eventPath = path
+
+      fs.writeFileSync(newFile, 'added')
+
+      waitsFor -> eventType?
+      runs ->
+        expect(eventType).toBe 'change'
+        expect(eventPath).toBe newFile
+
+  describe 'when a file is renamed under a recursively watched directory #win32', ->
+    it 'fires the callback with the event type and file path', ->
+      eventType = null
+      eventPath = null
+      newFile = path.join(tempDir, 'newfile')
+      renamedFile = path.join(tempDir, 'renamedfile')
+
+      watcher = pathWatcher.watch baseDir,  { recursive: true }, (type, path) ->
+        eventType = type
+        eventPath = path
+
+      fs.renameSync(newFile, renamedFile)
+
+      waitsFor -> eventType?
+      runs ->
+        expect(eventType).toBe 'change'
+        expect(eventPath).toBe renamedFile
+
+  describe 'when a file is removed under a recursively watched directory #win32', ->
+    it 'fires the callback with the event type and file path', ->
+      eventType = null
+      eventPath = null
+      renamedFile = path.join(tempDir, 'renamedfile')
+
+      watcher = pathWatcher.watch baseDir,  { recursive: true }, (type, path) ->
+        eventType = type
+        eventPath = path
+
+      fs.unlinkSync(renamedFile)
+
+      waitsFor -> eventType?
+      runs ->
+        expect(eventType).toBe 'change'
+        expect(eventPath).toBe renamedFile
