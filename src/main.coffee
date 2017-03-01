@@ -106,14 +106,13 @@ class PathWatcher extends EventEmitter
     @handleWatcher.removeListener('change', @onChange)
     @handleWatcher.closeIfNoListener()
 
-exports.watch = (path, callback) ->
+exports.watch = (pathToWatch, callback) ->
   unless handleWatchers?
     handleWatchers = new HandleMap
     binding.setCallback (event, handle, filePath, oldFilePath) ->
       handleWatchers.get(handle).onEvent(event, filePath, oldFilePath) if handleWatchers.has(handle)
 
-  path = require('path').resolve(path)
-  new PathWatcher(path, callback)
+  new PathWatcher(path.resolve(pathToWatch), callback)
 
 exports.closeAllWatchers = ->
   if handleWatchers?
