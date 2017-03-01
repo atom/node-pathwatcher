@@ -62,13 +62,14 @@ class HandleWatcher
       binding.unwatch(@handle)
       handleWatchers.remove(@handle)
 
-class PathWatcher extends EventEmitter
+class PathWatcher
   isWatchingParent: false
   path: null
   handleWatcher: null
 
   constructor: (filePath, callback) ->
     @path = filePath
+    @emitter = new Emitter()
 
     # On Windows watching a file is emulated by watching its parent folder.
     if process.platform is 'win32'
@@ -88,7 +89,7 @@ class PathWatcher extends EventEmitter
         when 'rename', 'change', 'delete'
           @path = newFilePath if event is 'rename'
           callback.call(this, event, newFilePath) if typeof callback is 'function'
-          @emit('change', event, newFilePath)
+          @emitter.emit('did-change', {event, newFilePath})
         when 'child-rename'
           if @isWatchingParent
             @onChange('rename', newFilePath) if @path is oldFilePath
@@ -106,7 +107,11 @@ class PathWatcher extends EventEmitter
 
     @disposable = @handleWatcher.onDidChange(@onChange)
 
+  onDidChange: (callback) ->
+    @emitter.on('did-change', callback)
+
   close: ->
+    @emitter.dispose()
     @disposable.dispose()
     @handleWatcher.closeIfNoListener()
 
