@@ -1,6 +1,5 @@
 binding = require '../build/Release/pathwatcher.node'
 {HandleMap} = binding
-{EventEmitter} = require 'events'
 {Emitter} = require 'event-kit'
 fs = require 'fs'
 path = require 'path'
