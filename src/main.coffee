@@ -4,10 +4,7 @@ binding = require '../build/Release/pathwatcher.node'
 fs = require 'fs'
 path = require 'path'
 
-handleWatchers = new HandleMap
-
-binding.setCallback (event, handle, filePath, oldFilePath) ->
-  handleWatchers.get(handle).onEvent(event, filePath, oldFilePath) if handleWatchers.has(handle)
+handleWatchers = null
 
 class HandleWatcher extends EventEmitter
   constructor: (@path) ->
@@ -110,16 +107,23 @@ class PathWatcher extends EventEmitter
     @handleWatcher.closeIfNoListener()
 
 exports.watch = (path, callback) ->
+  unless handleWatchers?
+    handleWatchers = new HandleMap
+    binding.setCallback (event, handle, filePath, oldFilePath) ->
+      handleWatchers.get(handle).onEvent(event, filePath, oldFilePath) if handleWatchers.has(handle)
+
   path = require('path').resolve(path)
   new PathWatcher(path, callback)
 
 exports.closeAllWatchers = ->
-  watcher.close() for watcher in handleWatchers.values()
-  handleWatchers.clear()
+  if handleWatchers?
+    watcher.close() for watcher in handleWatchers.values()
+    handleWatchers.clear()
 
 exports.getWatchedPaths = ->
   paths = []
-  paths.push(watcher.path) for watcher in handleWatchers.values()
+  if handleWatchers?
+    paths.push(watcher.path) for watcher in handleWatchers.values()
   paths
 
 exports.File = require './file'
