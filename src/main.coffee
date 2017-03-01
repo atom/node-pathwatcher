@@ -91,18 +91,18 @@ class PathWatcher
           @emitter.emit('did-change', {event, newFilePath})
         when 'child-rename'
           if @isWatchingParent
-            @onChange('rename', newFilePath) if @path is oldFilePath
+            @onChange({event: 'rename', newFilePath}) if @path is oldFilePath
           else
-            @onChange('change', '')
+            @onChange({event: 'change', newFilePath: ''})
         when 'child-delete'
           if @isWatchingParent
-            @onChange('delete', null) if @path is newFilePath
+            @onChange({event: 'delete', newFilePath: null}) if @path is newFilePath
           else
-            @onChange('change', '')
+            @onChange({event: 'change', newFilePath: ''})
         when 'child-change'
-          @onChange('change', '') if @isWatchingParent and @path is newFilePath
+          @onChange({event: 'change', newFilePath: ''}) if @isWatchingParent and @path is newFilePath
         when 'child-create'
-          @onChange('change', '') unless @isWatchingParent
+          @onChange({event: 'change', newFilePath: ''}) unless @isWatchingParent
 
     @disposable = @handleWatcher.onDidChange(@onChange)
 
