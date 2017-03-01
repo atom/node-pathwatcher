@@ -1,14 +1,15 @@
 binding = require '../build/Release/pathwatcher.node'
 {HandleMap} = binding
 {EventEmitter} = require 'events'
+{Emitter} = require 'event-kit'
 fs = require 'fs'
 path = require 'path'
 
 handleWatchers = null
 
-class HandleWatcher extends EventEmitter
+class HandleWatcher
   constructor: (@path) ->
-    @setMaxListeners(Infinity)
+    @emitter = new Emitter()
     @start()
 
   onEvent: (event, filePath, oldFilePath) ->
@@ -25,22 +26,25 @@ class HandleWatcher extends EventEmitter
               @path = filePath
               # On OS X files moved to ~/.Trash should be handled as deleted.
               if process.platform is 'darwin' and (/\/\.Trash\//).test(filePath)
-                @emit('change', 'delete', null)
+                @emitter.emit('did-change', {event: 'delete', newFilePath: null})
                 @close()
               else
                 @start()
-                @emit('change', 'rename', filePath)
+                @emitter.emit('did-change', {event: 'rename', newFilePath: filePath})
             else # atomic write.
               @start()
-              @emit('change', 'change', null)
+              @emitter.emit('did-change', {event: 'change', newFilePath: null})
         setTimeout(detectRename, 100)
       when 'delete'
-        @emit('change', 'delete', null)
+        @emitter.emit('did-change', {event: 'delete', newFilePath: null})
         @close()
       when 'unknown'
         throw new Error("Received unknown event for path: #{@path}")
       else
-        @emit('change', event, filePath, oldFilePath)
+        @emitter.emit('did-change', {event, newFilePath: filePath, oldFilePath: oldFilePath})
+
+  onDidChange: (callback) ->
+    @emitter.on('did-change', callback)
 
   start: ->
     @handle = binding.watch(@path)
@@ -51,7 +55,7 @@ class HandleWatcher extends EventEmitter
     handleWatchers.add(@handle, this)
 
   closeIfNoListener: ->
-    @close() if @listeners('change').length is 0
+    @close() if @emitter.getTotalListenerCount() is 0
 
   close: ->
     if handleWatchers.has(@handle)
@@ -79,7 +83,7 @@ class PathWatcher extends EventEmitter
 
     @handleWatcher ?= new HandleWatcher(filePath)
 
-    @onChange = (event, newFilePath, oldFilePath) =>
+    @onChange = ({event, newFilePath, oldFilePath}) =>
       switch event
         when 'rename', 'change', 'delete'
           @path = newFilePath if event is 'rename'
@@ -100,10 +104,10 @@ class PathWatcher extends EventEmitter
         when 'child-create'
           @onChange('change', '') unless @isWatchingParent
 
-    @handleWatcher.on('change', @onChange)
+    @disposable = @handleWatcher.onDidChange(@onChange)
 
   close: ->
-    @handleWatcher.removeListener('change', @onChange)
+    @disposable.dispose()
     @handleWatcher.closeIfNoListener()
 
 exports.watch = (pathToWatch, callback) ->
