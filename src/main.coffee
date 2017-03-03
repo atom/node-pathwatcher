@@ -1,17 +1,14 @@
 binding = require '../build/Release/pathwatcher.node'
 {HandleMap} = binding
-{EventEmitter} = require 'events'
+{Emitter} = require 'event-kit'
 fs = require 'fs'
 path = require 'path'
 
-handleWatchers = new HandleMap
+handleWatchers = null
 
-binding.setCallback (event, handle, filePath, oldFilePath) ->
-  handleWatchers.get(handle).onEvent(event, filePath, oldFilePath) if handleWatchers.has(handle)
-
-class HandleWatcher extends EventEmitter
+class HandleWatcher
   constructor: (@path) ->
-    @setMaxListeners(Infinity)
+    @emitter = new Emitter()
     @start()
 
   onEvent: (event, filePath, oldFilePath) ->
@@ -28,22 +25,25 @@ class HandleWatcher extends EventEmitter
               @path = filePath
               # On OS X files moved to ~/.Trash should be handled as deleted.
               if process.platform is 'darwin' and (/\/\.Trash\//).test(filePath)
-                @emit('change', 'delete', null)
+                @emitter.emit('did-change', {event: 'delete', newFilePath: null})
                 @close()
               else
                 @start()
-                @emit('change', 'rename', filePath)
+                @emitter.emit('did-change', {event: 'rename', newFilePath: filePath})
             else # atomic write.
               @start()
-              @emit('change', 'change', null)
+              @emitter.emit('did-change', {event: 'change', newFilePath: null})
         setTimeout(detectRename, 100)
       when 'delete'
-        @emit('change', 'delete', null)
+        @emitter.emit('did-change', {event: 'delete', newFilePath: null})
         @close()
       when 'unknown'
         throw new Error("Received unknown event for path: #{@path}")
       else
-        @emit('change', event, filePath, oldFilePath)
+        @emitter.emit('did-change', {event, newFilePath: filePath, oldFilePath: oldFilePath})
+
+  onDidChange: (callback) ->
+    @emitter.on('did-change', callback)
 
   start: ->
     @handle = binding.watch(@path)
@@ -54,20 +54,21 @@ class HandleWatcher extends EventEmitter
     handleWatchers.add(@handle, this)
 
   closeIfNoListener: ->
-    @close() if @listeners('change').length is 0
+    @close() if @emitter.getTotalListenerCount() is 0
 
   close: ->
     if handleWatchers.has(@handle)
       binding.unwatch(@handle)
       handleWatchers.remove(@handle)
 
-class PathWatcher extends EventEmitter
+class PathWatcher
   isWatchingParent: false
   path: null
   handleWatcher: null
 
   constructor: (filePath, callback) ->
     @path = filePath
+    @emitter = new Emitter()
 
     # On Windows watching a file is emulated by watching its parent folder.
     if process.platform is 'win32'
@@ -82,44 +83,54 @@ class PathWatcher extends EventEmitter
 
     @handleWatcher ?= new HandleWatcher(filePath)
 
-    @onChange = (event, newFilePath, oldFilePath) =>
+    @onChange = ({event, newFilePath, oldFilePath}) =>
       switch event
         when 'rename', 'change', 'delete'
           @path = newFilePath if event is 'rename'
           callback.call(this, event, newFilePath) if typeof callback is 'function'
-          @emit('change', event, newFilePath)
+          @emitter.emit('did-change', {event, newFilePath})
         when 'child-rename'
           if @isWatchingParent
-            @onChange('rename', newFilePath) if @path is oldFilePath
+            @onChange({event: 'rename', newFilePath}) if @path is oldFilePath
           else
-            @onChange('change', '')
+            @onChange({event: 'change', newFilePath: ''})
         when 'child-delete'
           if @isWatchingParent
-            @onChange('delete', null) if @path is newFilePath
+            @onChange({event: 'delete', newFilePath: null}) if @path is newFilePath
           else
-            @onChange('change', '')
+            @onChange({event: 'change', newFilePath: ''})
         when 'child-change'
-          @onChange('change', '') if @isWatchingParent and @path is newFilePath
+          @onChange({event: 'change', newFilePath: ''}) if @isWatchingParent and @path is newFilePath
         when 'child-create'
-          @onChange('change', '') unless @isWatchingParent
+          @onChange({event: 'change', newFilePath: ''}) unless @isWatchingParent
 
-    @handleWatcher.on('change', @onChange)
+    @disposable = @handleWatcher.onDidChange(@onChange)
+
+  onDidChange: (callback) ->
+    @emitter.on('did-change', callback)
 
   close: ->
-    @handleWatcher.removeListener('change', @onChange)
+    @emitter.dispose()
+    @disposable.dispose()
     @handleWatcher.closeIfNoListener()
 
-exports.watch = (path, callback) ->
-  path = require('path').resolve(path)
-  new PathWatcher(path, callback)
+exports.watch = (pathToWatch, callback) ->
+  unless handleWatchers?
+    handleWatchers = new HandleMap
+    binding.setCallback (event, handle, filePath, oldFilePath) ->
+      handleWatchers.get(handle).onEvent(event, filePath, oldFilePath) if handleWatchers.has(handle)
+
+  new PathWatcher(path.resolve(pathToWatch), callback)
 
 exports.closeAllWatchers = ->
-  watcher.close() for watcher in handleWatchers.values()
-  handleWatchers.clear()
+  if handleWatchers?
+    watcher.close() for watcher in handleWatchers.values()
+    handleWatchers.clear()
 
 exports.getWatchedPaths = ->
   paths = []
-  paths.push(watcher.path) for watcher in handleWatchers.values()
+  if handleWatchers?
+    paths.push(watcher.path) for watcher in handleWatchers.values()
   paths
 
 exports.File = require './file'

@@ -12,9 +12,7 @@ addons:
 git:
   depth: 10
 
-node_js:
-  - "0.12"
-  - "node"
+node_js: 6
 
 env:
   - CC=gcc-4.8 CXX=g++-4.8
