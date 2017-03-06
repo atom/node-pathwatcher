@@ -8,6 +8,7 @@ Grim = require 'grim'
 
 runas = null # Defer until used
 iconv = null # Defer until used
+jschardet = null # Defer until used
 
 Directory = null
 PathWatcher = require './main'
@@ -174,6 +175,18 @@ class File
 
   # Public: Returns the {String} encoding name for this file (default: 'utf8').
   getEncoding: -> @encoding
+
+  # Public: Returns the {String} detected encoding of this file,
+  # or undefined if the encoding was unable to be detected.
+  detectEncoding: ->
+    jschardet ?= require 'jschardet'
+    iconv ?= require 'iconv-lite'
+
+    buffer = fs.readFileSync(@path) # Don't supply an encoding to get the buffer
+    {encoding} = jschardet.detect(buffer)
+    encoding = 'utf8' if encoding is 'ascii'
+    return unless iconv.encodingExists(encoding)
+    return encoding.toLowerCase().replace(/[^0-9a-z]|:\d{4}$/g, '')
 
   ###
   Section: Managing Paths

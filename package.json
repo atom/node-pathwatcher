@@ -39,7 +39,8 @@
     "event-kit": "^2.1.0",
     "fs-plus": "^3.0.0",
     "grim": "^2.0.1",
-    "iconv-lite": "~0.4.4",
+    "iconv-lite": "~0.4.15",
+    "jschardet": "^1.4.1",
     "nan": "2.x",
     "runas": "^3.1.0",
     "underscore-plus": "~1.x"
