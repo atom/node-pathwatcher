@@ -147,7 +147,7 @@ void PlatformThread() {
       if (copied_events[i] == g_wake_up_event)
         continue;
 
-      ScopedLocker locker(g_handle_wrap_map_mutex);
+      ScopedLocker locker2(g_handle_wrap_map_mutex);
 
       HandleWrapper* handle = HandleWrapper::Get(copied_events[i]);
       if (!handle || handle->canceled)
@@ -235,13 +235,13 @@ void PlatformThread() {
       // Restart the monitor, it was reset after each call.
       QueueReaddirchanges(handle);
 
-      locker.Unlock();
+      locker2.Unlock();
 
-      for (size_t i = 0; i < events.size(); ++i)
-        PostEventAndWait(events[i].type,
-                         events[i].handle,
-                         events[i].new_path,
-                         events[i].old_path);
+      for (size_t j = 0; j < events.size(); ++j)
+        PostEventAndWait(events[j].type,
+                         events[j].handle,
+                         events[j].new_path,
+                         events[j].old_path);
     }
   }
 }
