@@ -401,9 +401,9 @@ describe 'File', ->
       ).toThrow()
 
     it "can be auto-detected", ->
-      cp1255FilePath = path.join(__dirname, 'fixtures', 'cp1255.txt')
-      cp1255File = new File(cp1255FilePath)
-      expect(cp1255File.detectEncoding()).toBe('cp1255')
+      windows1255FilePath = path.join(__dirname, 'fixtures', 'windows1255.txt')
+      windows1255File = new File(windows1255FilePath)
+      expect(windows1255File.detectEncoding()).toBe('windows1255')
 
   describe 'createReadStream()', ->
     it 'returns a stream to read the file', ->
