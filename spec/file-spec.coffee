@@ -400,6 +400,11 @@ describe 'File', ->
         file.setEncoding('utf-8-bom')
       ).toThrow()
 
+    it "can be auto-detected", ->
+      cp1255FilePath = path.join(__dirname, 'fixtures', 'cp1255.txt')
+      cp1255File = new File(cp1255FilePath)
+      expect(cp1255File.detectEncoding()).toBe('cp1255')
+
   describe 'createReadStream()', ->
     it 'returns a stream to read the file', ->
       stream = file.createReadStream()
