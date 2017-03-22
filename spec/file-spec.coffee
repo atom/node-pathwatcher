@@ -405,6 +405,12 @@ describe 'File', ->
       windows1255File = new File(windows1255FilePath)
       expect(windows1255File.detectEncoding()).toBe('windows1255')
 
+      emptyFilePath = path.join(__dirname, 'fixtures', 'empty.txt')
+      fs.writeFileSync(emptyFilePath, '')
+      emptyFile = new File(emptyFilePath)
+      expect(emptyFile.detectEncoding()).toBeUndefined()
+      fs.removeSync(emptyFilePath)
+
   describe 'createReadStream()', ->
     it 'returns a stream to read the file', ->
       stream = file.createReadStream()
