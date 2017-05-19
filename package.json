@@ -1,5 +1,5 @@
 {
-  "main": "./lib/main.js",
+  "main": "./lib/main",
   "name": "pathwatcher",
   "description": "Watch files and directories for changes",
   "version": "7.0.0",
