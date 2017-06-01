@@ -428,6 +428,7 @@ class File
         @emit 'moved' if Grim.includeDeprecatedAPIs
         @emitter.emit 'did-rename'
       when 'change', 'resurrect'
+        @cachedContents = null
         @emitter.emit 'did-change'
 
   detectResurrectionAfterDelay: ->

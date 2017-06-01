@@ -135,19 +135,19 @@ describe 'File', ->
 
     describe "when the contents of the file change", ->
       it "notifies ::onDidChange observers", ->
-        changeHandler = jasmine.createSpy('changeHandler')
-        file.onDidChange changeHandler
-        fs.writeFileSync(file.getPath(), "this is new!")
+        lastText = null
 
-        waitsFor "change event", ->
-          changeHandler.callCount > 0
+        file.onDidChange ->
+          file.read().then (text) ->
+            lastText = text
 
-        runs ->
-          changeHandler.reset()
-          fs.writeFileSync(file.getPath(), "this is newer!")
+        runs -> fs.writeFileSync(file.getPath(), 'this is new!')
+        waitsFor 'read after first change event', -> lastText is 'this is new!'
+        runs -> expect(file.readSync()).toBe('this is new!')
 
-        waitsFor "second change event", ->
-          changeHandler.callCount > 0
+        runs -> fs.writeFileSync(file.getPath(), 'this is newer!')
+        waitsFor 'read after second change event', -> lastText is 'this is newer!'
+        runs -> expect(file.readSync()).toBe('this is newer!')
 
     describe "when the file is deleted", ->
       it "notifies ::onDidDelete observers", ->
