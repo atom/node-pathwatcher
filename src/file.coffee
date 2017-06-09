@@ -428,34 +428,8 @@ class File
         @emit 'moved' if Grim.includeDeprecatedAPIs
         @emitter.emit 'did-rename'
       when 'change', 'resurrect'
-        oldContents = @cachedContents
-        handleReadError = (error) =>
-          # We cant read the file, so we GTFO on the watch
-          @unsubscribeFromNativeChangeEvents()
-
-          handled = false
-          handle = -> handled = true
-          error.eventType = eventType
-          @emitter.emit('will-throw-watch-error', {error, handle})
-          unless handled
-            newError = new Error("Cannot read file after file `#{eventType}` event: #{@path}")
-            newError.originalError = error
-            newError.code = "ENOENT"
-            newError.path
-            # I want to throw the error here, but it stops the event loop or
-            # something. No longer do interval or timeout methods get run!
-            # throw newError
-            console.error newError
-
-        try
-          handleResolve = (newContents) =>
-            unless oldContents is newContents
-              @emit 'contents-changed' if Grim.includeDeprecatedAPIs
-              @emitter.emit 'did-change'
-
-          @read(true).then(handleResolve, handleReadError)
-        catch error
-          handleReadError(error)
+        @cachedContents = null
+        @emitter.emit 'did-change'
 
   detectResurrectionAfterDelay: ->
     _.delay (=> @detectResurrection()), 50
@@ -464,7 +438,7 @@ class File
     @exists().then (exists) =>
       if exists
         @subscribeToNativeChangeEvents()
-        @handleNativeChangeEvent('resurrect', @getPath())
+        @handleNativeChangeEvent('resurrect')
       else
         @cachedContents = null
         @emit 'removed' if Grim.includeDeprecatedAPIs
