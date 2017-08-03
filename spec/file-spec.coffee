@@ -416,7 +416,7 @@ describe 'File', ->
       emptyFile = new File(emptyFilePath)
 
       waitsForPromise ->
-        emptyFile.detectEncoding().then(callback)
+        emptyFile.detectEncoding().catch(callback)
 
       runs ->
         expect(callback.mostRecentCall.args[0]).toBeUndefined()

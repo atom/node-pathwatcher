@@ -179,7 +179,7 @@ class File
   # Public: Detects the encoding of the file.
   #
   # Returns a promise that resolves to a {String},
-  # or undefined if the encoding was unable to be detected.
+  # or is rejected if the encoding was unable to be detected.
   detectEncoding: ->
     jschardet ?= require 'jschardet'
     iconv ?= require 'iconv-lite'
@@ -199,7 +199,7 @@ class File
           if iconv.encodingExists(encoding)
             resolve(encoding.toLowerCase().replace(/[^0-9a-z]|:\d{4}$/g, ''))
           else
-            resolve()
+            reject()
 
       readStream.on 'end', ->
         universalDetector.close()
@@ -208,14 +208,11 @@ class File
         if iconv.encodingExists(encoding)
           resolve(encoding.toLowerCase().replace(/[^0-9a-z]|:\d{4}$/g, ''))
         else
-          resolve()
+          reject()
 
       readStream.on 'error', (error) ->
         universalDetector.close()
-        if error.code is 'ENOENT'
-          resolve()
-        else
-          reject()
+        reject()
 
   ###
   Section: Managing Paths
