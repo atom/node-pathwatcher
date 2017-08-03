@@ -176,17 +176,46 @@ class File
   # Public: Returns the {String} encoding name for this file (default: 'utf8').
   getEncoding: -> @encoding
 
-  # Public: Returns the {String} detected encoding of this file,
+  # Public: Detects the encoding of the file.
+  #
+  # Returns a promise that resolves to a {String},
   # or undefined if the encoding was unable to be detected.
   detectEncoding: ->
     jschardet ?= require 'jschardet'
     iconv ?= require 'iconv-lite'
 
-    buffer = fs.readFileSync(@path) # Don't supply an encoding to get the buffer
-    {encoding} = jschardet.detect(buffer)
-    encoding = 'utf8' if encoding is 'ascii'
-    return unless iconv.encodingExists(encoding)
-    return encoding.toLowerCase().replace(/[^0-9a-z]|:\d{4}$/g, '')
+    universalDetector = new jschardet.UniversalDetector()
+    universalDetector.reset()
+
+    return new Promise (resolve, reject) =>
+      readStream = fs.createReadStream(@path) # Don't supply an encoding to get the buffer
+      readStream.on 'data', (chunk) ->
+        universalDetector.feed(chunk.toString('binary'))
+        {result} = universalDetector
+        if result.confidence > 0.95
+          universalDetector.close()
+          {encoding} = result
+          encoding = 'utf8' if encoding is 'ascii'
+          if iconv.encodingExists(encoding)
+            resolve(encoding.toLowerCase().replace(/[^0-9a-z]|:\d{4}$/g, ''))
+          else
+            resolve()
+
+      readStream.on 'end', ->
+        universalDetector.close()
+        {encoding} = universalDetector.result
+        encoding = 'utf8' if encoding is 'ascii'
+        if iconv.encodingExists(encoding)
+          resolve(encoding.toLowerCase().replace(/[^0-9a-z]|:\d{4}$/g, ''))
+        else
+          resolve()
+
+      readStream.on 'error', (error) ->
+        universalDetector.close()
+        if error.code is 'ENOENT'
+          resolve()
+        else
+          reject()
 
   ###
   Section: Managing Paths

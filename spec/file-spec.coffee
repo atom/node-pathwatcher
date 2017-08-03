@@ -403,13 +403,24 @@ describe 'File', ->
     it "can be auto-detected", ->
       windows1255FilePath = path.join(__dirname, 'fixtures', 'windows1255.txt')
       windows1255File = new File(windows1255FilePath)
-      expect(windows1255File.detectEncoding()).toBe('windows1255')
+      callback = jasmine.createSpy('promiseCallback')
+
+      waitsForPromise ->
+        windows1255File.detectEncoding().then(callback)
+
+      runs ->
+        expect(callback.mostRecentCall.args[0]).toBe('windows1255')
 
       emptyFilePath = path.join(__dirname, 'fixtures', 'empty.txt')
       fs.writeFileSync(emptyFilePath, '')
       emptyFile = new File(emptyFilePath)
-      expect(emptyFile.detectEncoding()).toBeUndefined()
-      fs.removeSync(emptyFilePath)
+
+      waitsForPromise ->
+        emptyFile.detectEncoding().then(callback)
+
+      runs ->
+        expect(callback.mostRecentCall.args[0]).toBeUndefined()
+        fs.removeSync(emptyFilePath)
 
   describe 'createReadStream()', ->
     it 'returns a stream to read the file', ->
