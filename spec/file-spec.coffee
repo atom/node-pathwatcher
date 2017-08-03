@@ -411,9 +411,11 @@ describe 'File', ->
       runs ->
         expect(callback.mostRecentCall.args[0]).toBe('windows1255')
 
+    it "rejects the promise with undefined when the encoding was unable to be auto-detected", ->
       emptyFilePath = path.join(__dirname, 'fixtures', 'empty.txt')
       fs.writeFileSync(emptyFilePath, '')
       emptyFile = new File(emptyFilePath)
+      callback = jasmine.createSpy('promiseCallback')
 
       waitsForPromise ->
         emptyFile.detectEncoding().catch(callback)
