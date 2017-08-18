@@ -2,7 +2,7 @@
   "main": "./lib/main",
   "name": "pathwatcher",
   "description": "Watch files and directories for changes",
-  "version": "7.1.0",
+  "version": "8.0.0",
   "licenses": [
     {
       "type": "MIT",
