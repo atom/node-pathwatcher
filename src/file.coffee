@@ -6,7 +6,6 @@ _ = require 'underscore-plus'
 fs = require 'fs-plus'
 Grim = require 'grim'
 
-runas = null # Defer until used
 iconv = null # Defer until used
 
 Directory = null
@@ -320,44 +319,11 @@ class File
   # Returns undefined.
   writeSync: (text) ->
     previouslyExisted = @existsSync()
-    @writeFileWithPrivilegeEscalationSync(@getPath(), text)
+    @writeFileSync(@getPath(), text)
     @cachedContents = text
     @setDigest(text)
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
     undefined
-
-  safeWriteSync: (text) ->
-    try
-      fd = fs.openSync(@getPath(), 'w')
-      fs.writeSync(fd, text)
-
-      # Ensure file contents are really on disk before proceeding
-      fs.fdatasyncSync(fd)
-      fs.closeSync(fd)
-
-      # Ensure file directory entry is really on disk before proceeding
-      #
-      # Windows doesn't support syncing on directories so we'll just have to live
-      # with less safety on that platform.
-      unless process.platform is 'win32'
-        try
-          directoryFD = fs.openSync(path.dirname(@getPath()), 'r')
-          fs.fdatasyncSync(directoryFD)
-          fs.closeSync(directoryFD)
-        catch error
-          console.warn("Non-fatal error syncing parent directory of #{@getPath()}")
-      return
-    catch error
-      if error.code is 'EACCES' and process.platform is 'darwin'
-        runas ?= require 'runas'
-        # Use dd to read from stdin and write to the file path.
-        unless runas('/bin/dd', ["of=#{@getPath()}"], stdin: text, admin: true) is 0
-          throw error
-        # Use sync to force completion of pending disk writes.
-        if runas('/bin/sync', [], admin: true) isnt 0
-          throw error
-      else
-        throw error
 
   writeFile: (filePath, contents) ->
     encoding = @getEncoding()
@@ -376,43 +342,6 @@ class File
             reject(err)
           else
             resolve(result)
-
-  # Writes the text to specified path.
-  #
-  # Privilege escalation would be asked when current user doesn't have
-  # permission to the path.
-  writeFileWithPrivilegeEscalationSync: (filePath, text) ->
-    try
-      @writeFileSync(filePath, text)
-    catch error
-      if error.code is 'EACCES' and process.platform is 'darwin'
-        runas ?= require 'runas'
-        # Use dd to read from stdin and write to the file path, same thing could
-        # be done with tee but it would also copy the file to stdout.
-        unless runas('/bin/dd', ["of=#{filePath}"], stdin: text, admin: true) is 0
-          throw error
-      else
-        throw error
-
-  safeRemoveSync: ->
-    try
-      # Ensure new file contents are really on disk before proceeding
-      fd = fs.openSync(@getPath(), 'a')
-      fs.fdatasyncSync(fd)
-      fs.closeSync(fd)
-
-      fs.removeSync(@getPath())
-      return
-    catch error
-      if error.code is 'EACCES' and process.platform is 'darwin'
-        runas ?= require 'runas'
-        # Use sync to force completion of pending disk writes.
-        if runas('/bin/sync', [], admin: true) isnt 0
-          throw error
-        if runas('/bin/rm', ['-f', @getPath()], admin: true) isnt 0
-          throw error
-      else
-        throw error
 
   ###
   Section: Private
