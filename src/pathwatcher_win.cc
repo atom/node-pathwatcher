@@ -153,11 +153,10 @@ void PlatformThread() {
       if (!handle || handle->canceled)
         continue;
 
-      DWORD bytes;
-      if (GetOverlappedResult(handle->dir_handle,
-                              &handle->overlapped,
-                              &bytes,
-                              FALSE) == FALSE)
+      DWORD bytes_transferred;
+      if (!GetOverlappedResult(handle->dir_handle, &handle->overlapped, &bytes_transferred, FALSE))
+        continue;
+      if (bytes_transferred == 0)
         continue;
 
       std::vector<char> old_path;
