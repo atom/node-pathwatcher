@@ -26,7 +26,7 @@ class File
   # Public: Configures a new File instance, no files are accessed.
   #
   # * `filePath` A {String} containing the absolute path to the file
-  # * `symlink` A {Boolean} indicating if the path is a symlink (default: false).
+  # * `symlink` (optional) A {Boolean} indicating if the path is a symlink (default: false).
   constructor: (filePath, @symlink=false, includeDeprecatedAPIs=Grim.includeDeprecatedAPIs) ->
     filePath = path.normalize(filePath) if filePath
     @path = filePath
