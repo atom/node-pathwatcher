@@ -96,18 +96,18 @@ static bool QueueReaddirchanges(HandleWrapper* handle) {
                                NULL) == TRUE;
 }
 
-Handle<Value> WatcherHandleToV8Value(WatcherHandle handle) {
-  Handle<Value> value = Nan::New(g_object_template)->NewInstance();
+Local<Value> WatcherHandleToV8Value(WatcherHandle handle) {
+  Local<Value> value = Nan::New(g_object_template)->NewInstance();
   Nan::SetInternalFieldPointer(value->ToObject(), 0, handle);
   return value;
 }
 
-WatcherHandle V8ValueToWatcherHandle(Handle<Value> value) {
+WatcherHandle V8ValueToWatcherHandle(Local<Value> value) {
   return reinterpret_cast<WatcherHandle>(Nan::GetInternalFieldPointer(
       value->ToObject(), 0));
 }
 
-bool IsV8ValueWatcherHandle(Handle<Value> value) {
+bool IsV8ValueWatcherHandle(Local<Value> value) {
   return value->IsObject() && value->ToObject()->InternalFieldCount() == 1;
 }
 

@@ -121,7 +121,7 @@ NAN_METHOD(HandleMap::Clear) {
 }
 
 // static
-void HandleMap::Initialize(Handle<Object> target) {
+void HandleMap::Initialize(Local<Object> target) {
   Nan::HandleScope scope;
 
   Local<FunctionTemplate> t = Nan::New<FunctionTemplate>(HandleMap::New);

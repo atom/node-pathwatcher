@@ -3,7 +3,7 @@
 
 namespace {
 
-void Init(Handle<Object> exports) {
+void Init(Local<Object> exports) {
   CommonInit();
   PlatformInit();
 
