@@ -250,7 +250,7 @@ class File
   # * `flushCache` A {Boolean} indicating whether to require a direct read or if
   #   a cached copy is acceptable.
   #
-  # Returns a promise that resolves to a String.
+  # Returns a promise that resolves to either a {String}, or null if the file does not exist.
   read: (flushCache) ->
     if @cachedContents? and not flushCache
       promise = Promise.resolve(@cachedContents)
