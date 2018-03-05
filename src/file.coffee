@@ -7,6 +7,7 @@ fs = require 'fs-plus'
 Grim = require 'grim'
 
 iconv = null # Defer until used
+jschardet = null # Defer until used
 
 Directory = null
 PathWatcher = require './main'
@@ -173,6 +174,44 @@ class File
 
   # Public: Returns the {String} encoding name for this file (default: 'utf8').
   getEncoding: -> @encoding
+
+  # Public: Detects the encoding of the file.
+  #
+  # Returns a promise that resolves to a {String},
+  # or is rejected if the encoding was unable to be detected.
+  detectEncoding: ->
+    jschardet ?= require 'jschardet'
+    iconv ?= require 'iconv-lite'
+
+    universalDetector = new jschardet.UniversalDetector()
+    universalDetector.reset()
+
+    return new Promise (resolve, reject) =>
+      readStream = fs.createReadStream(@path) # Don't supply an encoding to get the buffer
+      readStream.on 'data', (chunk) ->
+        universalDetector.feed(chunk.toString('binary'))
+        {result} = universalDetector
+        if result.confidence > 0.95
+          universalDetector.close()
+          {encoding} = result
+          encoding = 'utf8' if encoding is 'ascii'
+          if iconv.encodingExists(encoding)
+            resolve(encoding.toLowerCase().replace(/[^0-9a-z]|:\d{4}$/g, ''))
+          else
+            reject()
+
+      readStream.on 'end', ->
+        universalDetector.close()
+        {encoding} = universalDetector.result
+        encoding = 'utf8' if encoding is 'ascii'
+        if iconv.encodingExists(encoding)
+          resolve(encoding.toLowerCase().replace(/[^0-9a-z]|:\d{4}$/g, ''))
+        else
+          reject()
+
+      readStream.on 'error', (error) ->
+        universalDetector.close()
+        reject()
 
   ###
   Section: Managing Paths

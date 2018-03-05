@@ -400,6 +400,30 @@ describe 'File', ->
         file.setEncoding('utf-8-bom')
       ).toThrow()
 
+    it "can be auto-detected", ->
+      windows1255FilePath = path.join(__dirname, 'fixtures', 'windows1255.txt')
+      windows1255File = new File(windows1255FilePath)
+      callback = jasmine.createSpy('promiseCallback')
+
+      waitsForPromise ->
+        windows1255File.detectEncoding().then(callback)
+
+      runs ->
+        expect(callback.mostRecentCall.args[0]).toBe('windows1255')
+
+    it "rejects the promise with undefined when the encoding was unable to be auto-detected", ->
+      emptyFilePath = path.join(__dirname, 'fixtures', 'empty.txt')
+      fs.writeFileSync(emptyFilePath, '')
+      emptyFile = new File(emptyFilePath)
+      callback = jasmine.createSpy('promiseCallback')
+
+      waitsForPromise ->
+        emptyFile.detectEncoding().catch(callback)
+
+      runs ->
+        expect(callback.mostRecentCall.args[0]).toBeUndefined()
+        fs.removeSync(emptyFilePath)
+
   describe 'createReadStream()', ->
     it 'returns a stream to read the file', ->
       stream = file.createReadStream()
