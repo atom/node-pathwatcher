@@ -120,7 +120,7 @@ void PlatformInit() {
   g_wake_up_event = CreateEvent(NULL, FALSE, FALSE, NULL);
   g_events.push_back(g_wake_up_event);
 
-  g_object_template.Reset(ObjectTemplate::New());
+  g_object_template.Reset(Nan::New<ObjectTemplate>());
   Nan::New(g_object_template)->SetInternalFieldCount(1);
 
   WakeupNewThread();
