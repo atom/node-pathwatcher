@@ -24,7 +24,7 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
   Nan::HandleScope scope;
 
   if (!g_callback.IsEmpty()) {
-    Handle<String> type;
+    Local<String> type;
     switch (g_type) {
       case EVENT_CHANGE:
         type = Nan::New("change").ToLocalChecked();
@@ -52,7 +52,7 @@ static void MakeCallbackInMainThread(uv_async_t* handle, int status) {
         return;
     }
 
-    Handle<Value> argv[] = {
+    Local<Value> argv[] = {
         type,
         WatcherHandleToV8Value(g_handle),
         Nan::New(g_new_path.data(), g_new_path.size()).ToLocalChecked(),
@@ -121,7 +121,7 @@ NAN_METHOD(Watch) {
   if (!info[0]->IsString())
     return Nan::ThrowTypeError("String required");
 
-  Handle<String> path = info[0]->ToString();
+  Local<String> path = info[0]->ToString();
   WatcherHandle handle = PlatformWatch(*String::Utf8Value(path));
   if (!PlatformIsHandleValid(handle)) {
     int error_number = PlatformInvalidHandleToErrorNumber(handle);
@@ -154,7 +154,7 @@ NAN_METHOD(Unwatch) {
   Nan::HandleScope scope;
 
   if (!IsV8ValueWatcherHandle(info[0]))
-    return Nan::ThrowTypeError("Handle type required");
+    return Nan::ThrowTypeError("Local type required");
 
   PlatformUnwatch(V8ValueToWatcherHandle(info[0]));
 
