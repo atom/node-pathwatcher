@@ -99,18 +99,20 @@ static bool QueueReaddirchanges(HandleWrapper* handle) {
 }
 
 Local<Value> WatcherHandleToV8Value(WatcherHandle handle) {
-  Local<Value> value = Nan::New(g_object_template)->NewInstance();
-  Nan::SetInternalFieldPointer(value->ToObject(), 0, handle);
+  Local<v8::Context> context = Nan::GetCurrentContext();
+  Local<Value> value = Nan::New(g_object_template)->NewInstance(context).ToLocalChecked();
+  Nan::SetInternalFieldPointer(value->ToObject(context).ToLocalChecked(), 0, handle);
   return value;
 }
 
 WatcherHandle V8ValueToWatcherHandle(Local<Value> value) {
   return reinterpret_cast<WatcherHandle>(Nan::GetInternalFieldPointer(
-      value->ToObject(), 0));
+    value->ToObject(Nan::GetCurrentContext()).ToLocalChecked(), 0));
 }
 
 bool IsV8ValueWatcherHandle(Local<Value> value) {
-  return value->IsObject() && value->ToObject()->InternalFieldCount() == 1;
+  return value->IsObject() &&
+    value->ToObject(Nan::GetCurrentContext()).ToLocalChecked()->InternalFieldCount() == 1;
 }
 
 void PlatformInit() {
