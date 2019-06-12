@@ -30,7 +30,7 @@
     "rimraf": "~2.2.0",
     "node-cpplint": "~0.1.5",
     "grunt-coffeelint": "git+https://github.com/atom/grunt-coffeelint.git",
-    "temp": "~0.7.0",
+    "temp": "~0.9.0",
     "grunt-atomdoc": "^1.0"
   },
   "dependencies": {
