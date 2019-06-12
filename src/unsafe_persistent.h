@@ -27,7 +27,7 @@ class NanUnsafePersistent : public NanUnsafePersistentTraits<T>::HandleType {
 template<typename T>
 NAN_INLINE void NanAssignUnsafePersistent(
     NanUnsafePersistent<T>& handle
-  , v8::Handle<T> obj) {
+  , v8::Local<T> obj) {
     handle.Reset();
     handle = NanUnsafePersistent<T>(v8::Isolate::GetCurrent(), obj);
 }
@@ -43,7 +43,7 @@ NAN_INLINE v8::Local<T> NanUnsafePersistentToLocal(const NanUnsafePersistent<T> 
 template<typename T>
 NAN_INLINE void NanAssignUnsafePersistent(
     v8::Persistent<T>& handle
-  , v8::Handle<T> obj) {
+  , v8::Local<T> obj) {
     handle.Dispose();
     handle = v8::Persistent<T>::New(obj);
 }
