@@ -416,7 +416,7 @@ describe 'File', ->
 
     it 'honors the specified encoding', ->
       unicodeText = 'ё'
-      unicodeBytes = new Buffer('\x51\x04') # 'ё'
+      unicodeBytes = Buffer.from('\x51\x04') # 'ё'
 
       fs.writeFileSync(file.getPath(), unicodeBytes)
 
@@ -437,7 +437,7 @@ describe 'File', ->
   describe 'createWriteStream()', ->
     it 'returns a stream to read the file', ->
       unicodeText = 'ё'
-      unicodeBytes = new Buffer('\x51\x04') # 'ё'
+      unicodeBytes = Buffer.from('\x51\x04') # 'ё'
 
       file.setEncoding('utf16le')
       stream = file.createWriteStream()
@@ -459,7 +459,7 @@ describe 'File', ->
 
     beforeEach ->
       unicodeText = 'ё'
-      unicodeBytes = new Buffer('\x51\x04') # 'ё'
+      unicodeBytes = Buffer.from('\x51\x04') # 'ё'
 
     it 'should read a file in UTF-16', ->
       fs.writeFileSync(file.getPath(), unicodeBytes)
