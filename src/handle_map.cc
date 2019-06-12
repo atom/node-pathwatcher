@@ -86,11 +86,12 @@ NAN_METHOD(HandleMap::Values) {
   HandleMap* obj = Nan::ObjectWrap::Unwrap<HandleMap>(info.This());
 
   int i = 0;
+  v8::Local<v8::Context> context = Nan::GetCurrentContext();
   v8::Local<Array> keys = Nan::New<Array>(obj->map_.size());
   for (Map::const_iterator iter = obj->map_.begin();
        iter != obj->map_.end();
        ++iter, ++i) {
-    keys->Set(i, NanUnsafePersistentToLocal(iter->second));
+    keys->Set(context, i, NanUnsafePersistentToLocal(iter->second)).FromJust();
   }
 
   info.GetReturnValue().Set(keys);
@@ -135,5 +136,8 @@ void HandleMap::Initialize(Local<Object> target) {
   Nan::SetPrototypeMethod(t, "remove", Remove);
   Nan::SetPrototypeMethod(t, "clear", Clear);
 
-  target->Set(Nan::New<String>("HandleMap").ToLocalChecked(), t->GetFunction());
+  Local<v8::Context> context = Nan::GetCurrentContext();
+  target->Set(context,
+              Nan::New<String>("HandleMap").ToLocalChecked(),
+              t->GetFunction(context).ToLocalChecked()).FromJust();
 }

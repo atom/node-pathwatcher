@@ -18,7 +18,7 @@ bool IsV8ValueWatcherHandle(Local<Value> value);
 // Correspoding definetions on OS X and Linux.
 typedef int32_t WatcherHandle;
 #define WatcherHandleToV8Value(h) Nan::New<Integer>(h)
-#define V8ValueToWatcherHandle(v) v->Int32Value()
+#define V8ValueToWatcherHandle(v) v->Int32Value(Nan::GetCurrentContext()).FromJust()
 #define IsV8ValueWatcherHandle(v) v->IsInt32()
 #endif
 
