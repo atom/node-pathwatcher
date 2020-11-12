@@ -322,6 +322,8 @@ class File
     @writeFileSync(@getPath(), text)
     @cachedContents = text
     @setDigest(text)
+    @emit 'contents-changed' if Grim.includeDeprecatedAPIs
+    @emitter.emit 'did-change'
     @subscribeToNativeChangeEvents() if not previouslyExisted and @hasSubscriptions()
     undefined
 
