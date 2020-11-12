@@ -1,26 +1,6 @@
-image: Visual Studio 2015
-
-environment:
-  matrix:
-    - nodejs_version: "10"
-    - nodejs_version: "12"
-
-platform:
-  - x64
-  - x86
-
-install:
-  # AppVeyor still does not support Node v12: https://github.com/appveyor/ci/issues/2921
-  - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version) $env:PLATFORM
-  - npm install
-
-test_script:
-  - node -e "console.log(`${process.version} ${process.arch} ${process.platform}`)"
-  - npm --version
-  - npm test
-
+# dummy appveyor
 build: off
 
 branches:
   only:
-    - master
+    - non-existing
