@@ -506,3 +506,10 @@ describe 'File', ->
         readHandler.callCount > 0
       runs ->
         expect(readHandler.argsForCall[0][0]).toBe(null)
+
+  describe 'writeSync()', ->
+    it 'emits did-change event', ->
+      file.onDidChange writeHandler = jasmine.createSpy('write handler')
+      file.writeSync('ok')
+      waitsFor 'write handler', ->
+        writeHandler.callCount > 0
