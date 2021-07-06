@@ -33,6 +33,8 @@
             4506,  # no definition for inline function
             4577,  # 'noexcept' used with no exception handling mode specified; termination on exception is not guaranteed
             4996,  # function was declared deprecated
+            2220, # warning treated as error - no object file generated
+            4309, # 'conversion' : truncation of constant value
           ],
           'defines': [
             '_WIN32_WINNT=0x0600',
